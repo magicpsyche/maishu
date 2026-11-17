@@ -49,6 +49,8 @@ export const app = controlPlane.app;
 export const shutdownNodeApp = (signal = "dispose"): Promise<void> => controlPlane.stop(signal);
 
 if (controlPlane.processMode === "standalone") {
-  await controlPlane.start();
+  // Existing Work can call back during its first recovery drain. Listen first
+  // so restoring a worker cannot block the HTTP endpoint it needs to ACK.
   await serveNodeControlPlane(controlPlane, { ...config.http, signals: {} });
+  await controlPlane.start();
 }
