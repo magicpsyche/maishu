@@ -78,7 +78,14 @@ export function createCodexAuthRefresher(options: { binary: string; directory: s
 async function refreshRpc(binary: string, home: string, timeoutMs: number): Promise<void> {
   const child = spawn(binary, ["app-server"], {
     env: { ...process.env, CODEX_HOME: home }, stdio: ["pipe", "pipe", "pipe"],
+    detached: process.platform !== "win32",
   });
+  const terminate = (signal: NodeJS.Signals) => {
+    try {
+      if (process.platform !== "win32" && child.pid) process.kill(-child.pid, signal);
+      else child.kill(signal);
+    } catch (e) { if ((e as NodeJS.ErrnoException).code !== "ESRCH") throw e; }
+  };
   const lines = createInterface({ input: child.stdout });
   child.stderr.resume();
   let counter = 0;
@@ -95,7 +102,7 @@ async function refreshRpc(binary: string, home: string, timeoutMs: number): Prom
       if (message.error) p.reject(new Error("Codex 拒绝认证维护请求")); else p.resolve(message.result);
     } catch { fail(); }
   });
-  const timer = setTimeout(() => { fail(); child.kill("SIGKILL"); }, timeoutMs);
+  const timer = setTimeout(() => { fail(); terminate("SIGKILL"); }, timeoutMs);
   const request = (method: string, params: unknown) => new Promise<unknown>((resolve, reject) => {
     const id = ++counter; pending.set(id, { resolve, reject });
     child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n", error => { if (error) fail(); });
@@ -107,8 +114,8 @@ async function refreshRpc(binary: string, home: string, timeoutMs: number): Prom
     if (account?.account?.type !== "chatgpt") throw new Error("认证维护未返回 Codex 登录账号");
   } finally {
     clearTimeout(timer); lines.close(); child.stdin.end();
-    if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
-    const kill = setTimeout(() => { child.kill("SIGKILL"); }, 1000);
+    terminate("SIGTERM");
+    const kill = setTimeout(() => { terminate("SIGKILL"); }, 1000);
     await closed;
     clearTimeout(kill);
   }

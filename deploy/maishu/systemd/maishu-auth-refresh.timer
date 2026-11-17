@@ -4,6 +4,7 @@ Description=麦枢 Codex 认证六天周期检查
 [Timer]
 # 每小时检查是否距上次成功刷新满六天；重启后补查，不会每小时强制刷新。
 OnCalendar=hourly
+OnStartupSec=2min
 Persistent=true
 RandomizedDelaySec=60
 Unit=maishu-auth-refresh.service
