@@ -62,7 +62,9 @@ export function createCodexAuthRefresher(options: { binary: string; directory: s
     if (source.sourceHash === hash(input.content) && existing !== null && refreshedCodexAuth(input.content, existing)) return existing;
     await atomicPrivate(auth, input.content);
     await atomicPrivate(journal, JSON.stringify({ sourceHash: hash(input.content) }));
-    await atomicPrivate(join(home, "config.toml"), 'cli_auth_credentials_store = "file"\n');
+    // Native auth clients need the explicit proxy opt-in on this pinned Codex;
+    // Linux then uses the maintenance service's proxy environment.
+    await atomicPrivate(join(home, "config.toml"), 'cli_auth_credentials_store = "file"\n[features]\nrespect_system_proxy = true\n');
     let success = false;
     try { await refreshRpc(options.binary, home, options.timeoutMs ?? 90_000); success = true; }
     catch { /* A reply can be lost after Codex persisted the rotated file. */ }

@@ -110,6 +110,8 @@ systemctl start maishu-auth-refresh.service
 
 `auth-current` 可以独立更新，不要求重启已有麦枢控制进程或执行端。目录、账号和 Node 路径须与本机实际安装一致。若 OAuth 请求需要出站代理，仅为维护服务提供可用代理和对应 NO_PROXY，不改变旧 OMA 或宿主机全局代理。
 
+维护程序仅在自己的 `CODEX_HOME/config.toml` 中启用 `features.respect_system_proxy=true`，让 Linux 上的 Codex 原生认证请求使用维护服务的 HTTP(S) 代理环境。需要本机 VLESS 时，单独运行仅监听回环地址的 HTTP 代理，并通过该服务的 systemd drop-in 加载私密 `/etc/maishu/auth-refresh.env`；不要将节点密钥、完整代理配置或认证文件提交到仓库。只验证 curl 可达不足以证明 Codex 原生认证采用了相同路由。
+
 原生认证禁止全容器快照，避免 `/run` 和 `/tmp` 私密认证被存入镜像。仍存活沙箱的热继续与沙箱销毁后的冷恢复是两个验收项目。工作区和引擎原生会话白名单提供的是可用的持久化构件；本轮若没有完成“容器销毁→恢复工作文件→继续原逻辑会话”的真实测试，就必须保留冷恢复未验收状态。禁止把新建空工作区或仅重放聊天摘要标为完整恢复。
 
 ### 独立 Node 发布包
