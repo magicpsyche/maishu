@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -85,6 +86,6 @@ describe("SkillsList version preview", () => {
     expect(await screen.findByText("code-review/SKILL.md")).toBeInTheDocument();
     expect(screen.getByText("# Code review skill")).toBeInTheDocument();
     expect(state.download).toHaveBeenCalledWith("1001", { skill_id: "skill_review" });
-    expect(state.fetchPaths.some((path) => path.includes("/v1/oma/skills/"))).toBe(false);
+    expect(state.fetchPaths.some((path) => path.includes("/v1/maishu/skills/"))).toBe(false);
   });
 });

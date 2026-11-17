@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -62,6 +63,7 @@ beforeEach(() => {
     "GET /matter/bonds": () => json(200, { data: [bond] }),
   };
   localStorage.clear();
+  localStorage.setItem("maishu-locale", "en");
   vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.stubGlobal(
     "fetch",

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,11 +26,11 @@ const ALL_CAPABILITIES = [
 ] as const;
 
 const CAPABILITY_GROUPS: Array<{ label: string; caps: string[] }> = [
-  { label: "Messages", caps: ["message.read", "message.write", "message.update", "message.delete"] },
-  { label: "Threads", caps: ["thread.reply"] },
-  { label: "Reactions", caps: ["reaction.add", "reaction.remove"] },
-  { label: "People & search", caps: ["user.read", "search.read"] },
-  { label: "Other", caps: ["canvas.write"] },
+  { label: uiText("Messages"), caps: ["message.read", "message.write", "message.update", "message.delete"] },
+  { label: uiText("Threads"), caps: ["thread.reply"] },
+  { label: uiText("Reactions"), caps: ["reaction.add", "reaction.remove"] },
+  { label: uiText("People & search"), caps: ["user.read", "search.read"] },
+  { label: uiText("Other"), caps: ["canvas.write"] },
 ];
 
 export function IntegrationsSlackWorkspace() {
@@ -68,8 +70,7 @@ export function IntegrationsSlackWorkspace() {
           to="/integrations/slack"
           className="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          ← Slack integrations
-        </Link>
+           {uiText("← Slack integrations")} </Link>
 
         {installation && (
           <header className="mt-3 mb-7 flex items-end justify-between gap-6">
@@ -78,20 +79,18 @@ export function IntegrationsSlackWorkspace() {
                 {installation.workspace_name}
               </h1>
               <p className="mt-1.5 text-base text-fg-muted">
-                Dedicated apps · each agent has full identity in Slack
-              </p>
+                 {uiText("Dedicated apps · each agent has full identity in Slack")} </p>
             </div>
             <Link
               to={`/integrations/slack/publish?workspace=${id}`}
               className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] whitespace-nowrap"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-              Publish another
-            </Link>
+               {uiText("Publish another")} </Link>
           </header>
         )}
 
-        {loading && <p className="text-sm text-fg-muted">Loading…</p>}
+        {loading && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
         {error && (
           <div className="rounded-md border border-danger/30 bg-danger-subtle px-3 py-2 text-sm text-danger">
             {error}
@@ -107,7 +106,7 @@ export function IntegrationsSlackWorkspace() {
         {!loading && publications.length === 0 && (
           <div className="border border-border rounded-lg px-6 py-12 text-center bg-bg-surface/30">
             <div className="font-mono text-fg-subtle text-sm select-none mb-3">[ &nbsp;&nbsp; ]</div>
-            <p className="text-sm text-fg">No agents published yet.</p>
+            <p className="text-sm text-fg">{uiText("No agents published yet.")}</p>
           </div>
         )}
       </div>
@@ -147,7 +146,7 @@ function PublicationCard({
   }
 
   async function unpublish() {
-    if (!confirm(`Unpublish ${pub.persona.name}? It will stop responding in Slack.`)) return;
+    if (!confirm(uiText(`Unpublish ${pub.persona.name}? It will stop responding in Slack.`))) return;
     setWorking(true);
     try {
       await api.slack.unpublish(pub.id);
@@ -191,7 +190,7 @@ function PublicationCard({
           </div>
         </div>
         <span className="shrink-0 text-sm text-fg-muted">
-          {open ? "Hide" : "Edit"} {open ? "▲" : "▼"}
+          {open ? uiText("Hide") : uiText("Edit")} {open ? "▲" : "▼"}
         </span>
       </Button>
 
@@ -204,14 +203,14 @@ function PublicationCard({
           )}
 
           <div className="grid md:grid-cols-2 gap-4">
-            <Field label="Persona name">
+            <Field label={uiText("Persona name")}>
               <Input
                 value={personaName}
                 onChange={(e) => setPersonaName(e.target.value)}
                 className={inputCls}
               />
             </Field>
-            <Field label="Avatar URL">
+            <Field label={uiText("Avatar URL")}>
               <Input
                 value={personaAvatar}
                 onChange={(e) => setPersonaAvatar(e.target.value)}
@@ -223,14 +222,13 @@ function PublicationCard({
 
           <div>
             <div className="flex items-baseline justify-between mb-2">
-              <Label className="text-sm font-medium text-fg">Capabilities</Label>
+              <Label className="text-sm font-medium text-fg">{uiText("Capabilities")}</Label>
               <span className="text-sm text-fg-muted">
                 {caps.size} of {ALL_CAPABILITIES.length} enabled
               </span>
             </div>
             <p className="text-sm text-fg-muted mb-3">
-              What this agent may do in Slack. Defaults to everything; uncheck to restrict.
-            </p>
+               {uiText("What this agent may do in Slack. Defaults to everything; uncheck to restrict.")} </p>
             <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
               {CAPABILITY_GROUPS.map((g) => (
                 <div key={g.label}>
@@ -262,15 +260,14 @@ function PublicationCard({
               disabled={working}
               className="px-3.5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
             >
-              {working ? "Saving…" : "Save changes"}
+              {working ? uiText("Saving…") : uiText("Save changes")}
             </Button>
             <Button variant="ghost"
               onClick={unpublish}
               disabled={working}
               className="text-sm text-danger hover:underline disabled:opacity-50"
             >
-              Unpublish agent
-            </Button>
+               {uiText("Unpublish agent")} </Button>
           </div>
         </div>
       )}

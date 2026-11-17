@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,14 +24,14 @@ const api = new IntegrationsApi();
 // inherit the App's per-install GitHub permissions. The OMA-side caps
 // are the user's expression of intent for future-MCP and audit display.
 const CAPABILITY_GROUPS: Array<{ label: string; caps: string[] }> = [
-  { label: "Issues", caps: ["issue.read", "issue.create", "issue.update", "issue.delete"] },
-  { label: "Pull Requests", caps: ["pr.read", "pr.create", "pr.update", "pr.review.write", "pr.review.comment", "pr.close", "pr.merge"] },
-  { label: "Comments", caps: ["comment.write", "comment.delete"] },
-  { label: "Labels", caps: ["label.add", "label.remove"] },
-  { label: "Assignment", caps: ["assignee.set", "assignee.set_other"] },
-  { label: "Repo", caps: ["repo.read", "repo.write", "repo.branch.create", "repo.branch.delete"] },
-  { label: "Workflows", caps: ["workflow.read", "workflow.dispatch", "release.read", "release.create"] },
-  { label: "Other", caps: ["status.set", "user.mention", "search.read"] },
+  { label: uiText("Issues"), caps: ["issue.read", "issue.create", "issue.update", "issue.delete"] },
+  { label: uiText("Pull Requests"), caps: ["pr.read", "pr.create", "pr.update", "pr.review.write", "pr.review.comment", "pr.close", "pr.merge"] },
+  { label: uiText("Comments"), caps: ["comment.write", "comment.delete"] },
+  { label: uiText("Labels"), caps: ["label.add", "label.remove"] },
+  { label: uiText("Assignment"), caps: ["assignee.set", "assignee.set_other"] },
+  { label: uiText("Repo"), caps: ["repo.read", "repo.write", "repo.branch.create", "repo.branch.delete"] },
+  { label: uiText("Workflows"), caps: ["workflow.read", "workflow.dispatch", "release.read", "release.create"] },
+  { label: uiText("Other"), caps: ["status.set", "user.mention", "search.read"] },
 ];
 
 // Hard-coded snapshot of the default-mode wakeup matrix — derived from
@@ -38,12 +40,12 @@ const CAPABILITY_GROUPS: Array<{ label: string; caps: string[] }> = [
 // modes (e.g. --mode triage adds issue.opened) will need this list to
 // become a function of publication.session_granularity / mode flags.
 const WAKEUP_EVENTS: Array<{ kind: string; description: string }> = [
-  { kind: "issue_assigned", description: "Issue assigned to bot" },
-  { kind: "pr_assigned", description: "Pull request assigned to bot" },
-  { kind: "pr_review_requested", description: "Pull request review requested" },
-  { kind: "issue_mentioned", description: "@mention in issue comment" },
-  { kind: "pr_mentioned", description: "@mention in PR comment or review" },
-  { kind: "pr_review_submitted", description: "Pull request review submitted (when bot was reviewer)" },
+  { kind: "issue_assigned", description: uiText("Issue assigned to bot") },
+  { kind: "pr_assigned", description: uiText("Pull request assigned to bot") },
+  { kind: "pr_review_requested", description: uiText("Pull request review requested") },
+  { kind: "issue_mentioned", description: uiText("@mention in issue comment") },
+  { kind: "pr_mentioned", description: uiText("@mention in PR comment or review") },
+  { kind: "pr_review_submitted", description: uiText("Pull request review submitted (when bot was reviewer)") },
 ];
 
 export function IntegrationsGitHubWorkspace() {
@@ -87,10 +89,9 @@ export function IntegrationsGitHubWorkspace() {
           to="/integrations/github"
           className="inline-block mb-6 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          ← All GitHub installations
-        </Link>
+           {uiText("← All GitHub installations")} </Link>
 
-        {loading && <p className="text-sm text-fg-muted">Loading…</p>}
+        {loading && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
         {error && (
           <div className="rounded-md border border-danger/30 bg-danger-subtle px-3 py-2 text-sm text-danger">
             {error}
@@ -113,17 +114,16 @@ export function IntegrationsGitHubWorkspace() {
               <div className="min-w-0 space-y-8">
                 <section>
                   <SectionHeading
-                    title={publications.length === 1 ? "Bound agent" : "Bound agents"}
+                    title={publications.length === 1 ? uiText("Bound agent") : uiText("Bound agents")}
                     hint={`${publications.length} of this org's bots`}
                   />
                   {publications.length === 0 ? (
                     <div className="border border-border rounded-lg px-6 py-10 text-center bg-bg-surface/30">
                       <div className="font-mono text-fg-subtle text-sm select-none mb-3">[ &nbsp;&nbsp; ]</div>
-                      <p className="text-sm text-fg">No agents bound to this org.</p>
+                      <p className="text-sm text-fg">{uiText("No agents bound to this org.")}</p>
                       <p className="text-sm text-fg-muted mt-1.5">
                         <Link to="/integrations/github/bind" className="text-brand hover:underline">
-                          Bind one →
-                        </Link>
+                           {uiText("Bind one →")} </Link>
                       </p>
                     </div>
                   ) : (
@@ -153,18 +153,14 @@ function NotFound({ id }: { id: string }) {
   return (
     <div className="border border-border rounded-lg px-6 py-10 text-center bg-bg-surface/30">
       <div className="font-mono text-fg-subtle text-sm select-none mb-3">[ ?  ]</div>
-      <p className="text-sm text-fg">Installation not found.</p>
+      <p className="text-sm text-fg">{uiText("Installation not found.")}</p>
       <p className="text-sm text-fg-muted mt-1.5">
-        <code className="font-mono text-fg-muted">{id}</code> doesn't match any
-        GitHub installation on this account. It may have been removed, or you
-        may be signed in as a different user.
-      </p>
+        <code className="font-mono text-fg-muted">{id}</code>  {uiText("doesn't match any GitHub installation on this account. It may have been removed, or you may be signed in as a different user.")} </p>
       <Link
         to="/integrations/github"
         className="mt-4 inline-block text-sm text-brand hover:underline"
       >
-        ← Back to GitHub integrations
-      </Link>
+         {uiText("← Back to GitHub integrations")} </Link>
     </div>
   );
 }
@@ -193,7 +189,7 @@ function BotIdentityCard({
               {installation.workspace_name}
             </h1>
             <p className="mt-1 text-sm text-fg-muted">
-              acting as{" "}
+               {uiText("acting as")}{" "}
               <code className="font-mono text-fg">
                 @{slug}
                 {suffix && (
@@ -207,7 +203,7 @@ function BotIdentityCard({
       </div>
       <div className="mt-4 pt-4 border-t border-border flex items-center gap-4 text-sm text-fg-muted">
         <span>
-          Installed{" "}
+           {uiText("Installed")}{" "}
           <span className="text-fg">{relativeTime(installation.created_at)}</span>
         </span>
         <span className="text-border-strong">·</span>
@@ -278,8 +274,7 @@ function WakesUpOn() {
   return (
     <section>
       <h2 className="font-display text-lg font-semibold text-fg tracking-tight mb-3">
-        Wakes up on
-      </h2>
+         {uiText("Wakes up on")} </h2>
       <ul className="space-y-3">
         {WAKEUP_EVENTS.map((e) => (
           <li key={e.kind} className="flex items-start gap-2.5 text-sm">
@@ -291,9 +286,7 @@ function WakesUpOn() {
         ))}
       </ul>
       <p className="mt-4 text-xs text-fg-subtle leading-relaxed">
-        Default matrix. Self-mentions, sender-is-bot, and unmentioned comments
-        never wake the bot.
-      </p>
+         {uiText("Default matrix. Self-mentions, sender-is-bot, and unmentioned comments never wake the bot.")} </p>
     </section>
   );
 }
@@ -339,24 +332,22 @@ function ActivitySection({ installation }: { installation: GitHubInstallation })
   return (
     <section>
       <SectionHeading
-        title="Recent activity"
+        title={uiText("Recent activity")}
         hint={sessions ? `${sessions.length} session${sessions.length === 1 ? "" : "s"}` : undefined}
       />
-      {loading && <p className="text-sm text-fg-muted">Loading…</p>}
+      {loading && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
       {err && (
         <p className="text-sm text-fg-muted">
-          Couldn't load activity: <span className="text-danger">{err}</span>
+           {uiText("Couldn't load activity:")} <span className="text-danger">{err}</span>
         </p>
       )}
       {!loading && sessions && sessions.length === 0 && (
         <div className="border border-border rounded-lg px-6 py-10 text-center bg-bg-surface/30">
           <div className="font-mono text-fg-subtle text-sm select-none mb-3">[ &nbsp;&nbsp; ]</div>
-          <p className="text-sm text-fg">No webhook deliveries yet.</p>
+          <p className="text-sm text-fg">{uiText("No webhook deliveries yet.")}</p>
           <p className="text-sm text-fg-muted mt-1.5">
-            Try assigning a GitHub issue to{" "}
-            <code className="font-mono text-fg">@{installation.bot_login}</code> or
-            mentioning the bot in a comment.
-          </p>
+             {uiText("Try assigning a GitHub issue to")}{" "}
+            <code className="font-mono text-fg">@{installation.bot_login}</code>  {uiText("or mentioning the bot in a comment.")} </p>
         </div>
       )}
       {sessions && sessions.length > 0 && (
@@ -390,7 +381,7 @@ function ActivityRow({ session }: { session: SessionSummary }) {
           {relativeTime(session.created_at)}
           {meta?.actorLogin && (
             <>
-              {" · by "}
+              {uiText("· by")}
               <code className="font-mono text-fg-muted">@{meta.actorLogin}</code>
             </>
           )}
@@ -403,8 +394,7 @@ function ActivityRow({ session }: { session: SessionSummary }) {
           rel="noreferrer"
           className="shrink-0 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          View on GitHub →
-        </a>
+           {uiText("View on GitHub →")} </a>
       ) : (
         <span className="shrink-0 text-xs font-mono text-fg-subtle truncate max-w-[160px]">
           {session.id}
@@ -481,14 +471,13 @@ function PublicationCard({
             onClick={() => setEditing(!editing)}
             className="text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] px-3 py-1.5"
           >
-            {editing ? "Cancel" : "Edit caps"}
+            {editing ? uiText("Cancel") : uiText("Edit caps")}
           </Button>
           <Button variant="ghost"
             onClick={unbind}
             className="text-sm text-danger hover:underline px-3 py-1.5"
           >
-            Unbind
-          </Button>
+             {uiText("Unbind")} </Button>
         </div>
       </div>
 
@@ -538,7 +527,7 @@ function PublicationCard({
               disabled={saving}
               className="px-5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover disabled:opacity-50"
             >
-              {saving ? "Saving…" : "Save capabilities"}
+              {saving ? uiText("Saving…") : uiText("Save capabilities")}
             </Button>
           </div>
         </div>

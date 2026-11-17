@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { EyeIcon, EyeOffIcon, SearchIcon, SettingsIcon, PlusIcon } from "lucide-react";
@@ -204,7 +206,7 @@ export function DataTable<T>({
             className="console-list-toolbar"
             data-list-toolbar
             role="toolbar"
-            aria-label={title ? `${title} controls` : "List controls"}
+            aria-label={title ? `${title} controls` : uiText("List controls")}
           >
             {headerActions}
             {showCreate && !subtitle && <Button onClick={onCreate}>{createLabel}</Button>}
@@ -219,7 +221,7 @@ export function DataTable<T>({
                   type="search"
                   value={searchValue ?? ""}
                   onChange={(event) => onSearchChange(event.target.value)}
-                  placeholder={searchPlaceholder ?? "Search..."}
+                  placeholder={searchPlaceholder ?? uiText("Search...")}
                   autoComplete="off"
                   name="oma-list-search"
                 />
@@ -243,7 +245,7 @@ export function DataTable<T>({
                   className="console-data-table console-data-header-table"
                   style={{ minWidth: tableMinWidth }}
                   data-testid="data-header-table"
-                  aria-label={title ? `${title} columns` : "List columns"}
+                  aria-label={title ? `${title} columns` : uiText("List columns")}
                 >
                   {renderColgroup()}
                   <TableHeader variant="wireless" className="console-data-head">
@@ -306,7 +308,7 @@ export function DataTable<T>({
                 className="console-data-table console-data-body-table"
                 style={{ minWidth: tableMinWidth }}
                 data-testid="data-body-table"
-                aria-label={title ?? "List data"}
+                aria-label={title ?? uiText("List data")}
               >
                 {renderColgroup()}
                 <TableBody>

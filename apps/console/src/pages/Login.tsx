@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
@@ -21,7 +23,7 @@ import { useBranding } from "../lib/branding";
 // The pin is per-user — different login → different membership set →
 // the previous user's tenant id is at best meaningless and at worst
 // triggers "Not a member" 403s on every subsequent request.
-// TenantSwitcher repopulates from /v1/oma/me/tenants on next page load.
+// TenantSwitcher repopulates from /v1/maishu/me/tenants on next page load.
 function onLoginSuccess(redirect: () => void) {
   setActiveTenantId(null);
   redirect();
@@ -169,7 +171,7 @@ export function Login() {
   const buildTurnstileOpts = () => {
     if (!turnstileSiteKey) return undefined;
     const token = tokenRef.current;
-    if (!token) throw new Error("Complete the security verification first.");
+    if (!token) throw new Error(uiText("Complete the security verification first."));
     // Each backend request consumes one token. Never reuse it for a second request.
     clearTurnstileToken();
     return { headers: { "cf-turnstile-token": token } };
@@ -225,7 +227,7 @@ export function Login() {
             // widget obtain a fresh one before the user requests Resend.
             clearOtp();
             setMode("verify-signup");
-            setError("Complete the security verification and choose Resend to request an email code.");
+            setError(uiText("Complete the security verification and choose Resend to request an email code."));
           } else {
             throw new Error(error.message);
           }
@@ -275,10 +277,10 @@ export function Login() {
           body: JSON.stringify({ email, otp, password }),
         });
         const data = await res.json() as any;
-        if (!res.ok) throw new Error(data?.message || "Failed to reset password");
+        if (!res.ok) throw new Error(data?.message || uiText("Failed to reset password"));
         setError("");
         setMode("login");
-        toast.success("Password reset successfully. Please sign in.");
+        toast.success(uiText("Password reset successfully. Please sign in."));
       }
     } catch (err: any) {
       // Surface real cause when present. Anthropic-style envelope nests as
@@ -317,7 +319,7 @@ export function Login() {
       if (error) throw new Error(error.message);
       clearOtp();
     } catch (err: any) {
-      setError(err.message || "Failed to resend code");
+      setError(err.message || uiText("Failed to resend code"));
     } finally {
       resetTurnstile();
       setLoading(false);
@@ -337,13 +339,13 @@ export function Login() {
       providerId,
       callbackURL: nextUrl,
     });
-    if (error) setError(error.message ?? "Sign-in failed");
+    if (error) setError(error.message ?? uiText("Sign-in failed"));
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="text-fg-subtle text-sm">Loading...</div>
+        <div className="text-fg-subtle text-sm">{uiText("Loading...")}</div>
       </div>
     );
   }
@@ -351,7 +353,7 @@ export function Login() {
   const isOtpMode = mode === "verify-signup" || mode === "verify-login" || mode === "reset-otp";
 
   const titles: Record<Mode, string> = {
-    chooser: branding.loginTitle ?? `Log in to ${branding.productName}`,
+    chooser: branding.loginTitle ?? uiText(`Log in to ${branding.productName}`),
     login: "Log in with email",
     signup: "Create your account",
     "otp-login": "Sign in with email code",
@@ -364,12 +366,12 @@ export function Login() {
   const subtitles: Record<Mode, string> = {
     chooser: branding.loginSubtitle ?? "",
     login: "Use your email and password",
-    signup: `Get started with ${branding.productName}`,
+    signup: uiText(`Get started with ${branding.productName}`),
     "otp-login": "We'll send a 6-digit code to your email",
-    "verify-signup": `We sent a code to ${email}`,
-    "verify-login": `We sent a code to ${email}`,
+    "verify-signup": uiText(`We sent a code to ${email}`),
+    "verify-login": uiText(`We sent a code to ${email}`),
     forgot: "We'll send a code to reset your password",
-    "reset-otp": `Enter the code sent to ${email}`,
+    "reset-otp": uiText(`Enter the code sent to ${email}`),
   };
 
   const compactLinkClass =
@@ -391,7 +393,7 @@ export function Login() {
         </header>
 
         {mode === "chooser" && (
-          <div role="group" aria-label="Sign in options" className="flex flex-col gap-3">
+          <div role="group" aria-label={uiText("Sign in options")} className="flex flex-col gap-3">
             {error && (
               <div
                 role="alert"
@@ -410,7 +412,7 @@ export function Login() {
                 onClick={() => handleOidcSignIn(p.id)}
                 className="h-11 w-full rounded-full"
               >
-                Continue with {p.name}
+                 {uiText("Continue with")} {p.name}
               </Button>
             ))}
             {googleEnabled && (
@@ -422,8 +424,7 @@ export function Login() {
                 className="h-11 w-full rounded-full"
               >
                 <GoogleIcon />
-                Continue with Google
-              </Button>
+                 {uiText("Continue with Google")} </Button>
             )}
             {githubEnabled && (
               <Button
@@ -434,8 +435,7 @@ export function Login() {
                 className="h-11 w-full rounded-full"
               >
                 <GitHubIcon className="size-4" />
-                Continue with GitHub
-              </Button>
+                 {uiText("Continue with GitHub")} </Button>
             )}
             {emailEnabled && (
               <Button
@@ -452,8 +452,7 @@ export function Login() {
                 }}
                 className="h-11 w-full rounded-full"
               >
-                Continue with email
-              </Button>
+                 {uiText("Continue with email")} </Button>
             )}
           </div>
         )}
@@ -472,21 +471,21 @@ export function Login() {
           )}
 
           {mode === "signup" && (
-            <Field label="Name">
+            <Field label={uiText("Name")}>
               <Input
                 id="auth-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-10"
-                placeholder="Your name"
+                placeholder={uiText("Your name")}
                 autoComplete="name"
               />
             </Field>
           )}
 
           {!isOtpMode && (
-            <Field label="Email">
+            <Field label={uiText("Email")}>
               <Input
                 id="auth-email"
                 type="email"
@@ -506,8 +505,7 @@ export function Login() {
             <div data-login-field="password" className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="auth-password" className="text-sm text-fg">
-                  Password
-                </Label>
+                   {uiText("Password")} </Label>
                 {mode === "login" && passwordResetEnabled && (
                   <Button
                     type="button"
@@ -519,8 +517,7 @@ export function Login() {
                     }}
                     className={compactLinkClass}
                   >
-                    Forgot password?
-                  </Button>
+                     {uiText("Forgot password?")} </Button>
                 )}
               </div>
               <Input
@@ -539,7 +536,7 @@ export function Login() {
           )}
 
           {isOtpMode && (
-            <Field label="Verification code">
+            <Field label={uiText("Verification code")}>
               <Input
                 id="auth-otp"
                 ref={otpRef}
@@ -560,14 +557,14 @@ export function Login() {
           )}
 
           {mode === "reset-otp" && (
-            <Field label="New password">
+            <Field label={uiText("New password")}>
               <Input
                 id="auth-new-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-10"
-                placeholder="Min 8 characters"
+                placeholder={uiText("Min 8 characters")}
                 required
                 minLength={8}
                 name="new-password"
@@ -578,14 +575,14 @@ export function Login() {
 
           <div
             role="group"
-            aria-label={mode === "login" ? "Sign in actions" : "Form actions"}
+            aria-label={mode === "login" ? uiText("Sign in actions") : uiText("Form actions")}
             className="flex select-none flex-col gap-2 pt-1"
           >
             <Button
               type="submit"
               size="lg"
               loading={loading}
-              loadingLabel="Loading..."
+              loadingLabel={uiText("Loading...")}
               disabled={
                 (!isOtpMode && !email) ||
                 (isOtpMode && otp.length < 6) ||
@@ -596,19 +593,19 @@ export function Login() {
               className="h-10 w-full disabled:pointer-events-auto"
             >
               {mode === "login"
-                ? "Sign in"
+                ? uiText("Sign in")
                 : mode === "signup"
-                  ? "Create account"
+                  ? uiText("Create account")
                   : mode === "otp-login"
-                    ? "Send code"
+                    ? uiText("Send code")
                     : mode === "forgot"
-                      ? "Send reset code"
+                      ? uiText("Send reset code")
                       : mode === "reset-otp"
                         ? "Reset password"
                         : "Verify"}
             </Button>
             {turnstileSiteKey && (
-              <motion.div layout="position" initial={false} role="region" aria-label="Security verification">
+              <motion.div layout="position" initial={false} role="region" aria-label={uiText("Security verification")}>
                 <Turnstile
                   resetKey={turnstileNonce}
                   siteKey={turnstileSiteKey}
@@ -630,8 +627,7 @@ export function Login() {
                 }}
                 className="h-10 w-full"
               >
-                Sign in with email code
-              </Button>
+                 {uiText("Sign in with email code")} </Button>
             )}
           </div>
         </form>
@@ -639,7 +635,7 @@ export function Login() {
 
         {mode !== "chooser" && isOtpMode && (
           <div className="text-center text-sm text-fg-muted">
-            Didn't receive the code?{" "}
+             {uiText("Didn't receive the code?")}{" "}
             <Button
               type="button"
               variant="link"
@@ -648,8 +644,7 @@ export function Login() {
               disabled={loading || (!!turnstileSiteKey && !turnstileToken)}
               className={compactLinkClass}
             >
-              Resend
-            </Button>
+               {uiText("Resend")} </Button>
           </div>
         )}
 
@@ -664,20 +659,19 @@ export function Login() {
             }}
             className={`${compactLinkClass} self-center text-fg-muted`}
           >
-            Back to sign in options
-          </Button>
+             {uiText("Back to sign in options")} </Button>
         )}
 
         <motion.div
           layout="position"
           initial={false}
           role="group"
-          aria-label="Account options"
+          aria-label={uiText("Account options")}
           className="flex min-h-6 select-none items-center justify-center gap-1 text-center text-sm text-fg-muted"
         >
           {mode === "chooser" && emailEnabled && (
             <>
-              <span>Don't have an account?</span>
+              <span>{uiText("Don't have an account?")}</span>
               <Button
                 type="button"
                 variant="link"
@@ -688,13 +682,12 @@ export function Login() {
                 }}
                 className={compactLinkClass}
               >
-                Sign up
-              </Button>
+                 {uiText("Sign up")} </Button>
             </>
           )}
           {mode === "login" && (
             <>
-              <span>New to {branding.productName}?</span>
+              <span>{uiText("New to")} {branding.productName}?</span>
               <Button
                 type="button"
                 variant="link"
@@ -705,13 +698,12 @@ export function Login() {
                 }}
                 className={compactLinkClass}
               >
-                Sign up
-              </Button>
+                 {uiText("Sign up")} </Button>
             </>
           )}
           {mode === "signup" && (
             <>
-              <span>Already have an account?</span>
+              <span>{uiText("Already have an account?")}</span>
               <Button
                 type="button"
                 variant="link"
@@ -722,13 +714,12 @@ export function Login() {
                 }}
                 className={compactLinkClass}
               >
-                Sign in
-              </Button>
+                 {uiText("Sign in")} </Button>
             </>
           )}
           {mode === "otp-login" && (
             <>
-              <span>Prefer a password?</span>
+              <span>{uiText("Prefer a password?")}</span>
               <Button
                 type="button"
                 variant="link"
@@ -739,8 +730,7 @@ export function Login() {
                 }}
                 className={compactLinkClass}
               >
-                Sign in
-              </Button>
+                 {uiText("Sign in")} </Button>
             </>
           )}
           {(mode === "verify-signup" || mode === "verify-login") && (
@@ -755,12 +745,11 @@ export function Login() {
               }}
               className={compactLinkClass}
             >
-              Go back
-            </Button>
+               {uiText("Go back")} </Button>
           )}
           {mode === "forgot" && (
             <>
-              <span>Remember your password?</span>
+              <span>{uiText("Remember your password?")}</span>
               <Button
                 type="button"
                 variant="link"
@@ -771,8 +760,7 @@ export function Login() {
                 }}
                 className={compactLinkClass}
               >
-                Sign in
-              </Button>
+                 {uiText("Sign in")} </Button>
             </>
           )}
           {mode === "reset-otp" && (
@@ -787,8 +775,7 @@ export function Login() {
               }}
               className={compactLinkClass}
             >
-              Go back
-            </Button>
+               {uiText("Go back")} </Button>
           )}
         </motion.div>
       </div>

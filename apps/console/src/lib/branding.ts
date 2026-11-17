@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // Deployment branding: product name, logo, favicon, login copy, and a theme
 // stylesheet, configured by the operator (CONSOLE_BRANDING_DIR on main-node).
 //
@@ -22,7 +23,7 @@ export interface Branding {
 }
 
 export const DEFAULT_BRANDING: Branding = {
-  productName: "openma",
+  productName: "麦枢",
   logoUrl: null,
   logoDarkUrl: null,
   faviconUrl: null,

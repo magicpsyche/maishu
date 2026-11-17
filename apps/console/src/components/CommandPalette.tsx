@@ -1,6 +1,8 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useEffect, useState, type ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { CalendarClockIcon } from "lucide-react";
+import { BookOpenIcon, CalendarClockIcon } from "lucide-react";
 
 import {
   CommandDialog,
@@ -54,6 +56,8 @@ function useCommands(): NavCommand[] {
     { label: t.nav.evalBenchmarks, to: "/evals/benchmarks", icon: SessionsIcon, aliases: "evaluations evals harbor benchmarks cases datasets" },
     { label: t.nav.evalRuns, to: "/evals", icon: SessionsIcon, aliases: "evaluations evals runs" },
     { label: t.nav.environments, to: "/environments", icon: EnvIcon, aliases: "envs sandboxes" },
+    { label: "引擎凭证", to: "/settings/harness-credentials", icon: VaultIcon, aliases: "codex claude deepseek auth" },
+    { label: "沙箱后端", to: "/settings/sandbox", icon: RuntimesIcon, aliases: "opensandbox sandbox backend" },
     { label: t.nav.credentialVaults, to: "/vaults", icon: VaultIcon, aliases: "secrets credentials" },
     { label: t.nav.skills, to: "/skills", icon: SkillsIcon },
     { label: t.nav.memoryStores, to: "/memory", icon: MemoryIcon },
@@ -64,6 +68,7 @@ function useCommands(): NavCommand[] {
     { label: "Linear", to: "/integrations/linear", icon: LinearIcon },
     { label: "GitHub", to: "/integrations/github", icon: GitHubIcon },
     { label: "Slack", to: "/integrations/slack", icon: SlackIcon },
+    { label: "使用帮助", to: "/help", icon: BookOpenIcon, aliases: "help quickstart docs 快速入门 文档 许可" },
   ];
 }
 
@@ -173,18 +178,18 @@ export function CommandPalette() {
       />
       <CommandList>
         <CommandEmpty>{t.command.noMatches}</CommandEmpty>
-        <CommandGroup heading="Recent">
+        <CommandGroup heading={uiText("Recent")}>
           {recentCommands.map((command) => renderCommand(command, "recent"))}
         </CommandGroup>
-        <CommandGroup heading="Actions">
+        <CommandGroup heading={uiText("Actions")}>
           {renderCommand(commands.find((command) => command.to === "/agents")!, "view")}
           {renderCommand(commands.find((command) => command.to === "/sessions")!, "review")}
         </CommandGroup>
-        <CommandGroup heading="Navigate">
+        <CommandGroup heading={uiText("Navigate")}>
           {commands.map((command) => renderCommand(command, "navigate"))}
         </CommandGroup>
         {searchResults.length > 0 && (
-          <CommandGroup heading="Search">
+          <CommandGroup heading={uiText("Search")}>
             {searchResults.map((command) => renderCommand(command, "search"))}
           </CommandGroup>
         )}

@@ -1,10 +1,14 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import type { ComponentType } from "react";
-import { CalendarClockIcon, FlaskConicalIcon as EvalRunsIcon, LibraryIcon as BenchmarkIcon, LinkIcon, RepeatIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { BookOpenIcon, CalendarClockIcon, FlaskConicalIcon as EvalRunsIcon, LibraryIcon as BenchmarkIcon, LinkIcon, RepeatIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { useScrollFade } from "@/hooks/useScrollFade";
 
 import { openCommandPalette } from "./CommandPalette";
+import { Logo } from "./Logo";
+import { useBranding } from "../lib/branding";
 import { TenantSwitcher } from "./TenantSwitcher";
 import { UserProfile } from "./UserProfile";
 import {
@@ -65,6 +69,8 @@ function useNavGroups(): NavGroup[] {
       label: t.nav.infrastructure,
       items: [
         { to: "/environments", label: t.nav.environments, icon: EnvIcon },
+        { to: "/settings/sandbox", label: "沙箱后端", icon: RuntimesIcon },
+        { to: "/settings/harness-credentials", label: "引擎凭证", icon: VaultIcon },
         { to: "/vaults", label: t.nav.credentialVaults, icon: VaultIcon },
       ],
     },
@@ -75,9 +81,10 @@ function useNavGroups(): NavGroup[] {
         { to: "/memory", label: t.nav.memoryStores, icon: MemoryIcon },
         { to: "/model-cards", label: t.nav.modelCards, icon: ModelCardsIcon },
         { to: "/budget", label: t.nav.budget, icon: ModelCardsIcon },
-        { to: "/members", label: locale === "zh-CN" ? "成员" : "Members", icon: UsersIcon },
+        { to: "/members", label: locale === "zh-CN" ? "成员" : uiText("Members"), icon: UsersIcon },
         { to: "/api-keys", label: t.nav.apiKeys, icon: ApiKeysIcon },
         { to: "/runtimes", label: t.nav.localRuntimes, icon: RuntimesIcon },
+        { to: "/help", label: "使用帮助", icon: BookOpenIcon },
       ],
     },
     {
@@ -92,6 +99,7 @@ function useNavGroups(): NavGroup[] {
 }
 
 export function AppSidebar() {
+  const branding = useBranding();
   const navFade = useScrollFade<HTMLElement>();
   const { pathname } = useLocation();
   const { t } = useI18n();
@@ -101,7 +109,8 @@ export function AppSidebar() {
   ];
 
   return (
-    <aside className="console-sidebar" aria-label="Workspace navigation" data-sidebar="sidebar">
+    <aside className="console-sidebar" aria-label={uiText("Workspace navigation")} data-sidebar="sidebar">
+      <div className="maishu-sidebar-brand"><Logo size="lg" /><div><strong>{branding.productName}</strong><span>企业智能体平台</span></div></div>
       <div className="console-sidebar-tenant">
         <TenantSwitcher />
         <Button
@@ -116,7 +125,7 @@ export function AppSidebar() {
         </Button>
       </div>
 
-      <nav ref={navFade.ref} className={`console-sidebar-nav console-scroll-fade ${navFade.className}`} aria-label="Console">
+      <nav ref={navFade.ref} className={`console-sidebar-nav console-scroll-fade ${navFade.className}`} aria-label={uiText("Console")}>
         {navGroups.map((group, groupIndex) => (
           <section className="console-sidebar-group" key={group.label}>
             {groupIndex > 0 && (

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useMemo, useState } from "react";
@@ -29,7 +31,7 @@ export function ApiKeysList() {
   const load = async () => {
     setLoading(true);
     try {
-      setKeys((await api<{ data: ApiKey[] }>("/v1/oma/api_keys")).data);
+      setKeys((await api<{ data: ApiKey[] }>("/v1/maishu/api_keys")).data);
     } catch {}
     setLoading(false);
   };
@@ -44,7 +46,7 @@ export function ApiKeysList() {
   const create = useAsyncAction(async () => {
     setError("");
     try {
-      const result = await api<{ key: string }>("/v1/oma/api_keys", {
+      const result = await api<{ key: string }>("/v1/maishu/api_keys", {
         method: "POST",
         body: JSON.stringify({ name: name || t.apiKeys.untitledKey }),
       });
@@ -52,14 +54,14 @@ export function ApiKeysList() {
       setName("");
       load();
     } catch (e: any) {
-      setError(e?.message || "Failed to create key");
+      setError(e?.message || uiText("Failed to create key"));
     }
   });
 
   const remove = async (id: string) => {
-    if (!confirm("Revoke this API key? This cannot be undone.")) return;
+    if (!confirm(uiText("Revoke this API key? This cannot be undone."))) return;
     try {
-      await api(`/v1/oma/api_keys/${id}`, { method: "DELETE" });
+      await api(`/v1/maishu/api_keys/${id}`, { method: "DELETE" });
       load();
     } catch {}
   };
@@ -84,7 +86,7 @@ export function ApiKeysList() {
       {
         id: "name",
         accessorKey: "name",
-        header: "Name",
+        header: uiText("Name"),
         cell: ({ row }) => (
           <>
             <div className="font-medium text-fg">{row.original.name}</div>
@@ -104,7 +106,7 @@ export function ApiKeysList() {
       {
         id: "created",
         accessorKey: "created_at",
-        header: "Created",
+        header: uiText("Created"),
         cell: ({ row }) => (
           <span className="text-fg-muted text-xs">
             {new Date(row.original.created_at).toLocaleDateString()}
@@ -124,7 +126,7 @@ export function ApiKeysList() {
       getRowId={(k) => k.id}
       rowActions={(key) => [
         {
-          label: "Revoke",
+          label: uiText("Revoke"),
           icon: <XCircleIcon className="size-4" />,
           destructive: true,
           onSelect: () => void remove(key.id),
@@ -132,24 +134,22 @@ export function ApiKeysList() {
       ]}
       emptyTitle={t.apiKeys.noApiKeysYet}
       emptyKind="api_key"
-      emptySubtitle="Create an API key to access the platform from CLI or SDK."
+      emptySubtitle={uiText("Create an API key to access the platform from CLI or SDK.")}
       columns={columns}
     >
       <Modal
         open={showCreate}
         onClose={closeDialog}
-        title={createdKey ? "API Key Created" : "New API Key"}
+        title={createdKey ? uiText("API Key Created") : uiText("New API Key")}
         footer={
           createdKey ? (
-            <Button onClick={closeDialog}>Done</Button>
+            <Button onClick={closeDialog}>{uiText("Done")}</Button>
           ) : (
             <>
               <Button variant="ghost" onClick={closeDialog} disabled={create.loading}>
-                Cancel
-              </Button>
-              <Button onClick={create.run} loading={create.loading} loadingLabel="Creating…">
-                Create
-              </Button>
+                 {uiText("Cancel")} </Button>
+              <Button onClick={create.run} loading={create.loading} loadingLabel={uiText("Creating…")}>
+                 {uiText("Create")} </Button>
             </>
           )
         }
@@ -157,8 +157,7 @@ export function ApiKeysList() {
         {createdKey ? (
           <div className="space-y-3">
             <p className="text-sm text-fg-muted">
-              Copy this key now. You won't be able to see it again.
-            </p>
+               {uiText("Copy this key now. You won't be able to see it again.")} </p>
             <div className="bg-bg-surface border border-border rounded-lg p-3">
               <code className="text-sm font-mono text-fg break-all select-all">
                 {createdKey}
@@ -168,8 +167,7 @@ export function ApiKeysList() {
               onClick={() => navigator.clipboard.writeText(createdKey)}
               className="inline-flex items-center min-h-11 sm:min-h-0 text-sm text-brand hover:underline"
             >
-              Copy to clipboard
-            </Button>
+               {uiText("Copy to clipboard")} </Button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -180,14 +178,13 @@ export function ApiKeysList() {
             )}
             <div>
               <Label htmlFor="api-key-name" className="text-sm text-fg-muted block mb-1">
-                Name (optional)
-              </Label>
+                 {uiText("Name (optional)")} </Label>
               <Input
                 id="api-key-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className={inputCls}
-                placeholder="e.g. CLI key, CI/CD"
+                placeholder={uiText("e.g. CLI key, CI/CD")}
               />
             </div>
           </div>

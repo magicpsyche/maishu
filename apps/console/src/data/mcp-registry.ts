@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /**
  * MCP Server Registry — known remote MCP servers that support OAuth via MCP spec.
  * Users search this list or enter a custom URL.
@@ -32,7 +33,7 @@ export const MCP_REGISTRY: McpRegistryEntry[] = [
   //   ↑ disabled: OAuth flow itself works (302 + DCR fine) but the callback
   //     hits an Invalid-OAuth-state on KV lookup, because CF Workers KV is
   //     eventually consistent and Apollo's redirect is faster (<1s) than KV
-  //     put→get propagation on cross-POP reads. Re-enable once /v1/oma/oauth/*
+  //     put→get propagation on cross-POP reads. Re-enable once /v1/maishu/oauth/*
   //     migrates state from KV to JWT-encoded (self-contained, no roundtrip)
   //     or to a strongly-consistent store (D1 / Durable Object).
   { id: "asana", name: "Asana", url: "https://mcp.asana.com/v2/mcp", icon: favicon("asana.com") },

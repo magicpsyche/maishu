@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,14 +89,14 @@ const TEMPLATE_TAG_ICONS: Record<string, { label: string; Icon: ComponentType<{ 
   intercom: { label: "Intercom", Icon: MessageCircle },
   atlassian: { label: "Atlassian", Icon: Workflow },
   amplitude: { label: "Amplitude", Icon: ChartNoAxesCombined },
-  docx: { label: "Word (docx)", Icon: FileText },
+  docx: { label: uiText("Word (docx)"), Icon: FileText },
 };
 
 const ANTHROPIC_SKILLS = [
   { id: "xlsx", label: "Excel (xlsx)" },
   { id: "pdf", label: "PDF" },
   { id: "pptx", label: "PowerPoint (pptx)" },
-  { id: "docx", label: "Word (docx)" },
+  { id: "docx", label: uiText("Word (docx)") },
 ];
 
 // AMA spec built-in tool names — must match
@@ -103,15 +105,15 @@ const ANTHROPIC_SKILLS = [
 // names here would still validate at the API layer but produces a tool
 // the runtime never wires.
 const BUILTIN_TOOLS: Array<{ name: string; label: string; description: string }> = [
-  { name: "bash", label: "bash", description: "Run shell commands in the sandbox" },
-  { name: "edit", label: "edit", description: "In-place file edits" },
-  { name: "read", label: "read", description: "Read files from the sandbox FS" },
-  { name: "write", label: "write", description: "Create or overwrite files" },
-  { name: "glob", label: "glob", description: "Pattern-match file paths" },
-  { name: "grep", label: "grep", description: "Search file contents" },
-  { name: "web_fetch", label: "web_fetch", description: "Fetch a URL → markdown. Default for any web read." },
-  { name: "web_search", label: "web_search", description: "Web search via DuckDuckGo. Default for lookups." },
-  { name: "browser", label: "browser (opt-in)", description: "Heavy multi-step browser session (navigate / click / screenshot). Off by default — LLMs over-reach for it on simple lookups. Enable only when you need interactive navigation, JS-rendered SPAs, or auth flows." },
+  { name: "bash", label: "bash", description: uiText("Run shell commands in the sandbox") },
+  { name: "edit", label: "edit", description: uiText("In-place file edits") },
+  { name: "read", label: "read", description: uiText("Read files from the sandbox FS") },
+  { name: "write", label: "write", description: uiText("Create or overwrite files") },
+  { name: "glob", label: "glob", description: uiText("Pattern-match file paths") },
+  { name: "grep", label: "grep", description: uiText("Search file contents") },
+  { name: "web_fetch", label: "web_fetch", description: uiText("Fetch a URL → markdown. Default for any web read.") },
+  { name: "web_search", label: "web_search", description: uiText("Web search via DuckDuckGo. Default for lookups.") },
+  { name: "browser", label: uiText("browser (opt-in)"), description: uiText("Heavy multi-step browser session (navigate / click / screenshot). Off by default — LLMs over-reach for it on simple lookups. Enable only when you need interactive navigation, JS-rendered SPAs, or auth flows.") },
 ];
 
 interface AgentFormDialogProps {
@@ -182,6 +184,7 @@ export function AgentFormDialog({
   const [saving, setSaving] = useState(false);
   // Keep the wire value separately: omitted, null and explicit "default" must not collapse.
   const [harness, setHarness] = useState<unknown>();
+  const [acpOverride, setAcpOverride] = useState<Record<string, unknown>>();
   const [harnessCatalog, setHarnessCatalog] = useState<HarnessCatalog | null>(null);
   const [harnessLoading, setHarnessLoading] = useState(true);
   const [harnessError, setHarnessError] = useState("");
@@ -202,10 +205,10 @@ export function AgentFormDialog({
     setHarnessLoading(true);
     setHarnessCatalog(null);
     setHarnessError("");
-    void api<unknown>("/v1/oma/harnesses", { signal: controller.signal }).then((response) => {
+    void api<unknown>("/v1/maishu/harnesses", { signal: controller.signal }).then((response) => {
       if (!controller.signal.aborted) setHarnessCatalog(harnessCatalogSchema.parse(response));
     }).catch(() => {
-      if (!controller.signal.aborted) setHarnessError("Unable to load harness catalog. Retry to verify the deployment's registered implementations.");
+      if (!controller.signal.aborted) setHarnessError(uiText("Unable to load harness catalog. Retry to verify the deployment's registered implementations."));
     }).finally(() => {
       if (!controller.signal.aborted) setHarnessLoading(false);
     });
@@ -219,6 +222,7 @@ export function AgentFormDialog({
   // after a concurrent refresh). Create mode starts at the template step.
   useEffect(() => {
     if (!open) return;
+    setAcpOverride(undefined);
     if (editingAgent) {
       setForm(agentToForm(editingAgent));
       setHarness(openMaFields(editingAgent as unknown as Record<string, unknown>).harness);
@@ -252,6 +256,7 @@ export function AgentFormDialog({
 
   const closeCreate = () => {
     setHarness(undefined);
+    setAcpOverride(undefined);
     setMultiagent(undefined);
     setCreateStep("template");
     setTemplateSearch("");
@@ -319,7 +324,7 @@ export function AgentFormDialog({
   );
 
   const persistAgent = async (payload: Record<string, unknown>): Promise<Agent> => {
-    if (harnessLoading || !harnessCatalog) throw new Error(harnessError || "Harness catalog is not ready. Retry before saving.");
+    if (harnessLoading || !harnessCatalog) throw new Error(harnessError || uiText("Harness catalog is not ready. Retry before saving."));
     const fields = effectiveHarnessFields(payload);
     const harnessProblem = harnessValidationError(harnessCatalog, fields.harness, fields);
     if (harnessProblem) throw new Error(harnessProblem);
@@ -362,7 +367,7 @@ export function AgentFormDialog({
       }
     } catch (e: any) {
       setCreateError(
-        e?.message || (isEdit ? "Failed to update agent" : "Failed to create agent"),
+        e?.message || (isEdit ? uiText("Failed to update agent") : uiText("Failed to create agent")),
       );
     } finally {
       setSaving(false);
@@ -460,6 +465,7 @@ export function AgentFormDialog({
     const fields = openMaFields(payload);
     if (harness === undefined) delete fields.harness;
     else fields.harness = harness;
+    if (acpOverride !== undefined) fields.acp = acpOverride;
     if (Object.keys(fields).length) payload._oma = fields;
     else delete payload._oma;
     if (multiagent === undefined) delete payload.multiagent;
@@ -476,7 +482,7 @@ export function AgentFormDialog({
         const config = formToConfig(true);
         setCodeValue(mode === "yaml" ? yaml.dump(config, { lineWidth: -1 }) : JSON.stringify(config, null, 2));
       } catch (error) {
-        setCreateError(error instanceof Error ? error.message : "Invalid config");
+        setCreateError(error instanceof Error ? error.message : uiText("Invalid config"));
         return;
       }
     } else if (mode === "form") {
@@ -505,13 +511,14 @@ export function AgentFormDialog({
           else delete config._oma;
         }
         setPreservedConfig(config);
+        setAcpOverride(undefined);
         setForm(configToForm(config));
         // Preserve explicit null/omission in an update patch, not only the materialized value.
         setHarness(openMaFields(parsed).harness);
         // Preserve the user's update patch rather than materializing omitted/null fields.
         setMultiagent(parsed.multiagent as MultiagentDraft | null | undefined);
       } catch (error) {
-        setCreateError(error instanceof Error ? error.message : "Invalid config");
+        setCreateError(error instanceof Error ? error.message : uiText("Invalid config"));
         return;
       }
     } else {
@@ -524,7 +531,7 @@ export function AgentFormDialog({
             : JSON.stringify(parsed, null, 2),
         );
       } catch (error) {
-        setCreateError(error instanceof Error ? error.message : "Invalid config");
+        setCreateError(error instanceof Error ? error.message : uiText("Invalid config"));
         return;
       }
     }
@@ -626,14 +633,13 @@ export function AgentFormDialog({
               <div className="px-6 pt-6 pb-4 border-b border-border">
                 <h2 className="font-display text-lg font-semibold text-fg">{t.agents.newAgentTitle}</h2>
                 <p className="text-sm text-fg-muted mt-1">
-                  Start from a template or build from scratch.
-                </p>
+                   {uiText("Start from a template or build from scratch.")} </p>
                 <Input
                   value={templateSearch}
                   onChange={(e) => setTemplateSearch(e.target.value)}
                   className={`${inputCls} mt-3`}
-                  placeholder="Search templates..."
-                  aria-label="Search templates"
+                  placeholder={uiText("Search templates...")}
+                  aria-label={uiText("Search templates")}
                 />
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -672,8 +678,7 @@ export function AgentFormDialog({
                 </div>
                 {filteredTemplates.length === 0 && (
                   <div className="text-center py-8 text-fg-subtle text-sm">
-                    No templates match your search.
-                  </div>
+                     {uiText("No templates match your search.")} </div>
                 )}
               </div>
               <div className="px-6 py-4 border-t border-border flex justify-end">
@@ -708,8 +713,7 @@ export function AgentFormDialog({
                       }}
                       className="inline-flex items-center min-h-11 sm:min-h-0 text-sm text-fg-subtle hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
                     >
-                      &larr; Templates
-                    </Button>
+                       {uiText("&larr; Templates")} </Button>
                   )}
                   <div className="flex items-center gap-0.5 bg-bg-surface rounded-md p-0.5">
                     {(["form", "yaml", "json"] as const).map((m) => (
@@ -722,7 +726,7 @@ export function AgentFormDialog({
                             : "text-fg-muted hover:text-fg"
                         }`}
                       >
-                        {m === "form" ? "Form" : m.toUpperCase()}
+                        {m === "form" ? uiText("Form") : m.toUpperCase()}
                       </Button>
                     ))}
                   </div>
@@ -733,7 +737,7 @@ export function AgentFormDialog({
                 {createMode === "form" && (
                   <div
                     role="tablist"
-                    aria-label="Agent configuration sections"
+                    aria-label={uiText("Agent configuration sections")}
                     className="flex gap-1 mt-3"
                   >
                     <Button variant="ghost"
@@ -743,8 +747,7 @@ export function AgentFormDialog({
                       onClick={() => setTab("basic")}
                       className={tabCls("basic")}
                     >
-                      Basic
-                    </Button>
+                       {uiText("Basic")} </Button>
                     <Button variant="ghost"
                       role="tab"
                       aria-selected={tab === "tools"}
@@ -752,7 +755,7 @@ export function AgentFormDialog({
                       onClick={() => setTab("tools")}
                       className={tabCls("tools")}
                     >
-                      Tools{" "}
+                       {uiText("Tools")}{" "}
                       {Object.keys(form.toolOverrides).length > 0 && (
                         <span className="ml-1 text-xs opacity-60">
                           ({Object.keys(form.toolOverrides).length})
@@ -766,7 +769,7 @@ export function AgentFormDialog({
                       onClick={() => setTab("skills")}
                       className={tabCls("skills")}
                     >
-                      Skills{" "}
+                       {uiText("Skills")}{" "}
                       {form.skills.length > 0 && (
                         <span className="ml-1 text-xs opacity-60">({form.skills.length})</span>
                       )}
@@ -778,7 +781,7 @@ export function AgentFormDialog({
                       onClick={() => setTab("mcp")}
                       className={tabCls("mcp")}
                     >
-                      MCP Servers{" "}
+                       {uiText("MCP Servers")}{" "}
                       {form.mcpServers.length > 0 && (
                         <span className="ml-1 text-xs opacity-60">
                           ({form.mcpServers.length})
@@ -792,7 +795,7 @@ export function AgentFormDialog({
                       onClick={() => setTab("agents")}
                       className={tabCls("agents")}
                     >
-                      Multi-Agent{" "}
+                       {uiText("Multi-Agent")}{" "}
                       {memberCount > 0 && (
                         <span className="ml-1 text-xs opacity-60">
                           ({memberCount})
@@ -829,7 +832,13 @@ export function AgentFormDialog({
                     inputCls={inputCls}
                     modelCards={modelCards}
                     selectedCardId={selectedCardId}
-                    harnessPicker={<HarnessPicker value={effectiveHarness} fields={harnessFields} configError={formConfigError} onChange={setHarness}
+                    nativeAuth={acpSelected && (harnessFields.acp as { agent?: { env?: Record<string, string> } } | undefined)?.agent?.env?.MAISHU_AUTH_MODE === "native"}
+                    harnessPicker={<HarnessPicker value={effectiveHarness} fields={harnessFields} configError={formConfigError} onChange={setHarness} onAcpChange={(config) => {
+                      setAcpOverride(config);
+                      const mode = config.agent.env?.MAISHU_AUTH_MODE;
+                      if (mode !== "managed") setForm((current) => ({ ...current, model: "native", modelCardId: "", auxiliaryModel: "" }));
+                      else setForm((current) => current.model === "native" ? { ...current, model: "" } : current);
+                    }}
                       catalog={harnessCatalog} loading={harnessLoading} error={harnessError}
                       retry={() => setHarnessRefresh((value) => value + 1)} />}
                   />
@@ -942,6 +951,7 @@ interface BasicTabProps {
   modelCards: ModelCard[];
   selectedCardId: string;
   harnessPicker: React.ReactNode;
+  nativeAuth?: boolean;
 }
 
 function BasicTab({
@@ -952,6 +962,7 @@ function BasicTab({
   modelCards,
   selectedCardId,
   harnessPicker,
+  nativeAuth = false,
 }: BasicTabProps) {
   return (
     <div className="space-y-3">
@@ -962,36 +973,34 @@ function BasicTab({
       )}
       <div>
         <Label htmlFor="agent-name" className="text-sm text-fg-muted block mb-1">
-          Name *
-        </Label>
+           {uiText("Name *")} </Label>
         <Input
           id="agent-name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           className={inputCls}
-          placeholder="Coding Assistant"
+          placeholder={uiText("Coding Assistant")}
         />
       </div>
       {harnessPicker}
+      {nativeAuth ? <p className="rounded-lg border border-border bg-bg-surface p-3 text-sm text-fg-muted">原生认证模式直接使用执行引擎账号及其模型配置，无需添加平台模型配置。</p> : <>
       {/* Model picker — see comments at the original call site. */}
       {modelCards.length === 0 ? (
           <p className="text-xs text-fg-subtle bg-bg-surface px-3 py-2 rounded-lg">
-            No model cards configured. Cloud agents need at least one card to provide LLM
-            credentials.{" "}
+             {uiText("No model cards configured. Cloud agents need at least one card to provide LLM credentials.")}{" "}
             <a href="/model-cards" className="underline hover:text-fg-muted">
-              Add one
-            </a>
+               {uiText("Add one")} </a>
             .
           </p>
         ) : (
           <div>
-            <Label className="text-sm text-fg-muted block mb-1">Model</Label>
+            <Label className="text-sm text-fg-muted block mb-1">{uiText("Model")}</Label>
             <Combobox<ModelCard>
               value={selectedCardId}
               onValueChange={(v, item) => {
                 setForm({ ...form, modelCardId: v, model: item?.model_id ?? v });
               }}
-              endpoint="/v1/oma/model_cards"
+              endpoint="/v1/maishu/model_cards"
               searchParam="q"
               pagination="oma"
               getValue={(mc) => mc.id}
@@ -1012,7 +1021,7 @@ function BasicTab({
               placeholder={
                 !selectedCardId && form.model
                   ? `⚠ ${form.model} — no matching card, pick one`
-                  : "Select a model card..."
+                  : uiText("Select a model card...")
               }
             />
           </div>
@@ -1020,8 +1029,7 @@ function BasicTab({
       <div className="grid grid-cols-[minmax(0,1fr)_9rem] gap-3">
         <div>
           <Label className="text-sm text-fg-muted block mb-1">
-            Auxiliary model
-          </Label>
+             {uiText("Auxiliary model")} </Label>
           <Combobox<ModelCard>
             value={
               modelCards.find((card) => card.model_id === form.auxiliaryModel)?.id ?? ""
@@ -1032,17 +1040,17 @@ function BasicTab({
                 auxiliaryModel: item?.model_id ?? (value ? form.auxiliaryModel : ""),
               })
             }
-            endpoint="/v1/oma/model_cards"
+            endpoint="/v1/maishu/model_cards"
             searchParam="q"
             pagination="oma"
             getValue={(card) => card.id}
             getLabel={(card) => card.model_id}
             getTextLabel={(card) => card.model_id}
-            placeholder="None"
+            placeholder={uiText("None")}
           />
         </div>
         <div>
-          <Label className="text-sm text-fg-muted block mb-1">Speed</Label>
+          <Label className="text-sm text-fg-muted block mb-1">{uiText("Speed")}</Label>
           <Select
             value={form.auxiliaryModelSpeed || "default"}
             disabled={!form.auxiliaryModel}
@@ -1061,13 +1069,13 @@ function BasicTab({
           </Select>
         </div>
       </div>
+      </>}
       <div>
         <Label
           htmlFor="agent-appendable-prompts"
           className="text-sm text-fg-muted block mb-1"
         >
-          Appendable prompt IDs
-        </Label>
+           {uiText("Appendable prompt IDs")} </Label>
         <Textarea
           id="agent-appendable-prompts"
           value={form.appendablePrompts.join("\n")}
@@ -1084,24 +1092,22 @@ function BasicTab({
           className={`${inputCls} resize-none font-mono text-xs leading-relaxed`}
           placeholder="prompt_review\nprompt_security"
         />
-        <p className="mt-1 text-xs text-fg-subtle">One prompt ID per line.</p>
+        <p className="mt-1 text-xs text-fg-subtle">{uiText("One prompt ID per line.")}</p>
       </div>
       <div>
         <Label htmlFor="agent-description" className="text-sm text-fg-muted block mb-1">
-          Description
-        </Label>
+           {uiText("Description")} </Label>
         <Input
           id="agent-description"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           className={inputCls}
-          placeholder="A coding assistant that writes clean code..."
+          placeholder={uiText("A coding assistant that writes clean code...")}
         />
       </div>
       <div>
         <Label htmlFor="agent-metadata" className="text-sm text-fg-muted block mb-1">
-          Metadata (JSON)
-        </Label>
+           {uiText("Metadata (JSON)")} </Label>
         <Textarea
           id="agent-metadata"
           value={form.metadataJson}
@@ -1112,20 +1118,18 @@ function BasicTab({
           placeholder='{"team":"platform"}'
         />
         <p className="mt-1 text-xs text-fg-subtle">
-          Up to 16 string pairs; keys up to 64 characters and values up to 512.
-        </p>
+           {uiText("Up to 16 string pairs; keys up to 64 characters and values up to 512.")} </p>
       </div>
       <div>
         <Label htmlFor="agent-system" className="text-sm text-fg-muted block mb-1">
-          System Prompt
-        </Label>
+           {uiText("System Prompt")} </Label>
         <Textarea
           id="agent-system"
           value={form.system}
           onChange={(e) => setForm({ ...form, system: e.target.value })}
           rows={5}
           className={`${inputCls} resize-none font-mono text-xs leading-relaxed`}
-          placeholder="You are a helpful assistant..."
+          placeholder={uiText("You are a helpful assistant...")}
         />
       </div>
     </div>
@@ -1155,20 +1159,17 @@ function ToolsTab({
       )}
 
       <p className="text-xs text-fg-subtle leading-relaxed">
-        Built-in toolset (AMA <span className="font-mono">agent_toolset_20260401</span>).
-        Multi-agent delegation lives in its own tab and is a separate AMA field{" "}
-        <span className="font-mono">multiagent</span> — not part of this toolset. External MCP
-        tools live in the MCP Servers tab.
-      </p>
+         {uiText("Built-in toolset (AMA")} <span className="font-mono">agent_toolset_20260401</span>{uiText("). Multi-agent delegation lives in its own tab and is a separate AMA field")}{" "}
+        <span className="font-mono">multiagent</span>  {uiText("— not part of this toolset. External MCP tools live in the MCP Servers tab.")} </p>
 
       <div className="rounded-md border border-border bg-bg-surface px-3 py-3">
-        <div className="text-sm font-medium text-fg mb-1">{acp ? "Global permission mode" : "Default policy"}</div>
+        <div className="text-sm font-medium text-fg mb-1">{acp ? uiText("Global permission mode") : uiText("Default policy")}</div>
         <p className="text-xs text-fg-subtle mb-3">
           {acp ? (
             <>ACP harness 只支持一个全局权限档位，应用于所有内置工具和 MCP 工具；不支持逐工具权限。</>
           ) : (
             <>
-              Applies to every tool below that's set to{" "}
+               {uiText("Applies to every tool below that's set to")}{" "}
               <span className="font-mono">default</span>.
             </>
           )}
@@ -1181,12 +1182,11 @@ function ToolsTab({
                 setForm({ ...form, toolDefaultEnabled: checked === true })
               }
             />
-            Enable tools
-          </Label>
+             {uiText("Enable tools")} </Label>
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-fg-muted">Permission:</span>
+            <span className="text-fg-muted">{uiText("Permission:")}</span>
             <Select
-              aria-label={acp ? "Global permission mode" : "Default permission"}
+              aria-label={acp ? uiText("Global permission mode") : uiText("Default permission")}
               value={form.toolDefaultPermission}
               disabled={!acp && !form.toolDefaultEnabled}
               onValueChange={(value) =>
@@ -1215,21 +1215,17 @@ function ToolsTab({
 
       <div>
         <Label className="text-sm font-medium text-fg block mb-2">
-          {acp ? "Per-tool availability" : "Per-tool overrides"}
+          {acp ? uiText("Per-tool availability") : uiText("Per-tool overrides")}
         </Label>
         <p className="text-xs text-fg-subtle mb-3">
           {acp ? (
             <>
-              Turn individual tools on or off. Permission always follows the global mode above.
-            </>
+               {uiText("Turn individual tools on or off. Permission always follows the global mode above.")} </>
           ) : (
             <>
-              Each row's effective state is shown in the dropdown. Pick{" "}
-              <span className="font-mono">default</span> to inherit the policy above; pick a
-              specific value to override. <span className="font-mono">always_ask</span> emits a{" "}
-              <span className="font-mono">user.tool_confirmation</span> event the client must
-              approve before each call.
-            </>
+               {uiText("Each row's effective state is shown in the dropdown. Pick")}{" "}
+              <span className="font-mono">default</span>  {uiText("to inherit the policy above; pick a specific value to override.")} <span className="font-mono">always_ask</span>  {uiText("emits a")}{" "}
+              <span className="font-mono">user.tool_confirmation</span>  {uiText("event the client must approve before each call.")} </>
           )}
         </p>
         <div className="border border-border rounded-md divide-y divide-border">
@@ -1257,8 +1253,7 @@ function ToolsTab({
                   <div className="text-xs text-fg-subtle truncate">{bt.description}</div>
                   {conflicting && (
                     <div role="alert" className="text-xs text-danger">
-                      Per-tool permission ({stored}) is not supported for ACP harness agents. Choose default, enabled or disabled.
-                    </div>
+                       {uiText("Per-tool permission (")}{stored}{uiText(") is not supported for ACP harness agents. Choose default, enabled or disabled.")} </div>
                   )}
                 </div>
                 <Select
@@ -1274,10 +1269,10 @@ function ToolsTab({
                   }}
                   className="border border-border rounded-md px-2 py-1 min-h-11 sm:min-h-0 text-xs bg-bg text-fg outline-none focus:border-brand shrink-0"
                 >
-                  <SelectOption value="default">default ({effectiveLabel})</SelectOption>
+                  <SelectOption value="default">{uiText("default (")}{effectiveLabel})</SelectOption>
                   {acp ? (
                     <>
-                      {conflicting && <SelectOption value={stored} disabled>{stored} (not supported)</SelectOption>}
+                      {conflicting && <SelectOption value={stored} disabled>{stored}  {uiText("(not supported)")}</SelectOption>}
                       <SelectOption value="enabled">enabled</SelectOption>
                     </>
                   ) : (
@@ -1318,7 +1313,7 @@ function SkillsTab({
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-sm font-medium text-fg block mb-2">Anthropic Skills</Label>
+        <Label className="text-sm font-medium text-fg block mb-2">{uiText("Anthropic Skills")}</Label>
         <div className="grid grid-cols-2 gap-2">
           {ANTHROPIC_SKILLS.map((s) => {
             const active = form.skills.some(
@@ -1351,7 +1346,7 @@ function SkillsTab({
       </div>
 
       <div>
-        <Label className="text-sm font-medium text-fg block mb-2">Custom Skills</Label>
+        <Label className="text-sm font-medium text-fg block mb-2">{uiText("Custom Skills")}</Label>
         {filtered.length > 0 ? (
           <div className="space-y-2">
             {filtered.map((cs) => {
@@ -1417,17 +1412,16 @@ function SkillsTab({
           </div>
         ) : (
           <p className="text-xs text-fg-subtle">
-            No custom skills registered.{" "}
+             {uiText("No custom skills registered.")}{" "}
             <a href="/skills" className="underline hover:text-fg-muted">
-              Create one
-            </a>
+               {uiText("Create one")} </a>
             .
           </p>
         )}
       </div>
       {form.skills.length > 0 && (
         <div className="border border-border rounded-lg p-3 space-y-2">
-          <Label className="text-sm font-medium text-fg block">Pinned skill versions</Label>
+          <Label className="text-sm font-medium text-fg block">{uiText("Pinned skill versions")}</Label>
           {form.skills.map((skill, index) => (
             <div key={`${skill.type}:${skill.skill_id}`} className="flex items-center gap-2">
               <span className="flex-1 min-w-0 truncate font-mono text-xs text-fg-muted">
@@ -1475,20 +1469,18 @@ function McpTab({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <Label className="text-sm font-medium text-fg">MCP Servers</Label>
+        <Label className="text-sm font-medium text-fg">{uiText("MCP Servers")}</Label>
         <div className="flex items-center gap-3">
           <Button variant="ghost"
             onClick={onPickFromRegistry}
             className="inline-flex items-center min-h-11 sm:min-h-0 text-xs text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            + Pick known
-          </Button>
+             {uiText("+ Pick known")} </Button>
           <Button variant="ghost"
             onClick={addMcp}
             className="inline-flex items-center min-h-11 sm:min-h-0 text-xs text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            + Custom server
-          </Button>
+             {uiText("+ Custom server")} </Button>
         </div>
       </div>
       {form.mcpServers.map((mcp, i) => (
@@ -1496,8 +1488,7 @@ function McpTab({
           <div className="flex gap-2">
             <div className="flex-1">
               <Label htmlFor={`mcp-name-${i}`} className="text-xs text-fg-muted block mb-0.5">
-                Name
-              </Label>
+                 {uiText("Name")} </Label>
               <Input
                 id={`mcp-name-${i}`}
                 value={mcp.name}
@@ -1508,8 +1499,7 @@ function McpTab({
             </div>
             <div className="w-24">
               <Label htmlFor={`mcp-type-${i}`} className="text-xs text-fg-muted block mb-0.5">
-                Type
-              </Label>
+                 {uiText("Type")} </Label>
               <Select
                 id={`mcp-type-${i}`}
                 value={mcp.type}
@@ -1522,7 +1512,7 @@ function McpTab({
             </div>
             <Button variant="ghost"
               onClick={() => removeMcp(i)}
-              aria-label={`Remove MCP server ${mcp.name || i + 1}`}
+              aria-label={uiText(`Remove MCP server ${mcp.name || i + 1}`)}
               className="self-end inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 py-2 text-fg-subtle hover:text-danger transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
             >
               ×
@@ -1545,8 +1535,7 @@ function McpTab({
             <div className="space-y-2">
               <div>
                 <Label htmlFor={`mcp-command-${i}`} className="text-xs text-fg-muted block mb-0.5">
-                  Command (absolute sandbox path)
-                </Label>
+                   {uiText("Command (absolute sandbox path)")} </Label>
                 <Input
                   id={`mcp-command-${i}`}
                   value={mcp.command}
@@ -1558,8 +1547,7 @@ function McpTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor={`mcp-args-${i}`} className="text-xs text-fg-muted block mb-0.5">
-                    Args (JSON array)
-                  </Label>
+                     {uiText("Args (JSON array)")} </Label>
                   <Input
                     id={`mcp-args-${i}`}
                     value={mcp.argsJson}
@@ -1570,8 +1558,7 @@ function McpTab({
                 </div>
                 <div>
                   <Label htmlFor={`mcp-env-${i}`} className="text-xs text-fg-muted block mb-0.5">
-                    Non-secret env (JSON object)
-                  </Label>
+                     {uiText("Non-secret env (JSON object)")} </Label>
                   <Input
                     id={`mcp-env-${i}`}
                     value={mcp.envJson}
@@ -1587,10 +1574,9 @@ function McpTab({
       ))}
       {form.mcpServers.length === 0 && (
         <div className="text-center py-8 text-fg-subtle">
-          <p className="text-sm">No MCP servers configured.</p>
+          <p className="text-sm">{uiText("No MCP servers configured.")}</p>
           <p className="text-xs mt-1">
-            MCP servers provide external tools via the Model Context Protocol.
-          </p>
+             {uiText("MCP servers provide external tools via the Model Context Protocol.")} </p>
         </div>
       )}
     </div>
@@ -1635,7 +1621,7 @@ function AgentsTab({ value, onChange, allAgents, error }: {
             return <div key={i} className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg">
               {row.type === "self" ? <span className="flex-1 text-sm">self（当前 Agent）</span> : <>
                 <div className="flex-1 min-w-0">
-                  <Label htmlFor={`subagent-id-${i}`} className="text-xs text-fg-subtle">Agent ID {i + 1}</Label>
+                  <Label htmlFor={`subagent-id-${i}`} className="text-xs text-fg-subtle">{uiText("Agent ID")} {i + 1}</Label>
                   <Input id={`subagent-id-${i}`} value={row.id ?? ""} onChange={(e) => setEntries(entries.map((v, j) => j === i ? { ...row, id: e.target.value } : v))} />
                   <span className="text-xs text-fg-subtle">{allAgents.find((a) => a.id === row.id)?.name}</span>
                 </div>

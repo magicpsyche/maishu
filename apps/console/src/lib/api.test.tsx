@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { act, renderHook } from "@testing-library/react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,6 +19,7 @@ describe("useApi Managed Agents negotiation", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem("maishu-locale", "en");
   });
 
   afterEach(() => {

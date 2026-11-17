@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,7 +118,7 @@ export function EnvironmentDetail() {
   }, [fetchedEnv]);
   useEffect(() => {
     if (fetchError) {
-      setLoadError(fetchError instanceof Error ? fetchError.message : "load failed");
+      setLoadError(fetchError instanceof Error ? fetchError.message : uiText("load failed"));
     }
   }, [fetchError]);
 
@@ -178,7 +180,7 @@ export function EnvironmentDetail() {
 
       const updated = await managedApi.environments.update(id, body);
       applyEnv(updated);
-      toast.success("Environment saved");
+      toast.success(uiText("Environment saved"));
     } catch (err) {
       // useApi already toasts the underlying error; no duplicate here.
       void err;
@@ -209,18 +211,18 @@ export function EnvironmentDetail() {
       <div className="console-settings-layout" data-testid="settings-layout">
         {/* Header: name input + Cloud badge + status */}
         <section className="console-settings-intro">
-          <h1>{env.name || "Environment"}</h1>
+          <h1>{env.name || uiText("Environment")}</h1>
           <div className="flex items-center gap-3 flex-wrap">
-            <Label className="sr-only" htmlFor="env-name">Environment name</Label>
+            <Label className="sr-only" htmlFor="env-name">{uiText("Environment name")}</Label>
             <Input
               id="env-name"
               value={name}
               onChange={(e) => setName(e.target.value.slice(0, 50))}
               className="border border-border rounded-md px-3 py-2 min-h-11 sm:min-h-0 text-sm bg-bg text-fg outline-none focus:border-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] w-full sm:w-72"
-              placeholder="environment name"
+              placeholder={uiText("environment name")}
             />
             <span className="text-xs px-2 py-0.5 rounded border border-border bg-bg-surface text-fg-muted font-medium uppercase tracking-wider">
-              {env.config.type === "cloud" ? "Cloud" : "Self hosted"}
+              {env.config.type === "cloud" ? uiText("Cloud") : uiText("Self hosted")}
             </span>
             <span className="text-fg-subtle" aria-hidden="true">
               <GlobeIcon />
@@ -234,15 +236,14 @@ export function EnvironmentDetail() {
 
           <div>
             <Label className="block text-sm font-medium text-fg mb-1.5" htmlFor="env-description">
-              Description
-            </Label>
+               {uiText("Description")} </Label>
             <Textarea
               id="env-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-bg text-fg outline-none focus:border-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] placeholder:text-fg-subtle resize-y"
-              placeholder="What is this environment for?"
+              placeholder={uiText("What is this environment for?")}
             />
           </div>
         </section>
@@ -252,12 +253,11 @@ export function EnvironmentDetail() {
         {env.config.type === "cloud" &&
           (sandboxImages.length > 0 || sandboxImage !== DEFAULT_SANDBOX_IMAGE) && (
           <SectionCard
-            title="Sandbox image"
-            subtitle="Operator-provided image sandboxes start from. Pick one with your tools pre-installed to skip setup at session start."
+            title={uiText("Sandbox image")}
+            subtitle={uiText("Operator-provided image sandboxes start from. Pick one with your tools pre-installed to skip setup at session start.")}
           >
             <Label className="block text-sm font-medium text-fg mb-1.5" htmlFor="env-sandbox-image">
-              Image
-            </Label>
+               {uiText("Image")} </Label>
             <div className="w-full sm:w-72">
               <SandboxImageSelect
                 id="env-sandbox-image"
@@ -273,8 +273,8 @@ export function EnvironmentDetail() {
             peer resource managed on the Runtimes page. */}
         {env.config.type === "self_hosted" && (
           <SectionCard
-            title="Runtime"
-            subtitle="Run sessions on a paired machine and inject an env overlay into its runner."
+            title={uiText("Runtime")}
+            subtitle={uiText("Run sessions on a paired machine and inject an env overlay into its runner.")}
           >
             <RuntimeAttachmentFields
               idPrefix="env-detail"
@@ -290,11 +290,11 @@ export function EnvironmentDetail() {
 
         {/* Networking */}
         <SectionCard
-          title="Networking"
-          subtitle="Configure network access policies for sandboxes built from this environment."
+          title={uiText("Networking")}
+          subtitle={uiText("Configure network access policies for sandboxes built from this environment.")}
         >
           <div className="space-y-4">
-            <Field label="Type" className="w-48 max-w-full">
+            <Field label={uiText("Type")} className="w-48 max-w-full">
                 <Select
                   value={networking.type}
                   onValueChange={(v) =>
@@ -304,20 +304,20 @@ export function EnvironmentDetail() {
                     })
                   }
                 >
-                  <SelectOption value="unrestricted">Unrestricted</SelectOption>
-                  <SelectOption value="limited">Limited</SelectOption>
+                  <SelectOption value="unrestricted">{uiText("Unrestricted")}</SelectOption>
+                  <SelectOption value="limited">{uiText("Limited")}</SelectOption>
                 </Select>
             </Field>
 
             <Toggle
-              label="Allow MCP server network access"
+              label={uiText("Allow MCP server network access")}
               checked={!!networking.allow_mcp_servers}
               onChange={(v) =>
                 setNetworking({ ...networking, allow_mcp_servers: v })
               }
             />
             <Toggle
-              label="Allow package manager network access"
+              label={uiText("Allow package manager network access")}
               checked={!!networking.allow_package_managers}
               onChange={(v) =>
                 setNetworking({ ...networking, allow_package_managers: v })
@@ -326,7 +326,7 @@ export function EnvironmentDetail() {
 
             {networking.type === "limited" && (
               <Field
-                label="Allowed Hosts"
+                label={uiText("Allowed Hosts")}
                 hint="Comma-separated hostnames (e.g. www.example1.com, api.example2.com)"
               >
                 <Textarea
@@ -343,11 +343,11 @@ export function EnvironmentDetail() {
 
         {/* Packages */}
         <SectionCard
-          title="Packages"
-          subtitle="Specify packages and their versions to install when sandboxes are built."
+          title={uiText("Packages")}
+          subtitle={uiText("Specify packages and their versions to install when sandboxes are built.")}
           action={
             <IconButton
-              label="Add package row"
+              label={uiText("Add package row")}
               onClick={() =>
                 setPackageRows((rows) => [...rows, { manager: "pip", packages: "" }])
               }
@@ -358,8 +358,7 @@ export function EnvironmentDetail() {
         >
           {packageRows.length === 0 ? (
             <p className="text-sm text-fg-subtle italic">
-              No packages configured.
-            </p>
+               {uiText("No packages configured.")} </p>
           ) : (
             <div className="space-y-2">
               {packageRows.map((row, i) => (
@@ -393,7 +392,7 @@ export function EnvironmentDetail() {
                     className="flex-1 min-w-0 border border-border rounded-md px-3 py-2 text-sm bg-bg text-fg outline-none focus:border-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] placeholder:text-fg-subtle font-mono"
                   />
                   <IconButton
-                    label="Remove package row"
+                    label={uiText("Remove package row")}
                     onClick={() =>
                       setPackageRows((rows) => rows.filter((_, j) => j !== i))
                     }
@@ -406,19 +405,17 @@ export function EnvironmentDetail() {
           )}
           {env.config.type === "cloud" && env.config.packages.gem.length > 0 && (
             <p className="text-sm text-fg-subtle mt-3 pt-3 border-t border-border">
-              {env.config.packages.gem.length} legacy gem package(s) preserved (not editable
-              — Ruby is not in sandbox-base yet).
-            </p>
+              {env.config.packages.gem.length}  {uiText("legacy gem package(s) preserved (not editable — Ruby is not in sandbox-base yet).")} </p>
           )}
         </SectionCard>
 
         {/* Metadata */}
         <SectionCard
-          title="Metadata"
-          subtitle="Add custom key-value pairs to tag this environment."
+          title={uiText("Metadata")}
+          subtitle={uiText("Add custom key-value pairs to tag this environment.")}
           action={
             <IconButton
-              label="Add metadata row"
+              label={uiText("Add metadata row")}
               onClick={() =>
                 setMetadataRows((rows) => [...rows, { key: "", value: "" }])
               }
@@ -428,7 +425,7 @@ export function EnvironmentDetail() {
           }
         >
           {metadataRows.length === 0 ? (
-            <p className="text-sm text-fg-subtle italic">No metadata.</p>
+            <p className="text-sm text-fg-subtle italic">{uiText("No metadata.")}</p>
           ) : (
             <div className="space-y-2">
               {metadataRows.map((row, i) => (
@@ -454,11 +451,11 @@ export function EnvironmentDetail() {
                         ),
                       )
                     }
-                    placeholder="Value"
+                    placeholder={uiText("Value")}
                     className="flex-1 min-w-0 border border-border rounded-md px-3 py-2 text-sm bg-bg text-fg outline-none focus:border-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] placeholder:text-fg-subtle"
                   />
                   <IconButton
-                    label="Remove metadata row"
+                    label={uiText("Remove metadata row")}
                     onClick={() =>
                       setMetadataRows((rows) => rows.filter((_, j) => j !== i))
                     }
@@ -474,11 +471,9 @@ export function EnvironmentDetail() {
         {/* Footer actions */}
         <div className="console-settings-actions" data-testid="settings-actions">
           <Button onClick={save} loading={saving} disabled={!name.trim() || envOverlay.errors.length > 0}>
-            Save changes
-          </Button>
+             {uiText("Save changes")} </Button>
           <Button variant="ghost" onClick={cancel} disabled={saving}>
-            Cancel
-          </Button>
+             {uiText("Cancel")} </Button>
           <span className="console-settings-resource-id text-xs text-fg-subtle font-mono">
             {env.id}
           </span>

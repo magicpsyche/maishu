@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
@@ -351,7 +352,7 @@ describe("trajectory loading", () => {
   it("fetches the envelope from the OMA route", async () => {
     let hits = 0;
     server.use(
-      http.get("/v1/oma/sessions/:id/trajectory", ({ params }) => {
+      http.get("/v1/maishu/sessions/:id/trajectory", ({ params }) => {
         hits += 1;
         return HttpResponse.json(envelope([], { session_id: String(params.id) }));
       }),
@@ -368,7 +369,7 @@ describe("trajectory loading", () => {
   it("treats a missing optional envelope as unavailable without retrying", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(
-      http.get("/v1/oma/sessions/:id/trajectory", () =>
+      http.get("/v1/maishu/sessions/:id/trajectory", () =>
         HttpResponse.json({ type: "error", error: { type: "not_found_error", message: "nope" } }, { status: 404 }),
       ),
     );
@@ -381,7 +382,7 @@ describe("trajectory loading", () => {
   it("reports server failures as the error sentinel", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(
-      http.get("/v1/oma/sessions/:id/trajectory", () =>
+      http.get("/v1/maishu/sessions/:id/trajectory", () =>
         HttpResponse.json({ type: "error", error: { type: "server_error", message: "boom" } }, { status: 500 }),
       ),
     );
@@ -393,7 +394,7 @@ describe("trajectory loading", () => {
   it("resets on session change and drops stale responses", async () => {
     let release: (() => void) | undefined;
     server.use(
-      http.get("/v1/oma/sessions/:id/trajectory", async ({ params }) => {
+      http.get("/v1/maishu/sessions/:id/trajectory", async ({ params }) => {
         if (params.id === "slow") await new Promise<void>((r) => (release = r));
         return HttpResponse.json(envelope([], { session_id: String(params.id) }));
       }),

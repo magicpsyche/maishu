@@ -1,10 +1,11 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // Trace projection: raw event stream → turns, (agents), steps, gaps.
 //
 // Pure helpers behind the unified Trace view (components/timeline/
 // TraceView). They accept both the trajectory envelope's `StoredEvent`
 // rows (`{ seq, type, data: "<json>", ts }`) and already-unwrapped live
 // session events, so the same projection serves
-// `GET /v1/oma/sessions/:id/trajectory`, the live stream and fixtures.
+// `GET /v1/maishu/sessions/:id/trajectory`, the live stream and fixtures.
 //
 // Semantics come from the original Timeline (components/timeline/derive):
 //   - turn — user trigger (user.message / tool_confirmation /

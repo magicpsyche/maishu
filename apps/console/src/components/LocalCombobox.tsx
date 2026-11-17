@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import {
   useEffect,
@@ -127,7 +129,7 @@ export function LocalCombobox<T>({
               // before our click handler runs.
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange("")}
-              aria-label="Clear"
+              aria-label={uiText("Clear")}
             >
               <XIcon />
             </Button>
@@ -140,7 +142,7 @@ export function LocalCombobox<T>({
             onClick={() => setOpen((v) => !v)}
             disabled={disabled}
             aria-expanded={open}
-            aria-label="Toggle options"
+            aria-label={uiText("Toggle options")}
             className={cn(
               "transition-transform",
               open && "rotate-180",
@@ -159,7 +161,7 @@ export function LocalCombobox<T>({
       >
         {matches.length === 0 ? (
           <div className="px-3 py-4 text-center text-fg-subtle text-xs">
-            {emptyHint ?? "No matches"}
+            {emptyHint ?? uiText("No matches")}
           </div>
         ) : (
           matches.map((item) => (

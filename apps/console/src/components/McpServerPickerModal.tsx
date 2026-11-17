@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useScrollFade } from "@/hooks/useScrollFade";
 import { Input } from "@/components/ui/input";
@@ -58,8 +60,8 @@ export function McpServerPickerModal({
         onClose();
         setSearch("");
       }}
-      title="Pick a known MCP server"
-      subtitle="Same registry the vault's Connect Service flow uses."
+      title={uiText("Pick a known MCP server")}
+      subtitle={uiText("Same registry the vault's Connect Service flow uses.")}
       maxWidth="max-w-lg"
     >
       <div className="space-y-3">
@@ -67,7 +69,7 @@ export function McpServerPickerModal({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className={inputCls}
-          placeholder="Search services"
+          placeholder={uiText("Search services")}
           autoFocus
         />
         <div ref={listFade.ref} className={`console-scroll-fade ${listFade.className} max-h-80 overflow-y-auto -mx-1`}>
@@ -108,15 +110,14 @@ export function McpServerPickerModal({
                   <div className="text-xs text-fg-muted font-mono truncate">{entry.url}</div>
                 </div>
                 {alreadyAdded && (
-                  <span className="text-xs text-fg-subtle shrink-0">Added</span>
+                  <span className="text-xs text-fg-subtle shrink-0">{uiText("Added")}</span>
                 )}
               </Button>
             );
           })}
           {filtered.length === 0 && (
             <div className="text-center py-6 text-fg-subtle text-sm">
-              No matches. Use "+ Custom URL" to add a custom MCP server.
-            </div>
+               {uiText("No matches. Use \"+ Custom URL\" to add a custom MCP server.")} </div>
           )}
         </div>
       </div>

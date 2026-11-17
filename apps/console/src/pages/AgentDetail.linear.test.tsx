@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -28,7 +29,7 @@ vi.mock("../lib/useApiQuery", () => ({
 vi.mock("../lib/api", () => ({
   useApi: () => ({
     api: vi.fn(async (path: string) =>
-      path === "/v1/oma/runtimes" ? { runtimes: [] } : { data: [] },
+      path === "/v1/maishu/runtimes" ? { runtimes: [] } : { data: [] },
     ),
   }),
 }));

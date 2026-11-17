@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -98,7 +100,7 @@ export function SessionComposer({
     >
       <ComposerAttachmentStrip disabled={sending || interrupting} />
       <PromptInputTextarea
-        aria-label="Message"
+        aria-label={uiText("Message")}
         className="session-composer-textarea"
         disabled={sending || interrupting}
         onChange={(event) => setDraft(event.currentTarget.value)}
@@ -127,12 +129,12 @@ function ComposerAttachButton({ disabled }: { disabled: boolean }) {
 
   return (
     <PromptInputButton
-      aria-label="Add image"
+      aria-label={uiText("Add image")}
       className="session-composer-control"
       disabled={disabled}
       onClick={() => attachments.openFileDialog()}
       size="icon-sm"
-      title="Add image"
+      title={uiText("Add image")}
       type="button"
     >
       <PlusIcon aria-hidden="true" className="size-4" />
@@ -146,15 +148,15 @@ function ComposerAttachmentStrip({ disabled }: { disabled: boolean }) {
   if (attachments.files.length === 0) return null;
 
   return (
-    <div className="session-composer-attachments" aria-label="Attachments">
+    <div className="session-composer-attachments" aria-label={uiText("Attachments")}>
       {attachments.files.map((file) => (
         <div className="session-composer-attachment" key={file.id}>
           {file.url ? (
             <img alt="" aria-hidden="true" src={file.url} />
           ) : null}
-          <span title={file.filename}>{file.filename ?? "Image"}</span>
+          <span title={file.filename}>{file.filename ?? uiText("Image")}</span>
           <Button variant="ghost"
-            aria-label={`Remove ${file.filename ?? "image"}`}
+            aria-label={uiText(`Remove ${file.filename ?? "image"}`)}
             disabled={disabled}
             onClick={() => attachments.remove(file.id)}
             type="button"

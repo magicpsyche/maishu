@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { RowActionsMenu } from "../components/TableRowActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,9 +41,9 @@ const EMPTY_FORM = {
 };
 
 const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
-  { value: "any", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
+  { value: "any", label: uiText("All") },
+  { value: "active", label: uiText("Active") },
+  { value: "archived", label: uiText("Archived") },
 ];
 
 /** "runtime" for an Environment attached to a paired machine, else the CMA type. */
@@ -120,7 +122,7 @@ export function EnvironmentsList() {
 
   const actionsFor = (environment: Env) => [
     {
-      label: "Archive",
+      label: uiText("Archive"),
       icon: <ArchiveIcon className="size-4" />,
       disabled: Boolean(environment.archived_at),
       onSelect: async () => {
@@ -131,11 +133,11 @@ export function EnvironmentsList() {
       },
     },
     {
-      label: "Delete",
+      label: uiText("Delete"),
       icon: <TrashIcon className="size-4" />,
       destructive: true,
       onSelect: async () => {
-        if (!confirm(`Delete environment ${environment.name}? This can't be undone.`)) return;
+        if (!confirm(uiText(`Delete environment ${environment.name}? This can't be undone.`))) return;
         try {
           await managedApi.environments.delete(environment.id);
           load();
@@ -246,18 +248,18 @@ export function EnvironmentsList() {
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        title="Add Environment"
-        subtitle="Provision an isolated sandbox, or run on a machine you already paired."
+        title={uiText("Add Environment")}
+        subtitle={uiText("Provision an isolated sandbox, or run on a machine you already paired.")}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={create} disabled={!canCreate}>Create</Button>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>{uiText("Cancel")}</Button>
+            <Button onClick={create} disabled={!canCreate}>{uiText("Create")}</Button>
           </>
         }
       >
         <div className="space-y-4">
           <div>
-            <Label htmlFor="env-create-name" className="text-sm text-fg-muted block mb-1">Name</Label>
+            <Label htmlFor="env-create-name" className="text-sm text-fg-muted block mb-1">{uiText("Name")}</Label>
             <Input
               id="env-create-name"
               value={form.name}
@@ -265,19 +267,19 @@ export function EnvironmentsList() {
               className="w-full border border-border rounded-md px-3 py-2 min-h-11 sm:min-h-0 text-sm outline-none focus:border-brand bg-bg text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] placeholder:text-fg-subtle"
               placeholder="production"
             />
-            <p className="text-xs text-fg-subtle mt-1">{form.name.length}/50 characters</p>
+            <p className="text-xs text-fg-subtle mt-1">{form.name.length}{uiText("/50 characters")}</p>
           </div>
           <div>
-            <Label htmlFor="env-create-hosting" className="text-sm text-fg-muted block mb-1">Hosting Type</Label>
+            <Label htmlFor="env-create-hosting" className="text-sm text-fg-muted block mb-1">{uiText("Hosting Type")}</Label>
             <Select
               id="env-create-hosting"
               value={form.hosting}
               onValueChange={(hosting) => setForm({ ...form, hosting: hosting as Hosting })}
             >
-              <SelectOption value="cloud">Cloud — provision a sandbox</SelectOption>
-              <SelectOption value="runtime">Attach to existing Runtime</SelectOption>
+              <SelectOption value="cloud">{uiText("Cloud — provision a sandbox")}</SelectOption>
+              <SelectOption value="runtime">{uiText("Attach to existing Runtime")}</SelectOption>
             </Select>
-            <p className="text-xs text-fg-subtle mt-1">This cannot be changed after creation.</p>
+            <p className="text-xs text-fg-subtle mt-1">{uiText("This cannot be changed after creation.")}</p>
           </div>
           {form.hosting === "runtime" && (
             <RuntimeAttachmentFields
@@ -292,7 +294,7 @@ export function EnvironmentsList() {
           )}
           {form.hosting === "cloud" && sandboxImages.length > 0 && (
             <div>
-              <Label htmlFor="env-create-sandbox-image" className="text-sm text-fg-muted block mb-1">Sandbox image</Label>
+              <Label htmlFor="env-create-sandbox-image" className="text-sm text-fg-muted block mb-1">{uiText("Sandbox image")}</Label>
               <SandboxImageSelect
                 id="env-create-sandbox-image"
                 images={sandboxImages}
@@ -302,14 +304,14 @@ export function EnvironmentsList() {
             </div>
           )}
           <div>
-            <Label htmlFor="env-create-description" className="text-sm text-fg-muted block mb-1">Description <span className="text-fg-subtle">(optional)</span></Label>
+            <Label htmlFor="env-create-description" className="text-sm text-fg-muted block mb-1">{uiText("Description")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
             <Textarea
               id="env-create-description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
               className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-brand bg-bg text-fg resize-none transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] placeholder:text-fg-subtle"
-              placeholder="Production environment for customer-facing agents..."
+              placeholder={uiText("Production environment for customer-facing agents...")}
             />
           </div>
         </div>

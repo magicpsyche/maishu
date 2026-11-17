@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,9 +47,9 @@ type VersionDetail = BetaSkillVersion & {
 type SourceValue = "any" | "anthropic" | "custom";
 
 const SOURCE_OPTIONS: { value: SourceValue; label: string }[] = [
-  { value: "any", label: "All" },
+  { value: "any", label: uiText("All") },
   { value: "anthropic", label: "Anthropic" },
-  { value: "custom", label: "Custom" },
+  { value: "custom", label: uiText("Custom") },
 ];
 
 /* ---------- constants ---------- */
@@ -154,7 +156,7 @@ export function SkillsList() {
     }
     if (file.size > MAX_UPLOAD_BYTES) {
       setCreateError(
-        `Zip is ${formatBytes(file.size)}, exceeds the ${formatBytes(MAX_UPLOAD_BYTES)} upload limit`,
+        uiText(`Zip is ${formatBytes(file.size)}, exceeds the ${formatBytes(MAX_UPLOAD_BYTES)} upload limit`),
       );
       return false;
     }
@@ -177,7 +179,7 @@ export function SkillsList() {
       resetCreate();
       load();
     } catch (e: any) {
-      setCreateError(e?.message || "Upload failed");
+      setCreateError(e?.message || uiText("Upload failed"));
     } finally {
       setCreateUploading(false);
     }
@@ -192,7 +194,7 @@ export function SkillsList() {
     setNvError("");
     setNvZip(null);
     try {
-      if (!skill.latest_version_id) throw new Error("Skill has no versions");
+      if (!skill.latest_version_id) throw new Error(uiText("Skill has no versions"));
       const [versionDetail, versionsRes, preview] = await Promise.all([
         managedApi.skills.versions.retrieve(skill.latest_version_id, {
           skill_id: skill.id,
@@ -245,7 +247,7 @@ export function SkillsList() {
     }
     if (file.size > MAX_UPLOAD_BYTES) {
       setNvError(
-        `Zip is ${formatBytes(file.size)}, exceeds the ${formatBytes(MAX_UPLOAD_BYTES)} upload limit`,
+        uiText(`Zip is ${formatBytes(file.size)}, exceeds the ${formatBytes(MAX_UPLOAD_BYTES)} upload limit`),
       );
       return false;
     }
@@ -268,7 +270,7 @@ export function SkillsList() {
       const refreshed = await managedApi.skills.retrieve(detail.id);
       openDetail(refreshed);
     } catch (e: any) {
-      setNvError(e?.message || "Upload failed");
+      setNvError(e?.message || uiText("Upload failed"));
     } finally {
       setNvUploading(false);
     }
@@ -278,7 +280,7 @@ export function SkillsList() {
 
   const deleteSkill = async () => {
     if (!detail) return;
-    if (!confirm("Delete this skill? This cannot be undone.")) return;
+    if (!confirm(uiText("Delete this skill? This cannot be undone."))) return;
     try {
       await managedApi.skills.delete(detail.id);
       closeDetail();
@@ -291,7 +293,7 @@ export function SkillsList() {
   // skill's own title and there's no detail dialog to close after.
   const deleteSkillById = async (skill: Skill) => {
     const name = skill.display_name || skill.name;
-    if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+    if (!confirm(uiText(`Delete ${name}? This cannot be undone.`))) return;
     try {
       await managedApi.skills.delete(skill.id);
       load();
@@ -312,7 +314,7 @@ export function SkillsList() {
       {
         id: "name",
         accessorKey: "display_name",
-        header: "Name",
+        header: uiText("Name"),
         cell: ({ row }) => (
           <div className="min-w-0">
             <div className="font-medium text-fg truncate">
@@ -330,7 +332,7 @@ export function SkillsList() {
       {
         id: "description",
         accessorKey: "description",
-        header: "Description",
+        header: uiText("Description"),
         cell: ({ row }) => (
           <span className="text-fg-muted">{row.original.description || "—"}</span>
         ),
@@ -338,7 +340,7 @@ export function SkillsList() {
       {
         id: "source",
         accessorKey: "source",
-        header: "Source",
+        header: uiText("Source"),
         cell: ({ row }) => {
           const tracked = skillSources.locks.get(row.original.id);
           return row.original.source?.type === "anthropic" ? (
@@ -362,7 +364,7 @@ export function SkillsList() {
       {
         id: "version",
         accessorFn: (s) => s.latest_version_id,
-        header: "Version",
+        header: uiText("Version"),
         cell: ({ row }) => (
           <span className="text-fg-muted">
             {row.original.latest_version_id ? `v${row.original.latest_version_id}` : "—"}
@@ -372,7 +374,7 @@ export function SkillsList() {
       {
         id: "created",
         accessorFn: (s) => s.created_at,
-        header: "Created",
+        header: uiText("Created"),
         cell: ({ row }) => (
           <span className="text-fg-muted">
             {new Date(row.original.created_at).toLocaleDateString()}
@@ -391,7 +393,7 @@ export function SkillsList() {
 
   const filters = (
     <FilterChip
-      label="Source"
+      label={uiText("Source")}
       active={source !== "any"}
       display={sourceDisplay}
       onClear={() => setSource("any")}
@@ -406,7 +408,7 @@ export function SkillsList() {
           options={SOURCE_OPTIONS}
           value={source}
           onValueChange={(v) => setSource(v as SourceValue)}
-          searchPlaceholder="Source..."
+          searchPlaceholder={uiText("Source...")}
         />
       </PopoverContent>
     </FilterChip>
@@ -420,16 +422,15 @@ export function SkillsList() {
 
   return (
     <DataTable<Skill>
-      subtitle="Manage pre-built and custom skills for your agents."
-      createLabel="+ New skill"
+      subtitle={uiText("Manage pre-built and custom skills for your agents.")}
+      createLabel={uiText("+ New skill")}
       onCreate={() => setShowCreate(true)}
       headerActions={
         skillSources.available ? (
           <>
             {skillSources.locks.size > 0 && (
               <Button variant="outline" onClick={() => setUpdatesFor("all")}>
-                Check for updates
-              </Button>
+                 {uiText("Check for updates")} </Button>
             )}
             <Button
               variant="outline"
@@ -438,8 +439,7 @@ export function SkillsList() {
                 setShowInstallUrl(true);
               }}
             >
-              Install from URL
-            </Button>
+               {uiText("Install from URL")} </Button>
           </>
         ) : undefined
       }
@@ -453,7 +453,7 @@ export function SkillsList() {
       onRowClick={handleRowClick}
       rowActions={(skill) => [
         {
-          label: "Delete",
+          label: uiText("Delete"),
           icon: <TrashIcon className="size-4" />,
           destructive: true,
           disabled: skill.source?.type === "anthropic",
@@ -461,16 +461,15 @@ export function SkillsList() {
         },
       ]}
       columns={columns}
-      emptyTitle="No skills yet"
+      emptyTitle={uiText("No skills yet")}
       emptyKind="skill"
-      emptySubtitle="Create a skill to give your agents domain expertise."
+      emptySubtitle={uiText("Create a skill to give your agents domain expertise.")}
       emptyAction={
         <div className="flex gap-2 justify-center">
-          <Button onClick={() => setShowCreate(true)}>+ New skill</Button>
+          <Button onClick={() => setShowCreate(true)}>{uiText("+ New skill")}</Button>
           {skillSources.available && (
             <Button variant="outline" onClick={() => setShowInstallUrl(true)}>
-              Install from URL
-            </Button>
+               {uiText("Install from URL")} </Button>
           )}
         </div>
       }
@@ -504,8 +503,8 @@ export function SkillsList() {
           setShowCreate(false);
           resetCreate();
         }}
-        title="Upload Custom Skill"
-        subtitle="Upload an Anthropic-style skill folder packaged as a .zip."
+        title={uiText("Upload Custom Skill")}
+        subtitle={uiText("Upload an Anthropic-style skill folder packaged as a .zip.")}
         maxWidth="max-w-xl"
         footer={
           <>
@@ -517,16 +516,14 @@ export function SkillsList() {
                 resetCreate();
               }}
             >
-              Cancel
-            </Button>
+               {uiText("Cancel")} </Button>
             <Button
               onClick={doCreate}
               disabled={!createZip || createUploading}
               loading={createUploading}
-              loadingLabel="Uploading..."
+              loadingLabel={uiText("Uploading...")}
             >
-              Upload
-            </Button>
+               {uiText("Upload")} </Button>
           </>
         }
       >
@@ -554,24 +551,22 @@ export function SkillsList() {
           {/* Display Title (optional override) */}
           <div>
             <Label className="text-sm text-fg-muted block mb-1">
-              Display Title{" "}
+               {uiText("Display Title")}{" "}
               <span className="text-fg-subtle">
-                (optional — falls back to SKILL.md <code>name</code>)
+                 {uiText("(optional — falls back to SKILL.md")} <code>name</code>)
               </span>
             </Label>
             <Input
               value={createTitle}
               onChange={(e) => setCreateTitle(e.target.value)}
               className={inputCls}
-              placeholder="Leave blank to use the skill's own name"
+              placeholder={uiText("Leave blank to use the skill's own name")}
               disabled={createUploading}
             />
           </div>
 
           <p className="text-xs text-fg-subtle">
-            The zip must contain <code>SKILL.md</code> at the root, or one
-            top-level folder containing it (the common case when you
-            <code> zip -r my-skill.zip my-skill</code>).
+             {uiText("The zip must contain")} <code>SKILL.md</code>  {uiText("at the root, or one top-level folder containing it (the common case when you")} <code> zip -r my-skill.zip my-skill</code>).
           </p>
         </div>
       </Modal>
@@ -585,53 +580,46 @@ export function SkillsList() {
         maxWidth="max-w-2xl"
         footer={
           <Button variant="ghost" onClick={closeDetail}>
-            Close
-          </Button>
+             {uiText("Close")} </Button>
         }
       >
         {detailLoading ? (
           <div className="text-fg-subtle text-sm py-8 text-center">
-            Loading...
-          </div>
+             {uiText("Loading...")} </div>
         ) : detail ? (
           <div className="space-y-5">
             {/* Actions */}
             <div className="flex justify-end">
               <Button variant="destructive" size="sm" onClick={deleteSkill}>
-                Delete
-              </Button>
+                 {uiText("Delete")} </Button>
             </div>
 
             {/* Metadata */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-fg-muted block mb-0.5">
-                  Display Title
-                </Label>
+                   {uiText("Display Title")} </Label>
                 <p className="text-sm font-medium">
                   {detail.display_name || "—"}
                 </p>
               </div>
               <div>
                 <Label className="text-xs text-fg-muted block mb-0.5">
-                  Name
-                </Label>
+                   {uiText("Name")} </Label>
                 <p className="text-sm font-mono">
                   {detail.name || "—"}
                 </p>
               </div>
               <div>
                 <Label className="text-xs text-fg-muted block mb-0.5">
-                  Description
-                </Label>
+                   {uiText("Description")} </Label>
                 <p className="text-sm text-fg-muted">
                   {detail.description || "—"}
                 </p>
               </div>
               <div>
                 <Label className="text-xs text-fg-muted block mb-0.5">
-                  Created
-                </Label>
+                   {uiText("Created")} </Label>
                 <p className="text-sm text-fg-muted">
                   {new Date(detail.created_at).toLocaleString()}
                 </p>
@@ -644,18 +632,17 @@ export function SkillsList() {
               return (
                 <div className="border border-border rounded-lg p-3 space-y-1">
                   <div className="flex items-center justify-between gap-3">
-                    <Label className="text-xs text-fg-muted">Installed from</Label>
+                    <Label className="text-xs text-fg-muted">{uiText("Installed from")}</Label>
                     <Button size="sm" variant="outline" onClick={() => setUpdatesFor([detail.id])}>
-                      Check for updates
-                    </Button>
+                       {uiText("Check for updates")} </Button>
                   </div>
                   <p className="text-sm font-mono break-all">{tracked.source_url}</p>
                   <p className="text-xs text-fg-subtle">
-                    <span className="font-mono">{tracked.name}</span> · digest{" "}
+                    <span className="font-mono">{tracked.name}</span>  {uiText("· digest")}{" "}
                     <span className="font-mono" title={tracked.digest}>
                       {tracked.digest.replace(/^sha256:/, "").slice(0, 12)}
                     </span>{" "}
-                    · updated {new Date(tracked.updated_at).toLocaleString()}
+                     {uiText("· updated")} {new Date(tracked.updated_at).toLocaleString()}
                   </p>
                 </div>
               );
@@ -664,8 +651,7 @@ export function SkillsList() {
             {/* Usage hint */}
             <div>
               <Label className="text-xs text-fg-muted block mb-1">
-                Usage in Agent Config
-              </Label>
+                 {uiText("Usage in Agent Config")} </Label>
               <pre className="bg-bg-surface border border-border rounded-lg p-3 text-xs font-mono text-fg-muted">
 {`"skills": [{ "type": "custom", "skill_id": "${detail.id}", "version": "latest" }]`}
               </pre>
@@ -675,19 +661,17 @@ export function SkillsList() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="text-xs text-fg-muted">
-                  Files (v{detail.latest_version_id})
+                   {uiText("Files (v")}{detail.latest_version_id})
                 </Label>
                 <Button variant="ghost"
                   onClick={startNewVersion}
                   className="inline-flex items-center min-h-11 sm:min-h-0 px-2 text-xs text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
                 >
-                  + New version
-                </Button>
+                   {uiText("+ New version")} </Button>
               </div>
               {detailFiles.length === 0 ? (
                 <p className="text-xs text-fg-subtle">
-                  No files in this version.
-                </p>
+                   {uiText("No files in this version.")} </p>
               ) : (
                 <div className="space-y-2">
                   {detailFiles.map((f, i) => (
@@ -705,8 +689,7 @@ export function SkillsList() {
                       </div>
                       {f.encoding === "base64" ? (
                         <p className="px-3 py-2 text-xs italic text-fg-subtle">
-                          Binary file — not previewed.
-                        </p>
+                           {uiText("Binary file — not previewed.")} </p>
                       ) : (
                         <pre className="px-3 py-2 text-xs font-mono text-fg-muted whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed">
                           {f.content}
@@ -722,8 +705,7 @@ export function SkillsList() {
             {showNewVersion && (
               <div className="border border-border-strong rounded-lg p-4 bg-bg-surface/50 space-y-3">
                 <h3 className="text-sm font-medium text-fg">
-                  Upload New Version
-                </h3>
+                   {uiText("Upload New Version")} </h3>
                 {nvError && (
                   <div className="text-sm text-danger bg-danger-subtle border border-danger/30 rounded-lg px-3 py-2">
                     {nvError}
@@ -751,16 +733,14 @@ export function SkillsList() {
                       setNvError("");
                     }}
                   >
-                    Cancel
-                  </Button>
+                     {uiText("Cancel")} </Button>
                   <Button
                     onClick={doNewVersion}
                     disabled={!nvZip || nvUploading}
                     loading={nvUploading}
-                    loadingLabel="Uploading..."
+                    loadingLabel={uiText("Uploading...")}
                   >
-                    Publish Version
-                  </Button>
+                     {uiText("Publish Version")} </Button>
                 </div>
               </div>
             )}
@@ -768,19 +748,17 @@ export function SkillsList() {
             {/* Versions list */}
             <div>
               <Label className="text-xs text-fg-muted block mb-2">
-                Version History
-              </Label>
+                 {uiText("Version History")} </Label>
               {detailVersions.length === 0 ? (
                 <p className="text-xs text-fg-subtle">
-                  No version history available.
-                </p>
+                   {uiText("No version history available.")} </p>
               ) : (
                 <div className="border border-border rounded-lg overflow-x-auto">
                   <Table className="w-full text-sm">
                     <TableHeader>
                       <TableRow className="bg-bg-surface/60 text-fg-muted text-xs uppercase tracking-wider">
-                        <TableHead className="text-left px-4 py-2">Version</TableHead>
-                        <TableHead className="text-left px-4 py-2">Created</TableHead>
+                        <TableHead className="text-left px-4 py-2">{uiText("Version")}</TableHead>
+                        <TableHead className="text-left px-4 py-2">{uiText("Created")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -884,25 +862,21 @@ function DropZone({
               size="sm"
               onClick={() => inputRef.current?.click()}
             >
-              Replace
-            </Button>
+               {uiText("Replace")} </Button>
             <Button variant="ghost" size="sm" onClick={onClear}>
-              Remove
-            </Button>
+               {uiText("Remove")} </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-2">
           <div className="text-sm text-fg-muted">
-            Drag &amp; drop a <code>.zip</code>, or
-          </div>
+             {uiText("Drag &amp; drop a")} <code>.zip</code>{uiText(", or")} </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => inputRef.current?.click()}
           >
-            Choose file
-          </Button>
+             {uiText("Choose file")} </Button>
         </div>
       )}
     </div>

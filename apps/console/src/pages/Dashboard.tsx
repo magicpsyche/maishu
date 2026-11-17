@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState, type ReactNode } from "react";
@@ -40,7 +42,7 @@ function QuickstartStep({
   return (
     <div className="console-quickstart-step">
       <div>
-        <div className="console-step-index">STEP {number}</div>
+        <div className="console-step-index">{uiText("STEP")} {number}</div>
         <div className="console-step-title">{title}</div>
       </div>
       <div className="console-step-body">{children}</div>
@@ -53,7 +55,7 @@ export function Dashboard() {
   const branding = useBranding();
   const [copied, setCopied] = useState<string | null>(null);
   const { t } = useI18n();
-  const statsQuery = useApiQuery<Stats>("/v1/oma/stats");
+  const statsQuery = useApiQuery<Stats>("/v1/maishu/stats");
   const sessionsQuery = useApiQuery<{
     data: BetaManagedAgentsSession[];
     next_page: string | null;
@@ -83,10 +85,10 @@ export function Dashboard() {
     { label: t.nav.modelCards, value: stats?.model_cards, to: "/model-cards" },
   ];
 
-  const command = "npx -y -p @openma/cli oma";
-  const globalCommand = "npm i -g @openma/cli";
+  const command = `curl -fsSL ${window.location.origin}/downloads/install.sh | sh -s -- --server-url ${window.location.origin}`;
+  const globalCommand = `maishu auth login --base-url ${window.location.origin}`;
   const examplePrompt =
-    "Use oma to create a research agent that monitors arXiv for new ML papers daily";
+    "使用麦枢创建一个研究智能体，跟踪指定主题的新资料并每天生成简报。";
 
   const copyIcon = (key: string) =>
     copied === key ? <CheckIcon className="size-3.5 text-success" /> : <CopyIcon className="size-3.5" />;
@@ -95,7 +97,7 @@ export function Dashboard() {
     <DashboardLayout
       intro={
         <header>
-          <h1>Get started with {branding.productName}</h1>
+          <h1>{uiText("Get started with")} {branding.productName}</h1>
           <p>{t.dashboard.handPlatformToAgent}</p>
         </header>
       }
@@ -125,8 +127,8 @@ export function Dashboard() {
       }
     >
       <ConsolePanel
-        title="Launch an agent"
-        description="A short path from an empty workspace to a managed run."
+        title={uiText("Launch an agent")}
+        description={uiText("A short path from an empty workspace to a managed run.")}
       >
         <QuickstartStep number="01" title={t.dashboard.installCli}>
           <p>{t.dashboard.installCliDesc}</p>
@@ -140,7 +142,7 @@ export function Dashboard() {
             {copyIcon("command")}
           </Button>
           <p className="mt-1.5 text-xs text-fg-subtle">
-            or globally:{" "}
+             安装后登录：{" "}
             <Button
               variant="ghost"
               type="button"
@@ -179,7 +181,7 @@ export function Dashboard() {
 
       <ConsolePanel
         title={t.dashboard.recentSessions}
-        description="Latest activity across the current workspace."
+        description={uiText("Latest activity across the current workspace.")}
         action={
           <Button variant="ghost"
             type="button"

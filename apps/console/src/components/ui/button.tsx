@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
@@ -86,7 +88,7 @@ function Button({
     >
       {showLoader ? (
         <>
-          <BrandLoader size="sm" label="Loading" className="!text-current" />
+          <BrandLoader size="sm" label={uiText("Loading")} className="!text-current" />
           {loadingLabel ?? children}
         </>
       ) : (

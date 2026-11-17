@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Link } from "react-router";
@@ -5,7 +7,7 @@ import { useApiQuery } from "../lib/useApiQuery";
 import { parseEnvOverlay } from "../lib/env-overlay";
 import { Select, SelectOption } from "./Select";
 
-/** The subset of GET /v1/oma/runtimes the picker needs. */
+/** The subset of GET /v1/maishu/runtimes the picker needs. */
 export interface RuntimeOption {
   id: string;
   hostname: string;
@@ -14,7 +16,7 @@ export interface RuntimeOption {
 }
 
 export function useRuntimeOptions(): { runtimes: RuntimeOption[]; loading: boolean } {
-  const { data, isLoading } = useApiQuery<{ runtimes: RuntimeOption[] }>("/v1/oma/runtimes", undefined, {
+  const { data, isLoading } = useApiQuery<{ runtimes: RuntimeOption[] }>("/v1/maishu/runtimes", undefined, {
     retry: false,
   });
   return { runtimes: data?.runtimes ?? [], loading: isLoading };
@@ -52,46 +54,44 @@ export function RuntimeAttachmentFields({
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor={`${idPrefix}-runtime`} className="text-sm text-fg-muted block mb-1">Runtime</Label>
+        <Label htmlFor={`${idPrefix}-runtime`} className="text-sm text-fg-muted block mb-1">{uiText("Runtime")}</Label>
         {!loading && runtimes.length === 0 && !missing ? (
           <p className="text-xs text-fg-subtle">
-            No paired machines yet. <Link to="/runtimes" className="underline">Connect a machine</Link> first.
+             {uiText("No paired machines yet.")} <Link to="/runtimes" className="underline">{uiText("Connect a machine")}</Link> first.
           </p>
         ) : (
           <Select
             id={`${idPrefix}-runtime`}
             value={runtimeId}
             onValueChange={onRuntimeIdChange}
-            placeholder={loading ? "Loading runtimes…" : "Select a machine"}
+            placeholder={loading ? uiText("Loading runtimes…") : uiText("Select a machine")}
           >
             {runtimes.map((r) => (
               <SelectOption key={r.id} value={r.id}>
                 {r.hostname} · {r.os} · {r.status}
               </SelectOption>
             ))}
-            {missing && <SelectOption value={runtimeId}>{runtimeId} (revoked or not yours)</SelectOption>}
+            {missing && <SelectOption value={runtimeId}>{runtimeId}  {uiText("(revoked or not yours)")}</SelectOption>}
           </Select>
         )}
         <p className="text-xs text-fg-subtle mt-1">
-          To use this overlay, select an agent configured for the same Runtime.
-          Attaching this environment does not yet choose where sessions run.
-        </p>
+           {uiText("To use this overlay, select an agent configured for the same Runtime. Attaching this environment does not yet choose where sessions run.")} </p>
       </div>
       <div>
-        <Label htmlFor={`${idPrefix}-placement`}>Placement</Label>
+        <Label htmlFor={`${idPrefix}-placement`}>{uiText("Placement")}</Label>
         <Select id={`${idPrefix}-placement`} value={placement} onValueChange={(value) => onPlacementChange(value as "host" | "sandbox")}>
-          <SelectOption value="host">Host</SelectOption>
-          <SelectOption value="sandbox">Sandbox (LiteBox on Runtime)</SelectOption>
+          <SelectOption value="host">{uiText("Host")}</SelectOption>
+          <SelectOption value="sandbox">{uiText("Sandbox (LiteBox on Runtime)")}</SelectOption>
         </Select>
         <p className="text-xs text-fg-subtle mt-1">
           {placement === "sandbox"
-            ? "Runs in a separate LiteBox for each session on this Runtime. Requires local LiteBox and a prepared ACP image. Host directories and GitHub local paths are not supported."
-            : "Commands run with the Runtime user's permissions. Custom directories are not yet supported."}
+            ? uiText("Runs in a separate LiteBox for each session on this Runtime. Requires local LiteBox and a prepared ACP image. Host directories and GitHub local paths are not supported.")
+            : uiText("Commands run with the Runtime user's permissions. Custom directories are not yet supported.")}
         </p>
       </div>
       <div>
         <Label htmlFor={`${idPrefix}-env`} className="text-sm text-fg-muted block mb-1">
-          Env overlay <span className="text-fg-subtle">(optional)</span>
+           {uiText("Env overlay")} <span className="text-fg-subtle">{uiText("(optional)")}</span>
         </Label>
         <Textarea
           id={`${idPrefix}-env`}
@@ -108,10 +108,7 @@ export function RuntimeAttachmentFields({
           </ul>
         ) : (
           <p className="text-xs text-fg-subtle mt-1">
-            KEY=value per line, injected into the runner's shell, MCP servers and plugins.
-            Values are visible to workspace members — keep secrets in a vault.
-            System, OMA_* and Runtime-owned keys cannot be overridden.
-          </p>
+             {uiText("KEY=value per line, injected into the runner's shell, MCP servers and plugins. Values are visible to workspace members — keep secrets in a vault. System, OMA_* and Runtime-owned keys cannot be overridden.")} </p>
         )}
       </div>
     </div>

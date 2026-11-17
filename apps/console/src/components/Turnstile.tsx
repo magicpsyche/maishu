@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useEffect, useRef, useState } from "react";
 
 // Cloudflare Turnstile widget — vanilla CF JS, no dependency.
@@ -62,7 +64,7 @@ function loadTurnstileScript(): Promise<void> {
     const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`);
     if (existing) {
       existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("Turnstile script failed to load")), { once: true });
+      existing.addEventListener("error", () => reject(new Error(uiText("Turnstile script failed to load"))), { once: true });
       return;
     }
     const script = document.createElement("script");
@@ -70,7 +72,7 @@ function loadTurnstileScript(): Promise<void> {
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Turnstile script failed to load"));
+    script.onerror = () => reject(new Error(uiText("Turnstile script failed to load")));
     document.head.appendChild(script);
   });
   return scriptLoaded.catch((error) => {

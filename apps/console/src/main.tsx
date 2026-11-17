@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "./i18n/ui-text";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -53,31 +55,32 @@ function LegacyDatasetRedirect() {
 }
 
 const protectedRoutes: RouteObject[] = [
-  { index: true, lazy: async () => ({ Component: (await import("./pages/Dashboard")).Dashboard }), handle: { crumb: "Dashboard" } },
+  { path: "help", lazy: async () => ({ Component: (await import("./pages/Help")).Help }), handle: { crumb: "使用帮助" } },
+  { index: true, lazy: async () => ({ Component: (await import("./pages/Dashboard")).Dashboard }), handle: { crumb: uiText("Dashboard") } },
   // Nested route groups so detail pages publish a proper hierarchy
   // through `useMatches()` — `/agents/:id` resolves to
   // [agents-parent, agents/:id], so AppBreadcrumb renders
   // `Agents › Agent` instead of just `Agent` with no link back.
   {
     path: "agents",
-    handle: { crumb: "Agents" },
+    handle: { crumb: uiText("Agents") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/AgentsList")).AgentsList }) },
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/AgentDetail")).AgentDetail }),
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Agent" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Agent") },
       },
     ],
   },
   {
     path: "sessions",
-    handle: { crumb: "Sessions" },
+    handle: { crumb: uiText("Sessions") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/SessionsList")).SessionsList }) },
       {
         path: ":id",
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Session" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Session") },
         // SessionDetail lazy-loads — it pulls in ai-elements + Shiki +
         // Streamdown + mermaid + dozens of language defs (~500 kB
         // gzipped). Splitting it out keeps the initial bundle for
@@ -91,37 +94,39 @@ const protectedRoutes: RouteObject[] = [
   },
   {
     path: "deployments",
-    handle: { crumb: "Deployments" },
+    handle: { crumb: uiText("Deployments") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/DeploymentsList")).DeploymentsList }) },
-      { path: "new", lazy: async () => ({ Component: (await import("./pages/DeploymentNew")).DeploymentNew }), handle: { crumb: "New" } },
+      { path: "new", lazy: async () => ({ Component: (await import("./pages/DeploymentNew")).DeploymentNew }), handle: { crumb: uiText("New") } },
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/DeploymentDetail")).DeploymentDetail }),
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Deployment" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Deployment") },
       },
     ],
   },
-  { path: "files", lazy: async () => ({ Component: (await import("./pages/FilesList")).FilesList }), handle: { crumb: "Files" } },
+  { path: "settings/harness-credentials", lazy: async () => ({ Component: (await import("./pages/HarnessCredentials")).HarnessCredentials }), handle: { crumb: "引擎凭证" } },
+  { path: "settings/sandbox", lazy: async () => ({ Component: (await import("./pages/SandboxSettings")).SandboxSettings }), handle: { crumb: "沙箱后端" } },
+  { path: "files", lazy: async () => ({ Component: (await import("./pages/FilesList")).FilesList }), handle: { crumb: uiText("Files") } },
   {
     path: "evals",
-    handle: { crumb: "Evals" },
+    handle: { crumb: uiText("Evals") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/EvalRunsList")).EvalRunsList }) },
       {
         path: "benchmarks",
-        handle: { crumb: "Benchmarks" },
+        handle: { crumb: uiText("Benchmarks") },
         children: [
           { index: true, lazy: async () => ({ Component: (await import("./pages/EvalBenchmarksList")).EvalBenchmarksList }) },
           {
             path: ":benchmarkId",
-            handle: { crumb: (m: UIMatch) => (m.params.benchmarkId as string | undefined) ?? "Benchmark" },
+            handle: { crumb: (m: UIMatch) => (m.params.benchmarkId as string | undefined) ?? uiText("Benchmark") },
             children: [
               { index: true, lazy: async () => ({ Component: (await import("./pages/EvalBenchmarkDetail")).EvalBenchmarkDetail }) },
               {
                 path: "cases/:caseName",
                 lazy: async () => ({ Component: (await import("./pages/EvalCaseDetail")).EvalCaseDetail }),
-                handle: { crumb: (m: UIMatch) => (m.params.caseName as string | undefined) ?? "Case" },
+                handle: { crumb: (m: UIMatch) => (m.params.caseName as string | undefined) ?? uiText("Case") },
               },
             ],
           },
@@ -133,68 +138,68 @@ const protectedRoutes: RouteObject[] = [
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/EvalRunDetail")).EvalRunDetail }),
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Eval Run" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Eval Run") },
       },
     ],
   },
   {
     path: "environments",
-    handle: { crumb: "Environments" },
+    handle: { crumb: uiText("Environments") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/EnvironmentsList")).EnvironmentsList }) },
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/EnvironmentDetail")).EnvironmentDetail }),
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Environment" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Environment") },
       },
     ],
   },
-  { path: "skills", lazy: async () => ({ Component: (await import("./pages/SkillsList")).SkillsList }), handle: { crumb: "Skills" } },
+  { path: "skills", lazy: async () => ({ Component: (await import("./pages/SkillsList")).SkillsList }), handle: { crumb: uiText("Skills") } },
   {
     path: "vaults",
-    handle: { crumb: "Credential Vaults" },
+    handle: { crumb: uiText("Credential Vaults") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/VaultsList")).VaultsList }) },
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/VaultDetail")).VaultDetail }),
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Vault" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Vault") },
       },
     ],
   },
   {
     path: "memory",
-    handle: { crumb: "Memory Stores" },
+    handle: { crumb: uiText("Memory Stores") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/MemoryStoresList")).MemoryStoresList }) },
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/MemoryStoreDetail")).MemoryStoreDetail }),
-        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? "Memory Store" },
+        handle: { crumb: (m: UIMatch) => (m.params.id as string | undefined) ?? uiText("Memory Store") },
       },
     ],
   },
-  { path: "model-cards", lazy: async () => ({ Component: (await import("./pages/ModelCardsList")).ModelCardsList }), handle: { crumb: "Model Cards" } },
-  { path: "budget", lazy: async () => ({ Component: (await import("./pages/Budget")).Budget }), handle: { crumb: "Budget" } },
-  { path: "members", lazy: async () => ({ Component: (await import("./pages/WorkspaceMembers")).WorkspaceMembers }), handle: { crumb: "Members" } },
-  { path: "api-keys", lazy: async () => ({ Component: (await import("./pages/ApiKeysList")).ApiKeysList }), handle: { crumb: "API Keys" } },
-  { path: "runtimes", lazy: async () => ({ Component: (await import("./pages/RuntimesList")).RuntimesList }), handle: { crumb: "Local Runtimes" } },
+  { path: "model-cards", lazy: async () => ({ Component: (await import("./pages/ModelCardsList")).ModelCardsList }), handle: { crumb: uiText("Model Cards") } },
+  { path: "budget", lazy: async () => ({ Component: (await import("./pages/Budget")).Budget }), handle: { crumb: uiText("Budget") } },
+  { path: "members", lazy: async () => ({ Component: (await import("./pages/WorkspaceMembers")).WorkspaceMembers }), handle: { crumb: uiText("Members") } },
+  { path: "api-keys", lazy: async () => ({ Component: (await import("./pages/ApiKeysList")).ApiKeysList }), handle: { crumb: uiText("API Keys") } },
+  { path: "runtimes", lazy: async () => ({ Component: (await import("./pages/RuntimesList")).RuntimesList }), handle: { crumb: uiText("Local Runtimes") } },
   {
     path: "loops",
-    handle: { crumb: "Loops" },
+    handle: { crumb: uiText("Loops") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/Loops")).LoopsPage }) },
-      { path: "new", lazy: async () => ({ Component: (await import("./pages/Loops")).LoopEditPage }), handle: { crumb: "New" } },
-      { path: "templates", lazy: async () => ({ Component: (await import("./pages/Loops")).LoopTemplatesPage }), handle: { crumb: "Templates" } },
-      { path: ":id", lazy: async () => ({ Component: (await import("./pages/Loops")).LoopEditPage }), handle: { crumb: "Loop" } },
+      { path: "new", lazy: async () => ({ Component: (await import("./pages/Loops")).LoopEditPage }), handle: { crumb: uiText("New") } },
+      { path: "templates", lazy: async () => ({ Component: (await import("./pages/Loops")).LoopTemplatesPage }), handle: { crumb: uiText("Templates") } },
+      { path: ":id", lazy: async () => ({ Component: (await import("./pages/Loops")).LoopEditPage }), handle: { crumb: uiText("Loop") } },
     ],
   },
   {
     path: "bonds",
-    handle: { crumb: "Bonds" },
+    handle: { crumb: uiText("Bonds") },
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/Bonds")).BondsPage }) },
-      { path: "new", lazy: async () => ({ Component: (await import("./pages/Bonds")).BondLinkPage }), handle: { crumb: "New" } },
+      { path: "new", lazy: async () => ({ Component: (await import("./pages/Bonds")).BondLinkPage }), handle: { crumb: uiText("New") } },
       {
         path: ":id",
         lazy: async () => ({ Component: (await import("./pages/Bonds")).BondDetailPage }),
@@ -209,7 +214,7 @@ const protectedRoutes: RouteObject[] = [
   },
   {
     path: "integrations",
-    handle: { crumb: "Integrations" },
+    handle: { crumb: uiText("Integrations") },
     children: [
       {
         path: "linear",
@@ -219,17 +224,17 @@ const protectedRoutes: RouteObject[] = [
           {
             path: "publish",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsLinear")).IntegrationsLinearPublishPage }),
-            handle: { crumb: "Publish" },
+            handle: { crumb: uiText("Publish") },
           },
           {
             path: "install-pat",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsLinear")).IntegrationsLinearPatInstallPage }),
-            handle: { crumb: "Install PAT" },
+            handle: { crumb: uiText("Install PAT") },
           },
           {
             path: "installations/:id",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsLinear")).IntegrationsLinearWorkspace }),
-            handle: { crumb: "Workspace" },
+            handle: { crumb: uiText("Workspace") },
           },
         ],
       },
@@ -241,12 +246,12 @@ const protectedRoutes: RouteObject[] = [
           {
             path: "bind",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsGitHub")).IntegrationsGitHubBindPage }),
-            handle: { crumb: "Bind" },
+            handle: { crumb: uiText("Bind") },
           },
           {
             path: "installations/:id",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsGitHub")).IntegrationsGitHubWorkspace }),
-            handle: { crumb: "Workspace" },
+            handle: { crumb: uiText("Workspace") },
           },
         ],
       },
@@ -258,12 +263,12 @@ const protectedRoutes: RouteObject[] = [
           {
             path: "publish",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsSlack")).IntegrationsSlackPublishPage }),
-            handle: { crumb: "Publish" },
+            handle: { crumb: uiText("Publish") },
           },
           {
             path: "installations/:id",
             lazy: async () => ({ Component: (await import("./pages/IntegrationsSlack")).IntegrationsSlackWorkspace }),
-            handle: { crumb: "Workspace" },
+            handle: { crumb: uiText("Workspace") },
           },
         ],
       },

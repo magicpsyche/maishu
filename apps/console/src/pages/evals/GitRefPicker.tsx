@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { useEffect, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 
@@ -17,7 +18,7 @@ import { useI18n } from "../../i18n";
 import { useApiQuery } from "../../lib/useApiQuery";
 import { describeError } from "./shared";
 
-/** Repositories GET /v1/oma/evals/git-refs can list. */
+/** Repositories GET /v1/maishu/evals/git-refs can list. */
 const LISTABLE = /^https:\/\/(github\.com|huggingface\.co)\/[^/\s]+\/[^\s]+/u;
 
 interface GitRefPickerProps {
@@ -48,7 +49,7 @@ export function GitRefPicker({ url, value, onChange, fallbackRef, ...aria }: Git
 
   const listable = LISTABLE.test(debouncedUrl);
   const query = useApiQuery<EvalGitRefList>(
-    listable ? "/v1/oma/evals/git-refs" : null,
+    listable ? "/v1/maishu/evals/git-refs" : null,
     listable ? { url: debouncedUrl } : undefined,
     { retry: false, staleTime: 60_000 },
   );

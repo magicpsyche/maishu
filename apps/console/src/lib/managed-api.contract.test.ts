@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createManagedApiClient } from "./managed-api";
 
@@ -137,11 +138,11 @@ describe("Console Managed Agents client", () => {
           auth: { type: "cap_cli", cli_id: "gh", token: "gho_token" },
         }),
       }],
-      ["/v1/oma/vaults/vault%2F1/cap_cli_device_flow", {
+      ["/v1/maishu/vaults/vault%2F1/cap_cli_device_flow", {
         method: "POST",
         body: JSON.stringify({ cli_id: "gh" }),
       }],
-      ["/v1/oma/vaults/vault%2F1/cap_cli_device_flow/poll", {
+      ["/v1/maishu/vaults/vault%2F1/cap_cli_device_flow/poll", {
         method: "POST",
         body: JSON.stringify({ flow_token: "sealed" }),
       }],

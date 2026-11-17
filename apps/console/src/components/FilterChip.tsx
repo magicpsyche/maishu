@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, type ReactNode } from "react";
@@ -71,7 +73,7 @@ export function FilterChip({
               onClear();
             }}
             className="console-filter-chip-clear"
-            aria-label={`Clear ${label} filter`}
+            aria-label={uiText(`Clear ${label} filter`)}
           >
             <XIcon className="size-3" />
           </Button>

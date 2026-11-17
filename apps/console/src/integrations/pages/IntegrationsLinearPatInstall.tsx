@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useRef, useState } from "react";
@@ -73,7 +75,7 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
     e.preventDefault();
     setError(null);
     if (!agentId || !envId || !personaName.trim() || !pat.trim()) {
-      setError("All fields required");
+      setError(uiText("All fields required"));
       return;
     }
     setWorking(true);
@@ -101,15 +103,11 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
       <div className="console-integration-page console-integration-page--narrow">
         <header className="mb-8">
           <h1 className="font-display text-xl leading-tight font-semibold tracking-tight text-fg">
-            Install Linear via Personal API Key
-          </h1>
+             {uiText("Install Linear via Personal API Key")} </h1>
           <p className="mt-1.5 text-base text-fg-muted max-w-xl">
-            Paste a Linear PAT, pick the agent + environment to bind. Bot
-            actions in Linear will be attributed to the PAT owner. For full
-            agent identity (panel UX, dedicated bot user), use{" "}
+             {uiText("Paste a Linear PAT, pick the agent + environment to bind. Bot actions in Linear will be attributed to the PAT owner. For full agent identity (panel UX, dedicated bot user), use")}{" "}
             <a className="text-brand underline" href="/integrations/linear/publish">
-              Publish agent
-            </a>{" "}
+               {uiText("Publish agent")} </a>{" "}
             instead.
           </p>
         </header>
@@ -122,7 +120,7 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
 
         <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
           <div>
-            <Label className="block text-sm font-medium text-fg mb-1.5">Agent</Label>
+            <Label className="block text-sm font-medium text-fg mb-1.5">{uiText("Agent")}</Label>
             <Combobox<{ id: string; name: string }>
               value={agentId}
               onValueChange={(v) => setAgentId(v)}
@@ -134,12 +132,12 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
                 </span>
               )}
               getTextLabel={(a) => `${a.name} (${a.id})`}
-              placeholder="— pick an agent —"
+              placeholder={uiText("— pick an agent —")}
             />
           </div>
 
           <div>
-            <Label className="block text-sm font-medium text-fg mb-1.5">Environment</Label>
+            <Label className="block text-sm font-medium text-fg mb-1.5">{uiText("Environment")}</Label>
             <Combobox<{ id: string; name: string }>
               value={envId}
               onValueChange={(v) => setEnvId(v)}
@@ -151,17 +149,16 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
                 </span>
               )}
               getTextLabel={(e) => `${e.name} (${e.id})`}
-              placeholder="— pick an environment —"
+              placeholder={uiText("— pick an environment —")}
             />
           </div>
 
           <div>
             <Label className="block text-sm font-medium text-fg mb-1.5">
-              Persona display name
-            </Label>
+               {uiText("Persona display name")} </Label>
             <TextInput
               className="w-full px-3 py-2 rounded-md border border-border bg-bg text-base"
-              placeholder="e.g. Coder"
+              placeholder={uiText("e.g. Coder")}
               value={personaName}
               onChange={(e) => { personaEditedRef.current = true; setPersonaName(e.target.value); }}
             />
@@ -169,8 +166,7 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
 
           <div>
             <Label className="block text-sm font-medium text-fg mb-1.5">
-              Linear Personal API Key
-            </Label>
+               {uiText("Linear Personal API Key")} </Label>
             <SecretInput
               className="w-full px-3 py-2 rounded-md border border-border bg-bg text-base font-mono"
               placeholder="lin_api_…"
@@ -178,9 +174,7 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
               onChange={(e) => setPat(e.target.value)}
             />
             <p className="mt-1 text-sm text-fg-muted">
-              Generate at Linear → Settings → Security &amp; access → Personal API keys.
-              Stored encrypted in your tenant vault; not shared with agents directly.
-            </p>
+               {uiText("Generate at Linear → Settings → Security &amp; access → Personal API keys. Stored encrypted in your tenant vault; not shared with agents directly.")} </p>
           </div>
 
           <div className="flex items-center gap-3 pt-2">
@@ -189,14 +183,13 @@ export function IntegrationsLinearPatInstall({ loadAgents, loadEnvironments }: P
               disabled={working}
               className="px-4 py-2 rounded-md bg-brand text-brand-fg text-base font-medium disabled:opacity-50"
             >
-              {working ? "Installing…" : "Install"}
+              {working ? uiText("Installing…") : uiText("Install")}
             </Button>
             <a
               href="/integrations/linear"
               className="px-4 py-2 text-base text-fg-muted hover:text-fg"
             >
-              Cancel
-            </a>
+               {uiText("Cancel")} </a>
           </div>
         </form>
       </div>

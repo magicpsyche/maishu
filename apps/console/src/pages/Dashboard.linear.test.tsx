@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -7,7 +8,7 @@ import { Dashboard } from "./Dashboard";
 
 vi.mock("../lib/useApiQuery", () => ({
   useApiQuery: (path: string) =>
-    path === "/v1/oma/stats"
+    path === "/v1/maishu/stats"
       ? {
           data: {
             agents: 1,

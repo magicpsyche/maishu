@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import {
   BookOpenIcon,
@@ -40,9 +42,9 @@ import { useI18n, AVAILABLE_LOCALES } from "../i18n";
  * mirrors the brand row at the top.
  */
 const THEME_OPTIONS = [
-  { value: "light" as const, label: "Light", Icon: SunIcon },
-  { value: "dark" as const, label: "Dark", Icon: MoonIcon },
-  { value: "system" as const, label: "System", Icon: MonitorIcon },
+  { value: "light" as const, label: uiText("Light"), Icon: SunIcon },
+  { value: "dark" as const, label: uiText("Dark"), Icon: MoonIcon },
+  { value: "system" as const, label: uiText("System"), Icon: MonitorIcon },
 ];
 
 export function UserProfile() {
@@ -107,9 +109,7 @@ export function UserProfile() {
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <a
-              href="https://docs.openma.ai"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/help"
             >
               <BookOpenIcon className="size-4 opacity-80" />
               {t.profile.documentation}
@@ -120,8 +120,7 @@ export function UserProfile() {
         <DropdownMenuSeparator />
 
         <DropdownMenuLabel className="text-xs uppercase tracking-wider text-fg-subtle font-medium">
-          Language
-        </DropdownMenuLabel>
+           {uiText("Language")} </DropdownMenuLabel>
         <DropdownMenuGroup>
           {AVAILABLE_LOCALES.map(({ value, label, flag }) => {
             const active = locale === value;

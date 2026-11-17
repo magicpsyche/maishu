@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 // Shared status pill — used by both Linear and GitHub list/workspace pages.
 // The status string set here matches both providers' publication state machine
 // since they share the same vocabulary (live | pending_setup | awaiting_install
@@ -24,32 +26,32 @@ interface StatusPillProps {
 
 const MAP: Record<PublicationStatus, { label: string; cls: string; dot: string }> = {
   live: {
-    label: "Live",
+    label: uiText("Live"),
     cls: "text-success bg-success-subtle",
     dot: "bg-success",
   },
   pending_setup: {
-    label: "Pending setup",
+    label: uiText("Pending setup"),
     cls: "text-fg-muted bg-bg-surface",
     dot: "bg-fg-muted",
   },
   credentials_filled: {
-    label: "Credentials staged",
+    label: uiText("Credentials staged"),
     cls: "text-warning bg-warning-subtle",
     dot: "bg-warning",
   },
   awaiting_install: {
-    label: "Awaiting install",
+    label: uiText("Awaiting install"),
     cls: "text-warning bg-warning-subtle",
     dot: "bg-warning",
   },
   needs_reauth: {
-    label: "Needs reauth",
+    label: uiText("Needs reauth"),
     cls: "text-danger bg-danger-subtle",
     dot: "bg-danger",
   },
   unpublished: {
-    label: "Unpublished",
+    label: uiText("Unpublished"),
     cls: "text-fg-subtle bg-bg-surface",
     dot: "bg-fg-subtle",
   },

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -285,9 +287,9 @@ export function TraceView({
   const copyTranscript = async () => {
     try {
       await navigator.clipboard.writeText(transcriptText(p, filterActive ? (s) => stepMatches(s, filter) : undefined));
-      toast.success("Transcript copied");
+      toast.success(uiText("Transcript copied"));
     } catch {
-      toast.error("Could not copy transcript");
+      toast.error(uiText("Could not copy transcript"));
     }
   };
 
@@ -297,8 +299,7 @@ export function TraceView({
         {actions && <div className="px-4 sm:px-6 pt-3 flex flex-wrap justify-end gap-2">{actions}</div>}
         {notice}
         <div className="flex-1 flex items-center justify-center text-sm text-fg-subtle p-6 text-center">
-          No events yet — send a message to populate the trace.
-        </div>
+           {uiText("No events yet — send a message to populate the trace.")} </div>
         {footer}
       </div>
     );
@@ -314,8 +315,7 @@ export function TraceView({
         actions={
           <>
             <Button variant="outline" size="xs" onClick={() => void copyTranscript()}>
-              Copy transcript
-            </Button>
+               {uiText("Copy transcript")} </Button>
             {actions}
           </>
         }
@@ -362,7 +362,7 @@ export function TraceView({
           onToggleNode={(n) => setNodeOverrides((o) => ({ ...o, [n.key]: !nodeOpen(n) }))}
           onToggleGap={toggleGap}
         />
-        <aside aria-label="Event details" className="min-w-0 md:overflow-y-auto flex flex-col">
+        <aside aria-label={uiText("Event details")} className="min-w-0 md:overflow-y-auto flex flex-col">
           <Inspector
             p={p}
             selection={selection}
@@ -394,9 +394,9 @@ function compactionFacts(p: TraceProjection): TraceFact[] {
     orphans ? `${orphans} unpaired end` : null,
   ].filter(Boolean);
   return [
-    { label: "Compactions", value: parts.join(" · ") },
+    { label: uiText("Compactions"), value: parts.join(" · ") },
     {
-      label: "Compaction tokens in / out",
+      label: uiText("Compaction tokens in / out"),
       value: p.compactionTokens ? `${formatTokens(p.compactionTokens.input)} / ${formatTokens(p.compactionTokens.output)}` : "not reported",
     },
   ];
@@ -406,16 +406,16 @@ function TraceHeader({ p, facts, actions }: { p: TraceProjection; facts?: TraceF
   const last = p.turns[p.turns.length - 1];
   const status = last ? (last.turn.queued ? "queued" : last.turn.status) : "—";
   const items: TraceFact[] = [
-    { label: "Status", value: status },
-    { label: "Started", value: clockOrUnknown(p.startTs) },
-    { label: "Last activity", value: clockOrUnknown(p.endTs) },
-    { label: "Wall clock", value: p.startTs !== null && p.endTs !== null ? formatDuration(p.endTs - p.startTs) : "unknown" },
-    { label: "Model", value: p.models.length ? p.models.join(", ") : "not reported" },
-    { label: "Turns", value: p.turns.length },
-    { label: "Tool calls", value: p.toolCalls },
-    { label: "Errors", value: p.errors },
+    { label: uiText("Status"), value: status },
+    { label: uiText("Started"), value: clockOrUnknown(p.startTs) },
+    { label: uiText("Last activity"), value: clockOrUnknown(p.endTs) },
+    { label: uiText("Wall clock"), value: p.startTs !== null && p.endTs !== null ? formatDuration(p.endTs - p.startTs) : "unknown" },
+    { label: uiText("Model"), value: p.models.length ? p.models.join(", ") : "not reported" },
+    { label: uiText("Turns"), value: p.turns.length },
+    { label: uiText("Tool calls"), value: p.toolCalls },
+    { label: uiText("Errors"), value: p.errors },
     {
-      label: "Tokens in / out",
+      label: uiText("Tokens in / out"),
       value: p.tokens ? `${formatTokens(p.tokens.input)} / ${formatTokens(p.tokens.output)}` : "not reported",
     },
     ...compactionFacts(p),
@@ -423,7 +423,7 @@ function TraceHeader({ p, facts, actions }: { p: TraceProjection; facts?: TraceF
   ];
   return (
     <div className="px-4 sm:px-6 pt-3 pb-2 flex flex-wrap items-start gap-x-6 gap-y-2 min-w-0">
-      <dl role="region" aria-label="Trace summary" className="flex flex-wrap gap-x-6 gap-y-2 min-w-0 flex-1">
+      <dl role="region" aria-label={uiText("Trace summary")} className="flex flex-wrap gap-x-6 gap-y-2 min-w-0 flex-1">
         {items.map((f) => (
           <div key={f.label} className="min-w-0">
             <dt className="text-[11px] leading-4 text-fg-subtle">{f.label}</dt>
@@ -667,47 +667,44 @@ function Overview({
   const modeLabel = zoom.mode === "auto" ? "auto density" : zoom.mode === "fit" ? "full session" : `${(pxPerMs / fit).toFixed(pxPerMs / fit < 10 ? 1 : 0)}× zoom`;
 
   return (
-    <section aria-label="Session overview" className="px-4 sm:px-6 pt-1 pb-3 min-w-0 bg-bg-surface/30 border-t border-border">
+    <section aria-label={uiText("Session overview")} className="px-4 sm:px-6 pt-1 pb-3 min-w-0 bg-bg-surface/30 border-t border-border">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2 min-w-0">
         <Legend p={p} />
-        <div className="flex flex-wrap items-center gap-1" role="toolbar" aria-label="Overview zoom">
+        <div className="flex flex-wrap items-center gap-1" role="toolbar" aria-label={uiText("Overview zoom")}>
           <Button
             variant="outline"
             className={btn}
             onClick={fitSelection}
             disabled={!fitTarget || !scale}
-            title={fitTarget ? `Zoom the overview to the ${fitTarget.what}` : "Select an event or drag across the overview first"}
+            title={fitTarget ? `Zoom the overview to the ${fitTarget.what}` : uiText("Select an event or drag across the overview first")}
             aria-describedby={`${helpId}-fit`}
           >
-            Fit selection
-          </Button>
-          <span id={`${helpId}-fit`} className="sr-only">{fitTarget ? `Zooms to the ${fitTarget.what}` : "Nothing selected"}</span>
+             {uiText("Fit selection")} </Button>
+          <span id={`${helpId}-fit`} className="sr-only">{fitTarget ? `Zooms to the ${fitTarget.what}` : uiText("Nothing selected")}</span>
           <Button
             variant="outline"
             className={cn(btn, zoom.mode === "fit" && pressed)}
             onClick={fullSession}
-            aria-label="Reset to full session"
+            aria-label={uiText("Reset to full session")}
             aria-pressed={zoom.mode === "fit"}
-            title="Show the whole session (wall clock) and clear the brushed range. Collapsed idle gaps stay collapsed."
+            title={uiText("Show the whole session (wall clock) and clear the brushed range. Collapsed idle gaps stay collapsed.")}
           >
-            Full session
-          </Button>
-          <Button variant="outline" className={cn(btn, zoom.mode === "auto" && pressed)} onClick={autoDensity} aria-label="Auto-pick scale by event density" aria-pressed={zoom.mode === "auto"} title="Auto-pick scale by event density">
+             {uiText("Full session")} </Button>
+          <Button variant="outline" className={cn(btn, zoom.mode === "auto" && pressed)} onClick={autoDensity} aria-label={uiText("Auto-pick scale by event density")} aria-pressed={zoom.mode === "auto"} title={uiText("Auto-pick scale by event density")}>
             auto
           </Button>
-          <Button variant="outline" className={btn} onClick={() => zoomBy(0.5)} disabled={!scale || pxPerMs <= fit * 1.0001} aria-label="Zoom out" title="Zoom out">−</Button>
-          <Button variant="outline" className={btn} onClick={() => zoomBy(2)} disabled={!scale || pxPerMs >= Math.max(fit, bounds.maxPxPerMs) * 0.9999} aria-label="Zoom in" title="Zoom in">+</Button>
+          <Button variant="outline" className={btn} onClick={() => zoomBy(0.5)} disabled={!scale || pxPerMs <= fit * 1.0001} aria-label={uiText("Zoom out")} title={uiText("Zoom out")}>−</Button>
+          <Button variant="outline" className={btn} onClick={() => zoomBy(2)} disabled={!scale || pxPerMs >= Math.max(fit, bounds.maxPxPerMs) * 0.9999} aria-label={uiText("Zoom in")} title={uiText("Zoom in")}>+</Button>
           {idleGaps.length > 0 && (
-            <Button variant="outline" className={cn(btn, allIdleCollapsed && pressed)} onClick={onToggleAllIdle} aria-pressed={allIdleCollapsed} title="Collapsed idle gaps keep their marker and true duration">
-              {allIdleCollapsed ? "Restore idle gaps" : "Collapse idle gaps"}
+            <Button variant="outline" className={cn(btn, allIdleCollapsed && pressed)} onClick={onToggleAllIdle} aria-pressed={allIdleCollapsed} title={uiText("Collapsed idle gaps keep their marker and true duration")}>
+              {allIdleCollapsed ? uiText("Restore idle gaps") : uiText("Collapse idle gaps")}
             </Button>
           )}
         </div>
       </div>
       {!scale || !layout ? (
         <div className="text-xs text-fg-subtle py-4" role="note">
-          No timestamps in these events — the wall-clock overview needs them. Durations below show as unknown (—).
-        </div>
+           {uiText("No timestamps in these events — the wall-clock overview needs them. Durations below show as unknown (—).")} </div>
       ) : (
         <>
           <div
@@ -716,13 +713,12 @@ function Overview({
             onScroll={(e) => setScrollLeft(e.currentTarget.scrollLeft)}
             tabIndex={0}
             role="group"
-            aria-label="Session timeline"
+            aria-label={uiText("Session timeline")}
             aria-describedby={`${helpId}-keys`}
             onKeyDown={onChartKeyDown}
           >
             <span id={`${helpId}-keys`} className="sr-only">
-              Click a bar to select an event. Drag across empty space to select and zoom a time range. Keys: left and right arrows pan, plus and minus zoom, 0 resets to the full session.
-            </span>
+               {uiText("Click a bar to select an event. Drag across empty space to select and zoom a time range. Keys: left and right arrows pan, plus and minus zoom, 0 resets to the full session.")} </span>
             <div
               ref={chartRef}
               className="relative select-none cursor-crosshair"
@@ -775,8 +771,8 @@ function Overview({
                     selected={isSel("gap", g.gap.key)}
                     fill={idle ? "border border-border rounded-sm" : "border border-dashed border-warning/70 rounded-sm"}
                     fillStyle={idle ? { backgroundImage: HATCH } : undefined}
-                    aria-label={`Select ${gapLabel(g.gap)}${g.collapsed ? " (collapsed)" : ""}`}
-                    title={`${gapLabel(g.gap)}${g.collapsed ? " — collapsed; true duration kept" : ""}`}
+                    aria-label={`Select ${gapLabel(g.gap)}${g.collapsed ? " " + uiText("(collapsed)") : ""}`}
+                    title={`${gapLabel(g.gap)}${g.collapsed ? uiText("— collapsed; true duration kept") : ""}`}
                     data-gap-bar={g.gap.kind}
                     data-collapsed={g.collapsed ? "true" : undefined}
                     onClick={() => onSelect({ type: "gap", key: g.gap.key })}
@@ -795,8 +791,8 @@ function Overview({
                     selected={isSel("turn", b.turn.key)}
                     fill={errored ? "bg-danger/60" : "bg-info/70"}
                     fillStyle={b.openEnded ? { backgroundImage: STRIPES } : undefined}
-                    aria-label={`Select Turn ${b.turn.index + 1}`}
-                    title={`Turn ${b.turn.index + 1} · ${b.turn.turn.status}${b.turn.durationMs !== null ? ` · ${formatDuration(b.turn.durationMs)}` : ""}${b.openEnded ? " · no close event yet" : ""}`}
+                    aria-label={uiText(`Select Turn ${b.turn.index + 1}`)}
+                    title={`Turn ${b.turn.index + 1} · ${b.turn.turn.status}${b.turn.durationMs !== null ? ` · ${formatDuration(b.turn.durationMs)}` : ""}${b.openEnded ? uiText("· no close event yet") : ""}`}
                     onClick={() => onSelect({ type: "turn", key: b.turn.key })}
                     style={{ left: b.d0 * pxPerMs, width: Math.max(3, (b.d1 - b.d0) * pxPerMs), top: ROW0_TOP, height: BAR_H }}
                   />
@@ -809,7 +805,7 @@ function Overview({
                   fill={stepBarClass(b.step)}
                   fillStyle={b.openEnded ? { backgroundImage: STRIPES } : undefined}
                   aria-label={`Select ${b.step.label}${b.step.detail ? `: ${b.step.detail}` : ""}`}
-                  title={`${b.step.label} · ${stepDurationText(b.step)}${b.step.isError ? " · failed" : ""}${b.openEnded ? " · no end recorded" : ""}`}
+                  title={`${b.step.label} · ${stepDurationText(b.step)}${b.step.isError ? uiText("· failed") : ""}${b.openEnded ? uiText("· no end recorded") : ""}`}
                   data-step-bar={b.step.family}
                   data-failed={b.step.isError ? "true" : undefined}
                   onClick={() => onSelect({ type: "step", key: b.step.key })}
@@ -860,24 +856,21 @@ function Overview({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1.5 text-[11px] text-fg-subtle min-w-0" data-testid="overview-status">
             {visible && (
               <span className="font-mono tabular-nums" data-testid="overview-window">
-                {fmtRange(visible, tickStep || 1000)} · {formatDuration(Math.max(0, visible.endTs - visible.startTs))} wall clock
-              </span>
+                {fmtRange(visible, tickStep || 1000)} · {formatDuration(Math.max(0, visible.endTs - visible.startTs))}  {uiText("wall clock")} </span>
             )}
             <span className="font-mono tabular-nums" data-testid="overview-rate">{fmtRate(pxPerMs)}</span>
             <span data-testid="overview-mode">{modeLabel}</span>
             {collapsedIdle.length > 0 && (
               <span data-testid="overview-collapsed">
-                {collapsedIdle.length} idle gap{collapsedIdle.length === 1 ? "" : "s"} collapsed ·{" "}
-                {formatDuration(collapsedIdle.reduce((n, g) => n + (g.durationMs ?? 0), 0))} kept on markers
-              </span>
+                {collapsedIdle.length}  {uiText("idle gap")}{collapsedIdle.length === 1 ? "" : "s"}  {uiText("collapsed ·")}{" "}
+                {formatDuration(collapsedIdle.reduce((n, g) => n + (g.durationMs ?? 0), 0))}  {uiText("kept on markers")} </span>
             )}
             {range && (
               <span className="inline-flex items-center gap-1 rounded-full border border-info/50 bg-info-subtle/40 pl-2 text-info" data-testid="overview-range-chip">
-                <span className="font-mono tabular-nums">Range {fmtRange(range, range.endTs - range.startTs < 5_000 ? 100 : 1000)} · {formatDuration(range.endTs - range.startTs)}</span>
-                <Button variant="ghost" size="xs" className="h-5 px-1.5 text-[11px] text-info" onClick={() => zoomToWall(range)} title="Zoom to the brushed range">
-                  Zoom
-                </Button>
-                <Button variant="ghost" size="xs" className="h-5 px-1.5 text-[11px] text-info" onClick={() => onRangeChange(null)} aria-label="Clear brushed range">
+                <span className="font-mono tabular-nums">{uiText("Range")} {fmtRange(range, range.endTs - range.startTs < 5_000 ? 100 : 1000)} · {formatDuration(range.endTs - range.startTs)}</span>
+                <Button variant="ghost" size="xs" className="h-5 px-1.5 text-[11px] text-info" onClick={() => zoomToWall(range)} title={uiText("Zoom to the brushed range")}>
+                   {uiText("Zoom")} </Button>
+                <Button variant="ghost" size="xs" className="h-5 px-1.5 text-[11px] text-info" onClick={() => onRangeChange(null)} aria-label={uiText("Clear brushed range")}>
                   ×
                 </Button>
               </span>
@@ -895,21 +888,21 @@ function Legend({ p }: { p: TraceProjection }) {
   const hasBoundary = p.steps.some((s) => s.family === "compaction" && s.instant);
   // Core families are always explained; the rest only when present.
   const items: Array<{ label: string; className: string; style?: CSSProperties; when?: boolean }> = [
-    { label: "Turn", className: "bg-info/70" },
-    { label: "Generation", className: FAMILY_BAR.model },
-    { label: "Tool", className: FAMILY_BAR.tool },
-    { label: "MCP tool", className: FAMILY_BAR.mcp, when: has("mcp") },
-    { label: "Custom tool", className: FAMILY_BAR.custom_tool, when: has("custom_tool") },
-    { label: "Schedule wait", className: FAMILY_BAR.schedule },
-    { label: "Compaction", className: FAMILY_BAR.compaction },
-    { label: "Context boundary", className: "w-2 h-2 rounded-[1px] rotate-45 bg-trace-compaction", when: hasBoundary },
-    { label: "Failed", className: "bg-danger/80" },
-    { label: "No end yet", className: "bg-fg-subtle/60", style: { backgroundImage: STRIPES } },
-    { label: "Idle gap", className: "border border-border", style: { backgroundImage: HATCH } },
-    { label: "Unknown gap", className: "border border-dashed border-warning/70" },
+    { label: uiText("Turn"), className: "bg-info/70" },
+    { label: uiText("Generation"), className: FAMILY_BAR.model },
+    { label: uiText("Tool"), className: FAMILY_BAR.tool },
+    { label: uiText("MCP tool"), className: FAMILY_BAR.mcp, when: has("mcp") },
+    { label: uiText("Custom tool"), className: FAMILY_BAR.custom_tool, when: has("custom_tool") },
+    { label: uiText("Schedule wait"), className: FAMILY_BAR.schedule },
+    { label: uiText("Compaction"), className: FAMILY_BAR.compaction },
+    { label: uiText("Context boundary"), className: "w-2 h-2 rounded-[1px] rotate-45 bg-trace-compaction", when: hasBoundary },
+    { label: uiText("Failed"), className: "bg-danger/80" },
+    { label: uiText("No end yet"), className: "bg-fg-subtle/60", style: { backgroundImage: STRIPES } },
+    { label: uiText("Idle gap"), className: "border border-border", style: { backgroundImage: HATCH } },
+    { label: uiText("Unknown gap"), className: "border border-dashed border-warning/70" },
   ];
   return (
-    <ul aria-label="Legend" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-fg-muted min-w-0">
+    <ul aria-label={uiText("Legend")} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-fg-muted min-w-0">
       {items.filter((it) => it.when !== false).map((it) => (
         <li key={it.label} className="inline-flex items-center gap-1.5">
           <span aria-hidden className={cn(swatch, it.className)} style={it.style} />
@@ -950,7 +943,7 @@ function FilterBar({
   };
   return (
     <div className="px-4 sm:px-6 py-2 flex flex-wrap items-center gap-2 min-w-0 border-t border-border">
-      <div role="group" aria-label="Kind filter" className="flex flex-wrap gap-1">
+      <div role="group" aria-label={uiText("Kind filter")} className="flex flex-wrap gap-1">
         {STEP_FILTER_KINDS.filter((k) => k !== "compaction" || hasCompaction || filter.kinds.has(k)).map((k) => (
           <Button key={k} variant="outline" size="xs" className={chip(filter.kinds.has(k))} aria-pressed={filter.kinds.has(k)} onClick={() => toggleKind(k)}>
             {FILTER_LABEL[k]}
@@ -958,7 +951,7 @@ function FilterBar({
         ))}
       </div>
       {tools.length > 0 && (
-        <div role="group" aria-label="Tools filter" className="flex flex-wrap gap-1">
+        <div role="group" aria-label={uiText("Tools filter")} className="flex flex-wrap gap-1">
           {tools.slice(0, 8).map((t) => (
             <Button
               key={t.name}
@@ -975,8 +968,8 @@ function FilterBar({
       )}
       <Input
         type="search"
-        aria-label="Search steps"
-        placeholder="Search input / output…"
+        aria-label={uiText("Search steps")}
+        placeholder={uiText("Search input / output…")}
         value={filter.query}
         onChange={(e) => setFilter({ ...filter, query: e.target.value })}
         className="h-7 w-full sm:w-56 text-xs md:text-xs"
@@ -984,11 +977,10 @@ function FilterBar({
       <span className="text-[11px] text-fg-subtle font-mono tabular-nums">{visible === total ? `${total} steps` : `${visible} of ${total} steps`}</span>
       {hiddenLifecycle > 0 && (
         <span className="text-[11px] text-fg-subtle" role="note" data-testid="hidden-lifecycle">
-          {hiddenLifecycle} lifecycle marker{hiddenLifecycle === 1 ? "" : "s"} (status, threads, warnings) hidden by the kind filter
-        </span>
+          {hiddenLifecycle}  {uiText("lifecycle marker")}{hiddenLifecycle === 1 ? "" : "s"}  {uiText("(status, threads, warnings) hidden by the kind filter")} </span>
       )}
       {isFilterActive(filter) && (
-        <Button variant="ghost" size="xs" onClick={() => setFilter(EMPTY_FILTER)}>Clear</Button>
+        <Button variant="ghost" size="xs" onClick={() => setFilter(EMPTY_FILTER)}>{uiText("Clear")}</Button>
       )}
     </div>
   );
@@ -1105,11 +1097,11 @@ function TraceTree({
             <span className="truncate text-fg shrink-0 max-w-[60%]">{s.label}</span>
             {s.detail && <span className="truncate text-fg-subtle hidden sm:inline min-w-0">{s.detail}</span>}
             <span className="ml-auto flex items-center gap-1.5 shrink-0">
-              {s.isError && <Badge tone="danger">Failed</Badge>}
+              {s.isError && <Badge tone="danger">{uiText("Failed")}</Badge>}
               {s.pending && <Badge tone="warning">pending</Badge>}
               {s.orphan && <Badge tone="muted">{s.compaction ? "unpaired" : "orphan"}</Badge>}
-              {s.startTs === null && <Badge tone="muted">no time</Badge>}
-              <span className="font-mono tabular-nums text-fg-subtle w-14 text-right" title={s.durationMs === null && !s.instant ? "duration unknown" : undefined}>
+              {s.startTs === null && <Badge tone="muted">{uiText("no time")}</Badge>}
+              <span className="font-mono tabular-nums text-fg-subtle w-14 text-right" title={s.durationMs === null && !s.instant ? uiText("duration unknown") : undefined}>
                 {stepDurationText(s)}
               </span>
             </span>
@@ -1134,7 +1126,7 @@ function TraceTree({
             style={indent}
             onClick={() => onSelect({ type: "node", key: n.key })}
           >
-            <Chevron expanded={open} onClick={toggle} title={`${open ? "Collapse" : "Expand"} ${label}`} />
+            <Chevron expanded={open} onClick={toggle} title={`${open ? uiText("Collapse") : uiText("Expand")} ${label}`} />
             <span className={`w-2 h-2 rounded-full shrink-0 ${n.type === "agent" ? "bg-info" : n.errors ? "bg-danger" : FAMILY_DOT.tool}`} />
             <span className="truncate text-fg">{label}</span>
             {n.type === "agent" && n.agentName && <span className="truncate text-fg-subtle font-mono hidden sm:inline">{n.threadId}</span>}
@@ -1173,8 +1165,8 @@ function TraceTree({
         onClick={() => onSelect({ type: "turn", key: t.key })}
         title={`Turn ${t.index + 1} · ${turnTriggerLabel(t)} · ${statusText}`}
       >
-        <Chevron expanded={expanded} onClick={toggle} title={expanded ? "Collapse" : "Expand"} />
-        <span className="text-fg shrink-0">Turn {t.index + 1}</span>
+        <Chevron expanded={expanded} onClick={toggle} title={expanded ? uiText("Collapse") : uiText("Expand")} />
+        <span className="text-fg shrink-0">{uiText("Turn")} {t.index + 1}</span>
         <TurnStatusIcon t={t} />
         <span className="sr-only">{statusText}</span>
         {t.turn.queued && (
@@ -1190,7 +1182,7 @@ function TraceTree({
         <span className="ml-auto flex items-center gap-1.5 shrink-0 font-normal">
           {errored && <Badge tone="danger">{t.turn.status}</Badge>}
           {!errored && t.errors > 0 && <Badge tone="danger">{t.errors} failed</Badge>}
-          <span className="font-mono tabular-nums text-fg-subtle w-14 text-right" title={t.closed ? undefined : "no close event yet"}>
+          <span className="font-mono tabular-nums text-fg-subtle w-14 text-right" title={t.closed ? undefined : uiText("no close event yet")}>
             {t.durationMs === null ? "—" : formatDuration(t.durationMs)}
           </span>
         </span>
@@ -1201,7 +1193,7 @@ function TraceTree({
       treeByTurn[i]!.length > 0 ? (
         <div role="group">{renderNodes(treeByTurn[i]!, 1)}</div>
       ) : (
-        <div className="pl-12 py-1.5 text-xs text-fg-subtle">{filterActive ? "No steps match the current filters." : "No steps."}</div>
+        <div className="pl-12 py-1.5 text-xs text-fg-subtle">{filterActive ? uiText("No steps match the current filters.") : uiText("No steps.")}</div>
       )
     ) : null;
     if (gap) order.push({ sel: { type: "gap", key: gap.key } });
@@ -1247,9 +1239,9 @@ function TraceTree({
   }, [selection]);
 
   return (
-    <nav aria-label="Trace tree" className="min-w-0 md:overflow-y-auto border-b md:border-b-0 md:border-r border-border py-1">
-      {noMatches && <p className="px-3 py-2 text-xs text-fg-subtle">No steps match the current filters.</p>}
-      <div ref={treeRef} role="tree" aria-label="Trace tree" onKeyDown={onKeyDown}>
+    <nav aria-label={uiText("Trace tree")} className="min-w-0 md:overflow-y-auto border-b md:border-b-0 md:border-r border-border py-1">
+      {noMatches && <p className="px-3 py-2 text-xs text-fg-subtle">{uiText("No steps match the current filters.")}</p>}
+      <div ref={treeRef} role="tree" aria-label={uiText("Trace tree")} onKeyDown={onKeyDown}>
         {rows}
       </div>
     </nav>
@@ -1293,7 +1285,7 @@ function GapRow({
       <div className={rule} />
       <span className="truncate">
         {idle ? `↓ ${label}` : `? ${label} · not classified as idle`}
-        {collapsed && " · collapsed"}
+        {collapsed && <> {uiText("· collapsed")}</>}
       </span>
       {idle && (
         <Button
@@ -1305,10 +1297,10 @@ function GapRow({
           }}
           aria-pressed={collapsed}
           aria-label={collapsed ? `Restore full ${label} gap` : `Collapse ${label} gap`}
-          title={collapsed ? "Restore the full wall-clock gap in the overview" : "Collapse this gap in the overview (duration stays on the marker)"}
+          title={collapsed ? uiText("Restore the full wall-clock gap in the overview") : uiText("Collapse this gap in the overview (duration stays on the marker)")}
           className="h-5 px-1.5 text-[10px] text-fg-muted font-sans font-normal"
         >
-          {collapsed ? "Restore" : "Collapse"}
+          {collapsed ? uiText("Restore") : uiText("Collapse")}
         </Button>
       )}
       <div className={rule} />
@@ -1378,7 +1370,7 @@ function Inspector({
         <>
           <StepDot s={s} />
           <span className="truncate">{s.label}</span>
-          {s.isError && <Badge tone="danger">Failed</Badge>}
+          {s.isError && <Badge tone="danger">{uiText("Failed")}</Badge>}
           {s.pending && <Badge tone="warning">pending</Badge>}
           {s.orphan && <Badge tone="muted">{s.compaction ? "unpaired" : "orphan"}</Badge>}
           <span className="ml-auto pl-2 font-mono tabular-nums text-xs font-normal text-fg-subtle shrink-0">{stepDurationText(s)}</span>
@@ -1389,13 +1381,13 @@ function Inspector({
   } else if (selection?.type === "turn") {
     const t = p.turns.find((x) => x.key === selection.key);
     if (t) {
-      title = <span>Turn {t.index + 1}</span>;
+      title = <span>{uiText("Turn")} {t.index + 1}</span>;
       body = <TurnDetails t={t} />;
     }
   } else if (selection?.type === "gap") {
     const g = p.gaps.find((x) => x.key === selection.key);
     if (g) {
-      title = <span>{g.kind === "idle" ? "Idle between turns" : "Unknown interval"}</span>;
+      title = <span>{g.kind === "idle" ? uiText("Idle between turns") : uiText("Unknown interval")}</span>;
       body = <GapDetails g={g} collapsed={collapsedGaps.has(g.key)} onToggle={() => onToggleGap(g.key)} />;
     }
   } else if (selection?.type === "node") {
@@ -1407,7 +1399,7 @@ function Inspector({
         ["Started", clockOrUnknown(n.startTs)],
         ["Ended", clockOrUnknown(n.endTs)],
         ["Span", n.durationMs === null ? "unknown" : formatDuration(n.durationMs)],
-        ["Turn", `Turn ${hit.turn.index + 1}`],
+        ["Turn", uiText(`Turn ${hit.turn.index + 1}`)],
       ];
       if (n.type === "agent") {
         rows.push(["Thread", n.threadId], ["Parent thread", n.parentThreadId ?? "not reported"]);
@@ -1415,8 +1407,8 @@ function Inspector({
       rows.push(["Failed", n.errors]);
       body = (
         <>
-          <Section title="Timing"><Facts rows={rows} /></Section>
-          <Section title="Steps">
+          <Section title={uiText("Timing")}><Facts rows={rows} /></Section>
+          <Section title={uiText("Steps")}>
             <ul className="flex flex-col gap-1">
               {nodeSteps(n).map((s) => (
                 <li key={s.key}>
@@ -1438,25 +1430,23 @@ function Inspector({
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16 text-sm text-fg-muted">
         <span aria-hidden className="w-7 h-7 rounded-full border-2 border-dashed border-fg-subtle" />
-        Select an event to view details
-      </div>
+         {uiText("Select an event to view details")} </div>
     );
   }
   return (
     <div className="flex flex-col min-w-0" data-testid="trace-inspector">
       <div className="sticky top-0 z-10 px-4 py-2 border-b border-border border-l-2 border-l-info bg-bg-surface/95 backdrop-blur-sm min-w-0" data-testid="inspector-header">
         <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-wide text-fg-subtle">
-          <span>Event details</span>
+          <span>{uiText("Event details")}</span>
           <Button
             variant="ghost"
             size="xs"
             onClick={onClose}
-            aria-label="Close details"
-            title="Close event details panel; session status remains"
+            aria-label={uiText("Close details")}
+            title={uiText("Close event details panel; session status remains")}
             className="h-6 px-1.5 text-xs normal-case tracking-normal text-fg-subtle hover:text-fg"
           >
-            Close
-          </Button>
+             {uiText("Close")} </Button>
         </div>
         <div className="mt-1 flex items-center gap-2 text-sm font-medium min-w-0">{title}</div>
       </div>
@@ -1480,7 +1470,7 @@ function StepDetails({ s, turn }: { s: TraceStep; turn: TraceTurn }) {
     ["Duration", s.instant ? "instant" : s.durationMs === null ? "unknown" : formatDuration(s.durationMs)],
   ];
   if (s.ttftMs !== undefined) timing.push(["TTFT", formatDuration(s.ttftMs)]);
-  timing.push(["Turn", `Turn ${turn.index + 1}`]);
+  timing.push(["Turn", uiText(`Turn ${turn.index + 1}`)]);
   if (s.threadId) timing.push(["Thread", s.threadId]);
 
   const ids: Array<[string, ReactNode]> = [];
@@ -1500,8 +1490,8 @@ function StepDetails({ s, turn }: { s: TraceStep; turn: TraceTurn }) {
 
   return (
     <>
-      <Section title="Timing"><Facts rows={timing} /></Section>
-      {s.kind === "model" && <Section title="Usage"><Facts rows={usageRows} /></Section>}
+      <Section title={uiText("Timing")}><Facts rows={timing} /></Section>
+      {s.kind === "model" && <Section title={uiText("Usage")}><Facts rows={usageRows} /></Section>}
       {s.kind === "tool" && s.input !== undefined && (
         diff ? (
           <Section title={`Edit${diff.path ? ` · ${diff.path}` : ""}`} testId="step-diff">
@@ -1512,32 +1502,32 @@ function StepDetails({ s, turn }: { s: TraceStep; turn: TraceTurn }) {
             </pre>
           </Section>
         ) : (
-          <Section title="Input"><Pre>{stringifyCapped(s.input)}</Pre></Section>
+          <Section title={uiText("Input")}><Pre>{stringifyCapped(s.input)}</Pre></Section>
         )
       )}
       {s.kind === "tool" && (
         s.output !== undefined ? (
-          <Section title={s.isError ? "Output (error)" : "Output"}>
-            <Pre tone={s.isError ? "error" : undefined}>{s.output === "" ? "(empty)" : stringifyCapped(s.output)}</Pre>
+          <Section title={s.isError ? uiText("Output (error)") : uiText("Output")}>
+            <Pre tone={s.isError ? "error" : undefined}>{s.output === "" ? uiText("(empty)") : stringifyCapped(s.output)}</Pre>
           </Section>
         ) : s.pending ? (
-          <Section title="Output"><p className="text-xs text-fg-subtle">No result recorded for this call.</p></Section>
+          <Section title={uiText("Output")}><p className="text-xs text-fg-subtle">{uiText("No result recorded for this call.")}</p></Section>
         ) : null
       )}
       {s.compaction && <CompactionDetails s={s} />}
       {s.family === "warn" && <WarningDetails s={s} />}
       {s.text !== undefined && s.kind !== "tool" && !s.compaction && (
-        <Section title={s.kind === "thinking" ? "Thinking" : "Message"}><Pre>{s.text || "(empty)"}</Pre></Section>
+        <Section title={s.kind === "thinking" ? uiText("Thinking") : uiText("Message")}><Pre>{s.text || uiText("(empty)")}</Pre></Section>
       )}
       {s.errorText && s.kind !== "tool" && (
-        <Section title="Error"><Pre tone="error">{s.errorText}</Pre></Section>
+        <Section title={uiText("Error")}><Pre tone="error">{s.errorText}</Pre></Section>
       )}
       {s.detail && s.kind === "lifecycle" && !s.compaction && s.family !== "warn" && (
-        <Section title="Detail"><p className="text-xs text-fg break-words">{s.detail}</p></Section>
+        <Section title={uiText("Detail")}><p className="text-xs text-fg break-words">{s.detail}</p></Section>
       )}
-      <Section title="Identifiers"><Facts rows={ids} /></Section>
+      <Section title={uiText("Identifiers")}><Facts rows={ids} /></Section>
       <details className="text-xs">
-        <summary className="cursor-pointer text-fg-subtle">Source events ({s.events.length})</summary>
+        <summary className="cursor-pointer text-fg-subtle">{uiText("Source events (")}{s.events.length})</summary>
         <div className="mt-2 flex flex-col gap-2">
           {s.events.map((ev: Event, i) => (
             <div key={i} className="border border-border/60 rounded min-w-0">
@@ -1560,7 +1550,7 @@ const COMPACTION_KIND: Record<NonNullable<TraceStep["compaction"]>["role"], stri
 /** Compaction fields exactly as reported; missing ones say so. */
 function CompactionDetails({ s }: { s: TraceStep }) {
   const c = s.compaction!;
-  const NR = <span className="text-fg-subtle">not reported</span>;
+  const NR = <span className="text-fg-subtle">{uiText("not reported")}</span>;
   const rows: Array<[string, ReactNode]> = [["Kind", COMPACTION_KIND[c.role]]];
   if (c.role === "boundary") {
     rows.push(
@@ -1576,15 +1566,15 @@ function CompactionDetails({ s }: { s: TraceStep }) {
       rows.push(["Input tokens", s.usage.input_tokens], ["Output tokens", s.usage.output_tokens]);
       if (s.usage.cache_read_input_tokens !== undefined) rows.push(["Cache read", s.usage.cache_read_input_tokens]);
       if (s.usage.cache_creation_input_tokens !== undefined) rows.push(["Cache write", s.usage.cache_creation_input_tokens]);
-    } else rows.push(["Usage", s.pending ? <span className="text-fg-subtle">pending — no end event recorded</span> : NR]);
+    } else rows.push(["Usage", s.pending ? <span className="text-fg-subtle">{uiText("pending — no end event recorded")}</span> : NR]);
     rows.push(["Summary length", c.finalTextLength !== undefined ? `${c.finalTextLength} chars` : NR]);
   }
   return (
     <>
-      <Section title="Compaction" testId="compaction-details"><Facts rows={rows} /></Section>
+      <Section title={uiText("Compaction")} testId="compaction-details"><Facts rows={rows} /></Section>
       {c.role === "boundary" && (
-        <Section title="Summary">
-          {c.summary ? <Pre>{c.summary}</Pre> : <p className="text-xs text-fg-subtle">Summary not reported on this event.</p>}
+        <Section title={uiText("Summary")}>
+          {c.summary ? <Pre>{c.summary}</Pre> : <p className="text-xs text-fg-subtle">{uiText("Summary not reported on this event.")}</p>}
         </Section>
       )}
     </>
@@ -1603,8 +1593,8 @@ function WarningDetails({ s }: { s: TraceStep }) {
   if (source === CONTEXT_REASSEMBLED_SOURCE) rows.push(["Related to", "compaction — context re-assembled after a boundary (session.warning, not a summarize span)"]);
   return (
     <>
-      <Section title="Warning"><Facts rows={rows} /></Section>
-      {details !== undefined && details !== null && <Section title="Warning details"><Pre>{stringifyCapped(details)}</Pre></Section>}
+      <Section title={uiText("Warning")}><Facts rows={rows} /></Section>
+      {details !== undefined && details !== null && <Section title={uiText("Warning details")}><Pre>{stringifyCapped(details)}</Pre></Section>}
     </>
   );
 }
@@ -1612,26 +1602,26 @@ function WarningDetails({ s }: { s: TraceStep }) {
 function TurnDetails({ t }: { t: TraceTurn }) {
   return (
     <>
-      <Section title="Trigger">
+      <Section title={uiText("Trigger")}>
         <Facts rows={[
           ["Kind", turnTriggerLabel(t)],
           ["Status", t.turn.queued ? "queued" : t.turn.status],
           ["Message", t.triggerText ?? "—"],
         ]} />
       </Section>
-      <Section title="Timing">
+      <Section title={uiText("Timing")}>
         <Facts rows={[
           ["Started", clockOrUnknown(t.startTs)],
           ["Ended", t.closed ? clockOrUnknown(t.endTs) : "open — no status_idle / terminated / error yet"],
           ["Duration", t.durationMs === null ? "unknown" : `${formatDuration(t.durationMs)}${t.closed ? "" : " so far"}`],
         ]} />
       </Section>
-      <Section title="Work">
+      <Section title={uiText("Work")}>
         <Facts rows={[
           ["Steps", t.steps.length],
           ["Tool calls", t.toolCalls],
           ["Failed", t.errors],
-          ["Tokens in / out", t.tokens ? `${t.tokens.input} / ${t.tokens.output}` : "not reported"],
+          [uiText("Tokens in / out"), t.tokens ? `${t.tokens.input} / ${t.tokens.output}` : uiText("not reported")],
           ["Events", t.turn.events.length],
         ]} />
       </Section>
@@ -1647,8 +1637,8 @@ function GapDetails({ g, collapsed, onToggle }: { g: TraceGap; collapsed: boolea
   if (g.scheduledWakeup) cls.push(["Next trigger", "scheduled wakeup"]);
   return (
     <>
-      <Section title="Classification"><Facts rows={cls} /></Section>
-      <Section title="Timing">
+      <Section title={uiText("Classification")}><Facts rows={cls} /></Section>
+      <Section title={uiText("Timing")}>
         <Facts rows={[
           ["From", clockOrUnknown(g.startTs)],
           ["To", clockOrUnknown(g.endTs)],
@@ -1658,11 +1648,10 @@ function GapDetails({ g, collapsed, onToggle }: { g: TraceGap; collapsed: boolea
       {g.kind === "idle" && (
         <div className="flex flex-col gap-2">
           <Button variant="outline" size="xs" onClick={onToggle} className="self-start">
-            {collapsed ? "Restore full wall-clock gap" : "Collapse gap in overview"}
+            {collapsed ? uiText("Restore full wall-clock gap") : uiText("Collapse gap in overview")}
           </Button>
           <p className="text-[11px] text-fg-subtle">
-            Collapsing only shrinks this gap on the overview axis; the marker keeps its true duration.
-          </p>
+             {uiText("Collapsing only shrinks this gap on the overview axis; the marker keeps its true duration.")} </p>
         </div>
       )}
     </>

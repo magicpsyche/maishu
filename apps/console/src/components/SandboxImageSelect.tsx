@@ -1,7 +1,9 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useApiQuery } from "../lib/useApiQuery";
 import { Select, SelectOption } from "./Select";
 
-/** One entry of GET /v1/oma/sandbox_images. Provider references are never
+/** One entry of GET /v1/maishu/sandbox_images. Provider references are never
  * exposed; the Console only ever submits the alias. */
 export interface SandboxImageOption {
   alias: string;
@@ -21,7 +23,7 @@ export const DEFAULT_SANDBOX_IMAGE = "__default__";
  * (silent 404) or with an empty catalog yields `[]`, which hides the selector.
  */
 export function useSandboxImages(): SandboxImageOption[] {
-  const { data } = useApiQuery<SandboxImageListResponse>("/v1/oma/sandbox_images", undefined, {
+  const { data } = useApiQuery<SandboxImageListResponse>("/v1/maishu/sandbox_images", undefined, {
     staleTime: 5 * 60_000,
     retry: false,
   });
@@ -57,8 +59,8 @@ export function SandboxImageSelect({
   const missing = value !== DEFAULT_SANDBOX_IMAGE && selected === undefined;
   return (
     <div>
-      <Select id={id} value={value} onValueChange={onValueChange} placeholder="Sandbox image">
-        <SelectOption value={DEFAULT_SANDBOX_IMAGE}>Default image</SelectOption>
+      <Select id={id} value={value} onValueChange={onValueChange} placeholder={uiText("Sandbox image")}>
+        <SelectOption value={DEFAULT_SANDBOX_IMAGE}>{uiText("Default image")}</SelectOption>
         {images.map((image) => (
           <SelectOption key={image.alias} value={image.alias}>{image.label}</SelectOption>
         ))}
@@ -68,8 +70,8 @@ export function SandboxImageSelect({
       </Select>
       <p className="text-xs text-fg-subtle mt-1">
         {missing
-          ? "This image is no longer offered by the operator; sessions will fail until you pick another."
-          : selected?.description ?? "Pre-built image sandboxes start from. Packages below install on top of it."}
+          ? uiText("This image is no longer offered by the operator; sessions will fail until you pick another.")
+          : selected?.description ?? uiText("Pre-built image sandboxes start from. Packages below install on top of it.")}
       </p>
     </div>
   );

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { unzipSync } from "fflate";
 
 function ownedArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -18,7 +20,7 @@ export async function extractManagedSkillFiles(zip: File): Promise<File[]> {
     .map(([path, bytes]) => new File([ownedArrayBuffer(bytes)], path));
 
   if (files.length === 0) {
-    throw new Error("The skill archive does not contain any files");
+    throw new Error(uiText("The skill archive does not contain any files"));
   }
   return files;
 }

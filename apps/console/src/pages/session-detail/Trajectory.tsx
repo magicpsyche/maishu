@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   rewardHeadline,
@@ -37,7 +39,7 @@ export function TrajectoryOutcomeChip({
   return (
     <StatusPill
       status={tone}
-      label={`Outcome: ${trajectory.outcome}`}
+      label={uiText(`Outcome: ${trajectory.outcome}`)}
     />
   );
 }
@@ -59,13 +61,13 @@ export function TrajectoryRewardChip({
   // with the outcome chip next to it (success = same green, failure = red).
   const tone = isPass ? "completed" : isFail ? "errored" : "neutral";
   const titleParts = [
-    `Reward: ${r.final_reward.toFixed(4)}`,
+    uiText(`Reward: ${r.final_reward.toFixed(4)}`),
     r.verifier_id ? `verifier: ${r.verifier_id}` : null,
     r.computed_at ? `computed: ${new Date(r.computed_at).toLocaleString()}` : null,
   ].filter(Boolean) as string[];
   return (
     <span title={titleParts.join(" · ")}>
-      <StatusPill status={tone} label={`Reward: ${headline}`} />
+      <StatusPill status={tone} label={uiText(`Reward: ${headline}`)} />
     </span>
   );
 }
@@ -82,7 +84,7 @@ export function trajectoryNeedsFetch(trajectory: TrajectoryState): boolean {
 export type TrajectoryState = Trajectory | "loading" | "error" | "unavailable" | undefined;
 
 /**
- * On-demand loader for `GET /v1/oma/sessions/:id/trajectory` (OpenMA
+ * On-demand loader for `GET /v1/maishu/sessions/:id/trajectory` (OpenMA
  * product route, so plain `api()` rather than `managedApi`). A 404 means this
  * deployment has no trajectory envelope for the managed session; it becomes
  * a silent unavailable state because Trace can still render the event history.
@@ -104,7 +106,7 @@ export function useTrajectoryLoader(sessionId: string | undefined) {
     const mine = ++ticket.current;
     setTrajectory("loading");
     try {
-      const t = await api<Trajectory>(`/v1/oma/sessions/${encodeURIComponent(sessionId)}/trajectory`);
+      const t = await api<Trajectory>(`/v1/maishu/sessions/${encodeURIComponent(sessionId)}/trajectory`);
       if (ticket.current === mine) setTrajectory(t);
     } catch (error) {
       if (ticket.current !== mine) return;
@@ -135,10 +137,10 @@ function RawJsonDisclosure({ json }: { json: string }) {
   return (
     <details
       className="mx-4 my-3 text-xs"
-      aria-label="Raw JSON"
+      aria-label={uiText("Raw JSON")}
       onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
     >
-      <summary className="cursor-pointer text-fg-subtle">Raw JSON · oma.trajectory.v1</summary>
+      <summary className="cursor-pointer text-fg-subtle">{uiText("Raw JSON · oma.trajectory.v1")}</summary>
       {open && (
         <pre className="mt-2 font-mono text-xs bg-bg-surface rounded px-3 py-2 overflow-auto max-h-[40vh] text-fg whitespace-pre-wrap break-words">
           {json}
@@ -176,21 +178,20 @@ export function SessionTrace({
 
   const notice =
     trajectory === "loading" ? (
-      <div className="px-4 sm:px-6 py-1.5 text-xs text-fg-subtle" role="status">Loading trajectory envelope…</div>
+      <div className="px-4 sm:px-6 py-1.5 text-xs text-fg-subtle" role="status">{uiText("Loading trajectory envelope…")}</div>
     ) : trajectory === "error" ? (
       <div className="px-4 sm:px-6 py-1.5 text-xs text-danger flex flex-wrap items-center gap-2" role="alert">
         <span>
-          Trajectory unavailable. The session may not have any events yet, or the sandbox worker is unreachable.
-        </span>
-        {onRetry && <Button variant="outline" size="xs" onClick={onRetry}>Retry</Button>}
+           {uiText("Trajectory unavailable. The session may not have any events yet, or the sandbox worker is unreachable.")} </span>
+        {onRetry && <Button variant="outline" size="xs" onClick={onRetry}>{uiText("Retry")}</Button>}
       </div>
     ) : null;
 
   const facts = ready
     ? [
-        { label: "Trajectory", value: trajectory.trajectory_id },
-        { label: "Outcome", value: trajectory.outcome },
-        ...(trajectory.reward ? [{ label: "Reward", value: rewardHeadline(trajectory.reward) }] : []),
+        { label: uiText("Trajectory"), value: trajectory.trajectory_id },
+        { label: uiText("Outcome"), value: trajectory.outcome },
+        ...(trajectory.reward ? [{ label: uiText("Reward"), value: rewardHeadline(trajectory.reward) }] : []),
       ]
     : undefined;
 
@@ -205,10 +206,9 @@ export function SessionTrace({
           size="xs"
           onClick={() => ready && downloadTrajectoryJson(sessionId, json)}
           disabled={!ready}
-          title={ready ? "Download the oma.trajectory.v1 envelope" : "Available once the trajectory envelope loads"}
+          title={ready ? uiText("Download the oma.trajectory.v1 envelope") : uiText("Available once the trajectory envelope loads")}
         >
-          Download JSON
-        </Button>
+           {uiText("Download JSON")} </Button>
       }
       footer={ready ? <RawJsonDisclosure json={json} /> : null}
     />

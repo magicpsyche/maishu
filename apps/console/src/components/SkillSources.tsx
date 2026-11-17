@@ -1,6 +1,8 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 // Skill sources: install skills from any site that publishes the Agent Skills
 // discovery index (the `npx skills add <url>` protocol) and keep them updated.
-// Backed by /v1/oma/skill-sources on the self-hosted control plane; when the
+// Backed by /v1/maishu/skill-sources on the self-hosted control plane; when the
 // route is absent the console hides these controls.
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -12,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getActiveTenantId, useApi } from "../lib/api";
 
-export const SKILL_SOURCES_API = "/v1/oma/skill-sources";
+export const SKILL_SOURCES_API = "/v1/maishu/skill-sources";
 
 export interface SkillSourceLock {
   skill_id: string;
@@ -100,7 +102,7 @@ const STATUS_TEXT: Record<InstallResult["status"], string> = {
 
 function ResultList({ results }: { results: InstallResult[] }) {
   return (
-    <ul className="divide-y divide-border border border-border rounded-lg" aria-label="Results">
+    <ul className="divide-y divide-border border border-border rounded-lg" aria-label={uiText("Results")}>
       {results.map((r) => (
         <li key={r.name} className="px-3 py-2 text-sm flex items-start justify-between gap-3">
           <span className="font-mono">{r.name}</span>
@@ -162,7 +164,7 @@ export function InstallFromUrlModal({
       setSelected(new Set(body.data.filter((s) => !s.installed_skill_id).map((s) => s.name)));
     } catch (err) {
       setFound(null);
-      setError(err instanceof Error ? err.message : "Could not read that source");
+      setError(err instanceof Error ? err.message : uiText("Could not read that source"));
     } finally {
       setBusy(null);
     }
@@ -180,7 +182,7 @@ export function InstallFromUrlModal({
       setResults(body.data);
       onInstalled();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Install failed");
+      setError(err instanceof Error ? err.message : uiText("Install failed"));
     } finally {
       setBusy(null);
     }
@@ -203,24 +205,23 @@ export function InstallFromUrlModal({
         if (busy) return;
         onClose();
       }}
-      title="Install skills from a URL"
-      subtitle="Any site that publishes an Agent Skills index, the same URL you would pass to npx skills add."
+      title={uiText("Install skills from a URL")}
+      subtitle={uiText("Any site that publishes an Agent Skills index, the same URL you would pass to npx skills add.")}
       maxWidth="max-w-xl"
       footer={
         results ? (
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose}>{uiText("Done")}</Button>
         ) : (
           <>
             <Button variant="ghost" disabled={!!busy} onClick={onClose}>
-              Cancel
-            </Button>
+               {uiText("Cancel")} </Button>
             <Button
               onClick={install}
               disabled={!found || selected.size === 0 || !!busy}
               loading={busy === "install"}
-              loadingLabel="Installing..."
+              loadingLabel={uiText("Installing...")}
             >
-              {selected.size > 0 ? `Install ${selected.size}` : "Install"}
+              {selected.size > 0 ? uiText(`Install ${selected.size}`) : uiText("Install")}
             </Button>
           </>
         )
@@ -230,8 +231,7 @@ export function InstallFromUrlModal({
         <form onSubmit={discover} className="flex gap-2 items-end">
           <div className="flex-1">
             <Label htmlFor="skill-source-url" className="text-sm text-fg-muted block mb-1">
-              Source URL
-            </Label>
+               {uiText("Source URL")} </Label>
             <Input
               id="skill-source-url"
               value={url}
@@ -246,10 +246,9 @@ export function InstallFromUrlModal({
             variant="outline"
             disabled={!url.trim() || !!busy || !!results}
             loading={busy === "discover"}
-            loadingLabel="Finding..."
+            loadingLabel={uiText("Finding...")}
           >
-            Find skills
-          </Button>
+             {uiText("Find skills")} </Button>
         </form>
 
         {error && <div className={errorBox}>{error}</div>}
@@ -258,7 +257,7 @@ export function InstallFromUrlModal({
           <ResultList results={results} />
         ) : found ? (
           found.skills.length === 0 ? (
-            <p className="text-sm text-fg-subtle">This source lists no skills.</p>
+            <p className="text-sm text-fg-subtle">{uiText("This source lists no skills.")}</p>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-fg-muted">
@@ -271,7 +270,7 @@ export function InstallFromUrlModal({
                   size="xs"
                   onClick={() => setSelected(allSelected ? new Set() : new Set(found.skills.map((s) => s.name)))}
                 >
-                  {allSelected ? "Clear selection" : "Select all"}
+                  {allSelected ? uiText("Clear selection") : uiText("Select all")}
                 </Button>
               </div>
               <ul ref={listFade.ref} className={`console-scroll-fade ${listFade.className} border border-border rounded-lg divide-y divide-border max-h-80 overflow-y-auto`}>
@@ -300,8 +299,7 @@ export function InstallFromUrlModal({
                 ))}
               </ul>
               <p className="text-xs text-fg-subtle">
-                Reinstalling an installed skill adds a new version only when its contents changed.
-              </p>
+                 {uiText("Reinstalling an installed skill adds a new version only when its contents changed.")} </p>
             </div>
           )
         ) : null}
@@ -353,7 +351,7 @@ export function SkillUpdatesModal({
         }),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not check for updates");
+      setError(err instanceof Error ? err.message : uiText("Could not check for updates"));
     } finally {
       setChecking(false);
     }
@@ -384,7 +382,7 @@ export function SkillUpdatesModal({
       onUpdated();
       await runCheck();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
+      setError(err instanceof Error ? err.message : uiText("Update failed"));
     } finally {
       setUpdating(null);
     }
@@ -400,21 +398,20 @@ export function SkillUpdatesModal({
         if (updating) return;
         onClose();
       }}
-      title="Skill updates"
-      subtitle="Compares installed skills with their sources, like npx skills update."
+      title={uiText("Skill updates")}
+      subtitle={uiText("Compares installed skills with their sources, like npx skills update.")}
       maxWidth="max-w-xl"
       footer={
         <>
           <Button variant="ghost" disabled={updating !== null} onClick={onClose}>
-            Close
-          </Button>
+             {uiText("Close")} </Button>
           <Button
             onClick={() => void update(pending)}
             disabled={pending.length === 0 || busy}
             loading={updating !== null && updating.length > 1}
-            loadingLabel="Updating..."
+            loadingLabel={uiText("Updating...")}
           >
-            {pending.length > 0 ? `Update all (${pending.length})` : "Update all"}
+            {pending.length > 0 ? `Update all (${pending.length})` : uiText("Update all")}
           </Button>
         </>
       }
@@ -423,11 +420,11 @@ export function SkillUpdatesModal({
         {error && <div className={errorBox}>{error}</div>}
         {results && results.some((r) => r.status !== "unchanged") && <ResultList results={results} />}
         {!check && checking ? (
-          <div className="text-fg-subtle text-sm py-6 text-center">Checking sources...</div>
+          <div className="text-fg-subtle text-sm py-6 text-center">{uiText("Checking sources...")}</div>
         ) : check && check.skills.length === 0 ? (
-          <p className="text-sm text-fg-subtle">No skills installed from a URL yet.</p>
+          <p className="text-sm text-fg-subtle">{uiText("No skills installed from a URL yet.")}</p>
         ) : check ? (
-          <ul className="border border-border rounded-lg divide-y divide-border" aria-label="Installed from sources">
+          <ul className="border border-border rounded-lg divide-y divide-border" aria-label={uiText("Installed from sources")}>
             {check.skills.map((s) => (
               <li key={s.skill_id} className="px-3 py-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -455,12 +452,11 @@ export function SkillUpdatesModal({
                       variant="outline"
                       disabled={busy}
                       loading={updating?.length === 1 && updating[0] === s.skill_id}
-                      loadingLabel="Updating..."
+                      loadingLabel={uiText("Updating...")}
                       onClick={() => void update([s.skill_id])}
-                      aria-label={`Update ${s.name}`}
+                      aria-label={uiText(`Update ${s.name}`)}
                     >
-                      Update
-                    </Button>
+                       {uiText("Update")} </Button>
                   )}
                 </div>
               </li>
@@ -470,13 +466,12 @@ export function SkillUpdatesModal({
         {newSkills.map((source) => (
           <div key={source.url} className="text-xs text-fg-muted flex items-center justify-between gap-3">
             <span>
-              {source.new_skills.length} more skill{source.new_skills.length === 1 ? "" : "s"} available from{" "}
+              {source.new_skills.length}  {uiText("more skill")}{source.new_skills.length === 1 ? "" : "s"}  {uiText("available from")}{" "}
               {sourceLabel(source.url)}: {source.new_skills.map((s) => s.name).join(", ")}
             </span>
             {onInstallNew && (
               <Button size="sm" variant="ghost" onClick={() => onInstallNew(source.url)}>
-                Install...
-              </Button>
+                 {uiText("Install...")} </Button>
             )}
           </div>
         ))}

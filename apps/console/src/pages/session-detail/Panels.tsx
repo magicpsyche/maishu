@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -81,15 +83,15 @@ export function ResourcePanel({
         <Button variant="ghost"
           onClick={onClose}
           className="text-fg-subtle hover:text-fg-muted text-lg leading-none inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-8 sm:min-h-8 rounded hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
-          title="Close"
-          aria-label="Close panel"
+          title={uiText("Close")}
+          aria-label={uiText("Close panel")}
         >
           ×
         </Button>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
-        {err && <div className="text-danger">Failed to load: {err}</div>}
-        {!data && !err && <div className="text-fg-subtle">Loading…</div>}
+        {err && <div className="text-danger">{uiText("Failed to load:")} {err}</div>}
+        {!data && !err && <div className="text-fg-subtle">{uiText("Loading…")}</div>}
         {data && (
           <pre className="font-mono text-fg-muted bg-bg-surface/60 rounded px-3 py-2 overflow-x-auto whitespace-pre-wrap break-all text-xs">
             {JSON.stringify(data, null, 2)}
@@ -101,7 +103,7 @@ export function ResourcePanel({
           to={linkPath}
           className="inline-flex items-center gap-1.5 text-sm text-info hover:text-info/80 font-medium"
         >
-          Go to {panel.kind} →
+           {uiText("Go to")} {panel.kind} →
         </Link>
       </div>
     </aside>
@@ -150,29 +152,27 @@ export function FilesPanel({
       <div className="px-4 py-3 flex items-start gap-3 shrink-0">
         <div className="min-w-0 flex-1">
           <div className="text-xs uppercase tracking-wide text-fg-subtle font-mono">
-            Files
-          </div>
-          <div className="text-base font-semibold text-fg">Session outputs</div>
+             {uiText("Files")} </div>
+          <div className="text-base font-semibold text-fg">{uiText("Session outputs")}</div>
           <div className="text-xs text-fg-muted mt-0.5">
-            Files the agent wrote to <code className="font-mono">/mnt/session/outputs/</code>
+             {uiText("Files the agent wrote to")} <code className="font-mono">/mnt/session/outputs/</code>
           </div>
         </div>
         <Button variant="ghost"
           onClick={onClose}
           className="text-fg-subtle hover:text-fg-muted text-lg leading-none inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-8 sm:min-h-8 rounded hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
-          title="Close"
-          aria-label="Close panel"
+          title={uiText("Close")}
+          aria-label={uiText("Close panel")}
         >
           ×
         </Button>
       </div>
       <div className="flex-1 overflow-y-auto p-4 text-xs">
-        {err && <div className="text-danger">Failed to load: {err}</div>}
-        {!files && !err && <div className="text-fg-subtle">Loading…</div>}
+        {err && <div className="text-danger">{uiText("Failed to load:")} {err}</div>}
+        {!files && !err && <div className="text-fg-subtle">{uiText("Loading…")}</div>}
         {files && files.length === 0 && (
           <div className="text-fg-subtle">
-            No files yet. The agent must write under <code className="font-mono">/mnt/session/outputs/</code> for files to appear here.
-          </div>
+             {uiText("No files yet. The agent must write under")} <code className="font-mono">/mnt/session/outputs/</code>  {uiText("for files to appear here.")} </div>
         )}
         {files && files.length > 0 && (
           <ul className="space-y-1.5">

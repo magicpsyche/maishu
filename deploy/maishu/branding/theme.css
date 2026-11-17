@@ -1,0 +1,62 @@
+/* 麦枢企业控制台主题。通过原版 CONSOLE_BRANDING_DIR 加载。 */
+:root {
+  --font-display: "Geist Variable", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-sans: "Geist Variable", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --bg: #ffffff;
+  --bg-sidebar: #f1f5f4;
+  --bg-surface: #f5f8f7;
+  --fg: #1b302d;
+  --fg-muted: #526864;
+  --fg-subtle: #6c7f7b;
+  --border: #dce5e2;
+  --brand: #17645b;
+  --brand-fg: #ffffff;
+  --brand-subtle: #e7f2ee;
+  --console-type-label: 12px;
+  --console-type-body: 14px;
+  --console-type-ui: 14px;
+  --console-type-section: 19px;
+  --console-type-title: 28px;
+  --type-line: 21px;
+  --shell-top-h: 52px;
+  --sidebar-row-h: 36px;
+  --sidebar-section-gap: 18px;
+  --shell-sidebar-w: 248px;
+  --control-h: 36px;
+  --data-row-h: 44px;
+  --table-head-h: 34px;
+  --menu-action-row-h: 38px;
+  --console-radius-card: 14px;
+  --console-radius-row: 8px;
+  --shell-stage-gap: 10px;
+  --shadow-route: 0 1px 3px rgb(20 48 41 / 4%), 0 8px 30px rgb(20 48 41 / 3%);
+  font-family: "Geist Variable", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+}
+.dark {
+  --bg: #15221f;
+  --bg-sidebar: #101b18;
+  --bg-surface: #1d2c27;
+  --fg: #e5eeea;
+  --fg-muted: #b1c4bc;
+  --fg-subtle: #8fa79d;
+  --border: #30443b;
+  --brand: #68c4ac;
+  --brand-fg: #10261f;
+  --brand-subtle: #223e33;
+}
+body { font-family: "Geist Variable", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", sans-serif; }
+button, input, textarea, select { font: inherit; }
+.console-sidebar { padding-top: 8px; }
+.console-topbar { border-bottom: 1px solid var(--border); }
+.console-sidebar a[aria-current="page"] { background: var(--brand-subtle); color: var(--brand); font-weight: 600; }
+:where(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+@media (max-width: 767px) {
+  :root { --detail-frame-inset: 20px; --dashboard-frame-inset: 18px; --settings-frame-inset: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.maishu-sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 12px 18px 15px; flex-shrink: 0; }
+.maishu-sidebar-brand strong { display: block; font-size: 18px; line-height: 24px; letter-spacing: 1px; }
+.maishu-sidebar-brand span { display: block; color: var(--fg-subtle); font-size: 11px; line-height: 18px; letter-spacing: .5px; }

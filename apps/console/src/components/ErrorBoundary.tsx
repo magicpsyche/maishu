@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
@@ -54,24 +56,21 @@ function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) 
         [ ERR ]
       </div>
       <h2 className="font-display text-lg font-semibold mb-1">
-        Something broke on this page
-      </h2>
+         {uiText("Something broke on this page")} </h2>
       <p className="text-sm text-fg-muted mb-6 max-w-md">
-        {error.message || "An unexpected error occurred."}
+        {error.message || uiText("An unexpected error occurred.")}
       </p>
       <div className="flex gap-2">
         <Button variant="ghost"
           onClick={reset}
           className="px-4 py-2 text-sm rounded-md bg-brand text-brand-fg hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          Try again
-        </Button>
+           {uiText("Try again")} </Button>
         <Button variant="ghost"
           onClick={() => window.location.reload()}
           className="px-4 py-2 text-sm rounded-md border border-border text-fg hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          Reload
-        </Button>
+           {uiText("Reload")} </Button>
       </div>
     </div>
   );

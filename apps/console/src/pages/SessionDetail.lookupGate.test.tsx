@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -124,8 +125,8 @@ describe("SessionDetail gates history/stream/threads on the session lookup", () 
 
   it("silences the toast only for a 404 on GET /v1/sessions/:id", () => {
     expect(shouldSilenceApiErrorToast("/v1/sessions/sesn_x", 404)).toBe(true);
-    expect(shouldSilenceApiErrorToast("/v1/oma/sessions/sesn_x/trajectory", 404)).toBe(true);
-    expect(shouldSilenceApiErrorToast("/v1/oma/sessions/sesn_x/events", 404)).toBe(false);
+    expect(shouldSilenceApiErrorToast("/v1/maishu/sessions/sesn_x/trajectory", 404)).toBe(true);
+    expect(shouldSilenceApiErrorToast("/v1/maishu/sessions/sesn_x/events", 404)).toBe(false);
     expect(shouldSilenceApiErrorToast("/v1/sessions/sesn_x", 500)).toBe(false);
     expect(shouldSilenceApiErrorToast("/v1/sessions/sesn_x", 403)).toBe(false);
     expect(shouldSilenceApiErrorToast("/v1/sessions/sesn_x/events?limit=100", 404)).toBe(false);

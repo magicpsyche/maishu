@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -18,8 +20,8 @@ import { useAsyncAction } from "../hooks/useAsyncAction";
 
 const copy = {
   en: {
-    title: "Members",
-    subtitle: "Manage who can access this workspace.",
+    title: uiText("Members"),
+    subtitle: uiText("Manage who can access this workspace."),
     shared:
       "Members share workspace resources. Owners manage roles; admins can invite and remove members.",
     owner: "Owner",
@@ -121,9 +123,9 @@ export function WorkspaceMembers() {
   const [removing, setRemoving] = useState<Member | null>(null);
   const load = useCallback(async () => {
     const me = await api<{ tenant: { id: string; name: string } }>(
-      "/v1/oma/me",
+      "/v1/maishu/me",
     );
-    const base = `/v1/oma/tenants/${encodeURIComponent(me.tenant.id)}`;
+    const base = `/v1/maishu/tenants/${encodeURIComponent(me.tenant.id)}`;
     const result = await api<Members>(`${base}/members`);
     const pending =
       result.role === "member"
@@ -156,7 +158,7 @@ export function WorkspaceMembers() {
       setError(e instanceof Error ? e.message : String(e));
     }
   });
-  const base = `/v1/oma/tenants/${encodeURIComponent(workspace?.id ?? "")}`;
+  const base = `/v1/maishu/tenants/${encodeURIComponent(workspace?.id ?? "")}`;
   const canManage = members?.role === "owner" || members?.role === "admin";
   const createInvite = () =>
     action.run(async () => {
@@ -445,7 +447,7 @@ export function JoinWorkspace() {
     setError("");
     try {
       const result = await api<{ tenant_id: string }>(
-        "/v1/oma/tenants/invitations/accept",
+        "/v1/maishu/tenants/invitations/accept",
         {
           method: "POST",
           headers: { "x-active-tenant": "" },

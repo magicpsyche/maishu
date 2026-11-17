@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
@@ -175,7 +177,7 @@ export function IntegrationsGitHubBindWizard({ loadAgents, loadEnvironments }: P
 
   async function startBind() {
     if (!agentId || !envId || !persona) {
-      setError("Pick an agent, environment, and persona name.");
+      setError(uiText("Pick an agent, environment, and persona name."));
       return;
     }
     setError(null);
@@ -270,12 +272,9 @@ export function IntegrationsGitHubBindWizard({ loadAgents, loadEnvironments }: P
     <div className="console-integration-route">
       <div className="console-integration-page console-integration-page--narrow">
         <h1 className="font-display text-xl leading-tight font-semibold tracking-tight text-fg mb-2">
-          Bind agent to GitHub
-        </h1>
+           {uiText("Bind agent to GitHub")} </h1>
         <p className="text-base text-fg-muted mb-8">
-          Make this agent a GitHub teammate — assignable, mentionable, request-as-reviewer.
-          The agent gets its own bot identity (a GitHub App) and its own audit trail.
-        </p>
+           {uiText("Make this agent a GitHub teammate — assignable, mentionable, request-as-reviewer. The agent gets its own bot identity (a GitHub App) and its own audit trail.")} </p>
 
         <Stepper phase={phase} />
 
@@ -318,8 +317,7 @@ export function IntegrationsGitHubBindWizard({ loadAgents, loadEnvironments }: P
               onClick={() => { setPhase("config"); setError(null); }}
               className="ml-3 underline"
             >
-              Try again
-            </Button>
+               {uiText("Try again")} </Button>
           </div>
         )}
       </div>
@@ -340,10 +338,10 @@ function Stepper({ phase }: { phase: Phase }) {
   // for an enterprise install flow, so kept the verbs functional and
   // saved the warmth for the subtitle copy.
   const steps: Step[] = [
-    { key: "config", label: "Configure", hint: "Pick agent, env, bot name" },
-    { key: "registering", label: "Register", hint: "GitHub mints a new App" },
-    { key: "installing", label: "Install", hint: "Grant access to your org" },
-    { key: "done", label: "Live", hint: "Bot is responding to events" },
+    { key: "config", label: uiText("Configure"), hint: uiText("Pick agent, env, bot name") },
+    { key: "registering", label: uiText("Register"), hint: uiText("GitHub mints a new App") },
+    { key: "installing", label: uiText("Install"), hint: uiText("Grant access to your org") },
+    { key: "done", label: uiText("Live"), hint: uiText("Bot is responding to events") },
   ];
   const idx = steps.findIndex((s) => s.key === phase);
   return (
@@ -407,7 +405,7 @@ function ConfigForm({
 }) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5">
-      <Field label="Agent">
+      <Field label={uiText("Agent")}>
         <Combobox<{ id: string; name: string }>
           value={agentId}
           onValueChange={(v) => onAgent(v)}
@@ -415,10 +413,10 @@ function ConfigForm({
           getValue={(a) => a.id}
           getLabel={(a) => a.name}
           getTextLabel={(a) => a.name}
-          placeholder="Pick an agent…"
+          placeholder={uiText("Pick an agent…")}
         />
       </Field>
-      <Field label="Environment">
+      <Field label={uiText("Environment")}>
         <Combobox<{ id: string; name: string }>
           value={envId}
           onValueChange={(v) => onEnv(v)}
@@ -426,47 +424,38 @@ function ConfigForm({
           getValue={(e) => e.id}
           getLabel={(e) => e.name}
           getTextLabel={(e) => e.name}
-          placeholder="Pick an environment…"
+          placeholder={uiText("Pick an environment…")}
         />
       </Field>
       <Field
-        label="Bot name (visible in GitHub)"
+        label={uiText("Bot name (visible in GitHub)")}
         hint="GitHub will create a bot user @<slug>[bot] from this name. Defaults to the agent's name."
       >
         <Input
           type="text"
           value={persona}
           onChange={(e) => onPersona(e.target.value)}
-          placeholder="e.g. Coder"
+          placeholder={uiText("e.g. Coder")}
           className="w-full px-3 py-2 border border-border rounded-md bg-bg text-base"
           required
         />
       </Field>
 
       <div className="rounded-md border border-border bg-bg-surface/30 p-3 text-sm leading-relaxed text-fg-muted">
-        <p className="font-medium text-fg mb-1">How users will engage this bot</p>
+        <p className="font-medium text-fg mb-1">{uiText("How users will engage this bot")}</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>
-            <strong className="text-fg">Primary:</strong> add the{" "}
+            <strong className="text-fg">{uiText("Primary:")}</strong>  {uiText("add the")}{" "}
             <code className="px-1 py-0.5 bg-bg rounded text-xs">{(persona || "<bot>").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9._\-]/g, "")}</code>{" "}
-            label to any issue or PR. The bot reacts to whitelisted activity on
-            labeled items (open / edit / new comment / new commits / review).
-          </li>
+             {uiText("label to any issue or PR. The bot reacts to whitelisted activity on labeled items (open / edit / new comment / new commits / review).")} </li>
           <li>
-            <strong className="text-fg">Fallback:</strong>{" "}
+            <strong className="text-fg">{uiText("Fallback:")}</strong>{" "}
             <code className="px-1 py-0.5 bg-bg rounded text-xs">@{(persona || "&lt;bot&gt;").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9._\-]/g, "")}[bot]</code>{" "}
-            in any issue / PR / comment body. (GitHub doesn't autocomplete bot
-            accounts — type the full string. Functionally equivalent to the
-            label trigger.)
-          </li>
+             {uiText("in any issue / PR / comment body. (GitHub doesn't autocomplete bot accounts — type the full string. Functionally equivalent to the label trigger.)")} </li>
           <li>
-            On install, OMA auto-creates the label in your selected repos. If
-            you delete it, OMA won't recreate it.
-          </li>
+             {uiText("On install, OMA auto-creates the label in your selected repos. If you delete it, OMA won't recreate it.")} </li>
           <li>
-            Removing the label from an issue stops further auto-wakeups on
-            that thread.
-          </li>
+             {uiText("Removing the label from an issue stops further auto-wakeups on that thread.")} </li>
         </ul>
       </div>
 
@@ -476,16 +465,13 @@ function ConfigForm({
 
       <div className="flex items-center justify-between gap-4 pt-1">
         <p className="text-sm text-fg-muted leading-snug">
-          Opens a popup to GitHub. You'll click <strong>Create GitHub App</strong>
-          {" "}and then <strong>Install</strong> on the org you want this bot to
-          work in.
-        </p>
+           {uiText("Opens a popup to GitHub. You'll click")} <strong>{uiText("Create GitHub App")}</strong>
+          {" "}{uiText("and then")} <strong>{uiText("Install")}</strong>  {uiText("on the org you want this bot to work in.")} </p>
         <Button variant="ghost"
           type="submit"
           className="shrink-0 px-5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          Bind on GitHub
-        </Button>
+           {uiText("Bind on GitHub")} </Button>
       </div>
     </form>
   );
@@ -512,9 +498,7 @@ function InProgress({
           : `Installing on your org…`}
       </div>
       <p className="text-sm text-fg-muted mb-5">
-        Switch to the GitHub popup to confirm. We'll check every few seconds
-        and pick up the new install automatically — no need to refresh.
-      </p>
+         {uiText("Switch to the GitHub popup to confirm. We'll check every few seconds and pick up the new install automatically — no need to refresh.")} </p>
 
       <div className="flex flex-col gap-2 items-center">
         {phase === "registering" && manifestUrl && (
@@ -523,8 +507,7 @@ function InProgress({
             target="github-bind"
             className="text-sm text-brand hover:underline"
           >
-            Re-open GitHub registration popup →
-          </a>
+             {uiText("Re-open GitHub registration popup →")} </a>
         )}
         {phase === "installing" && installUrl && (
           <a
@@ -532,15 +515,13 @@ function InProgress({
             target="github-bind"
             className="text-sm text-brand hover:underline"
           >
-            Re-open GitHub install popup →
-          </a>
+             {uiText("Re-open GitHub install popup →")} </a>
         )}
         <Button variant="ghost"
           onClick={onRefresh}
           className="text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] mt-3"
         >
-          Check now
-        </Button>
+           {uiText("Check now")} </Button>
       </div>
     </div>
   );
@@ -549,17 +530,14 @@ function InProgress({
 function Done({ livePubId, onView }: { livePubId: string | null; onView: () => void }) {
   return (
     <div className="border border-success/30 bg-success-subtle rounded-lg p-6 text-center">
-      <div className="text-success text-base font-medium mb-2">✓ Bot is live on GitHub</div>
+      <div className="text-success text-base font-medium mb-2">{uiText("✓ Bot is live on GitHub")}</div>
       <p className="text-sm text-fg-muted mb-4">
-        Try assigning a GitHub issue to the bot or @-mentioning it in a comment — should respond in seconds.
-        First response after binding may take ~5 seconds (cold start).
-      </p>
+         {uiText("Try assigning a GitHub issue to the bot or @-mentioning it in a comment — should respond in seconds. First response after binding may take ~5 seconds (cold start).")} </p>
       <Button variant="ghost"
         onClick={onView}
         className="px-4 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover"
       >
-        View installation
-      </Button>
+         {uiText("View installation")} </Button>
       {livePubId && (
         <p className="mt-3 text-xs font-mono text-fg-subtle">publication: {livePubId}</p>
       )}

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { z } from "zod";
 import { harnessExecutionPlacement } from "../../../../../packages/managed-agents-domain/src/environment-work/execution-placement";
 
@@ -49,16 +51,20 @@ export function missingHarnessRequirements(descriptor: HarnessDescriptor, fields
 }
 
 export function formatHarnessRequirement(requirement: string): string {
-  return requirement.split("|").map((path) => `_oma.${path}`).join(" or ");
+  return requirement.split("|").map((path) => `_oma.${path}`).join(uiText(" or "));
 }
 
 export function harnessValidationError(catalog: HarnessCatalog, value: unknown, fields: Record<string, unknown>): string {
   const descriptor = resolvedHarness(catalog, value);
   if (!descriptor) {
     return value == null || value === "default"
-      ? "No deployment default harness is available. Choose a registered implementation."
-      : `Harness \"${String(value)}\" is not registered in this deployment. Its configuration is preserved; choose a registered implementation or edit JSON / YAML.`;
+      ? uiText("No deployment default harness is available. Choose a registered implementation.")
+      : uiText(`Harness \"${String(value)}\" is not registered in this deployment. Its configuration is preserved; choose a registered implementation or edit JSON / YAML.`);
+  }
+  const acp = fields.acp as { agent?: { command?: string; env?: Record<string, string> } } | undefined;
+  if (descriptor.id === "acp-sandbox" && acp?.agent?.command === "/usr/local/bin/maishu-harness" && acp.agent.env?.MAISHU_AUTH_MODE !== "managed" && !acp.agent.env?.MAISHU_CREDENTIAL_REF?.trim()) {
+    return "请选择引擎凭证，或切换为平台托管模型。";
   }
   const missing = missingHarnessRequirements(descriptor, fields);
-  return missing.length ? `Missing required configuration: ${missing.map(formatHarnessRequirement).join(", ")}. Set it in JSON / YAML; selecting a harness does not install packages.` : "";
+  return missing.length ? `${uiText("Missing required configuration:")} ${missing.map(formatHarnessRequirement).join(", ")}. ${uiText("Set it in JSON / YAML; selecting a harness does not install packages.")}` : "";
 }

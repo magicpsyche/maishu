@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
@@ -72,7 +73,7 @@ beforeEach(() => {
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
       state.calls.push({ method, path, body });
-      if (!path.startsWith("/v1/oma/skill-sources")) return Response.json({ data: [] });
+      if (!path.startsWith("/v1/maishu/skill-sources")) return Response.json({ data: [] });
       if (!state.sourcesAvailable) return Response.json({ error: "Not found" }, { status: 404 });
       if (path.endsWith("/installed")) return Response.json({ data: state.installed });
       if (path.endsWith("/discover")) {

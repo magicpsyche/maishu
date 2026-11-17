@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import type { AgentUITurnState } from "@openma/common/agent-ui";
 import {
   AgentUITurnView,
@@ -52,7 +54,7 @@ export function projectCanonicalSessionTurn(
           ? "complete"
           : canonicalTurnStatus(turn.status),
       errorMessage: turn.status === "errored"
-        ? turn.render.notes.join("\n") || "The turn failed."
+        ? turn.render.notes.join("\n") || uiText("The turn failed.")
         : undefined,
     },
     { rendered: turn.render },
@@ -81,14 +83,14 @@ export function CanonicalSessionTurn({
 }
 
 const MANAGED_TURN_LABELS: AgentUITurnLabels = {
-  workingFor: (seconds) => `Working for ${formatElapsed(seconds)}`,
-  workedFor: (seconds) => `Worked for ${formatElapsed(seconds)}`,
-  thinking: "Thinking…",
-  thoughtFor: (seconds) => `Thought for ${formatElapsed(seconds)}`,
-  toolActivity: (tool) => tool.title || tool.name || "Using tool",
+  workingFor: (seconds) => uiText(`Working for ${formatElapsed(seconds)}`),
+  workedFor: (seconds) => uiText(`Worked for ${formatElapsed(seconds)}`),
+  thinking: uiText("Thinking…"),
+  thoughtFor: (seconds) => uiText(`Thought for ${formatElapsed(seconds)}`),
+  toolActivity: (tool) => tool.title || tool.name || uiText("Using tool"),
   toolRunSummary: (tools) => tools.length === 1
-    ? tools[0]?.title || tools[0]?.name || "Used a tool"
-    : `Used ${tools.length} tools`,
+    ? tools[0]?.title || tools[0]?.name || uiText("Used a tool")
+    : uiText(`Used ${tools.length} tools`),
 };
 
 function managedTurnSlots(source: CanonicalChatTurn): AgentUITurnSlots {
@@ -121,7 +123,7 @@ function managedTurnSlots(source: CanonicalChatTurn): AgentUITurnSlots {
               && (tool.status === "pending" || tool.status === "in_progress"
                 || (source.awaitingToolCallIds ?? []).includes(tool.id)),
           )}
-          title={tool.title || tool.name || "Tool"}
+          title={tool.title || tool.name || uiText("Tool")}
           toolName={tool.name || tool.title || "tool"}
           type="dynamic-tool"
         />
@@ -149,8 +151,7 @@ function managedTurnSlots(source: CanonicalChatTurn): AgentUITurnSlots {
       ] : []),
       ...(source.status === "interrupted" ? [
         <p className="text-xs text-fg-muted" data-turn-interrupted="true" key={`${source.id}:interrupted`}>
-          Stopped
-        </p>,
+           {uiText("Stopped")} </p>,
       ] : []),
       ...source.render.notes.map((note, index) => (
       <p

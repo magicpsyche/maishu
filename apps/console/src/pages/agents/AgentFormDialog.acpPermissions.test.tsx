@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -18,8 +19,8 @@ beforeAll(() => { HTMLElement.prototype.scrollIntoView = vi.fn(); });
 beforeEach(() => {
   requests.length = 0;
   server.use(
-    http.get("/v1/oma/model_cards", () => HttpResponse.json({ data: [], has_more: false })),
-    http.get("/v1/oma/harnesses", () => HttpResponse.json({ object: "list", default_harness_id: "pi", data: [
+    http.get("/v1/maishu/model_cards", () => HttpResponse.json({ data: [], has_more: false })),
+    http.get("/v1/maishu/harnesses", () => HttpResponse.json({ object: "list", default_harness_id: "pi", data: [
       { id: "pi", label: "Pi", description: "Host", execution: { placement: "host" }, capabilities: { runtime_binding: false }, requirements: [] },
       { id: "acp-sandbox", label: "ACP", description: "Sandbox", execution: { placement: "sandbox" }, capabilities: { runtime_binding: false }, requirements: ["acp.agent.command|acp.agent.registry"] },
     ] })),

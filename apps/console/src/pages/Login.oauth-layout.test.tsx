@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -140,7 +141,7 @@ describe("Login OAuth and layout", () => {
     const { container } = renderLogin();
 
     expect(
-      screen.getByRole("heading", { name: "Log in to openma" }),
+      screen.getByRole("heading", { name: "Log in to 麦枢" }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
     expect(

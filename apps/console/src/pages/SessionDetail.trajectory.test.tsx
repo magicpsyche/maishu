@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -93,7 +94,7 @@ describe("SessionDetail Trace tab", () => {
     setup();
     mount("session_ok");
     fireEvent.click(await screen.findByRole("tab", { name: "Trace" }));
-    await waitFor(() => expect(apiMock).toHaveBeenCalledWith("/v1/oma/sessions/session_ok/trajectory"));
+    await waitFor(() => expect(apiMock).toHaveBeenCalledWith("/v1/maishu/sessions/session_ok/trajectory"));
     // No live events → the envelope's events drive the tree.
     const tree = await screen.findByRole("tree", { name: "Trace tree" });
     expect(within(tree).getByRole("treeitem", { name: /agent\.message.*Done\./ })).toBeInTheDocument();

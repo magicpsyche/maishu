@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Label } from "@/components/ui/label";
 import { useEffect, useRef, type ReactNode } from "react";
 import { SearchIcon } from "lucide-react";
@@ -162,8 +164,7 @@ export function ListPage<T>({
             checked={showArchived ?? false}
             onCheckedChange={(c) => onShowArchivedChange(c === true)}
           />
-          Show archived
-        </Label>
+           {uiText("Show archived")} </Label>
       )}
       <div className="flex-1" />
       {onSearchChange && (
@@ -175,7 +176,7 @@ export function ListPage<T>({
             type="search"
             value={searchValue ?? ""}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder ?? "Search..."}
+            placeholder={searchPlaceholder ?? uiText("Search...")}
             autoComplete="off"
             name="oma-list-search"
           />
@@ -329,7 +330,7 @@ function LoadMoreRow({
   return (
     <TableRow ref={ref} className="hover:bg-transparent">
       <TableCell colSpan={colSpan} className="text-center py-4 text-xs text-fg-subtle">
-        {loading ? "Loading more…" : " "}
+        {loading ? uiText("Loading more…") : " "}
       </TableCell>
     </TableRow>
   );

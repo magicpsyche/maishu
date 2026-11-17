@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -182,11 +183,11 @@ beforeEach(() => {
   localStorage.clear();
   localStorage.setItem("oma-locale", "en");
   server.use(
-    http.get("*/v1/oma/evals/benchmarks", () => HttpResponse.json({
+    http.get("*/v1/maishu/evals/benchmarks", () => HttpResponse.json({
       data: [{ ...harborBench, cases: undefined }, { ...messagesBench, cases: undefined }],
     })),
-    http.get("*/v1/oma/evals/benchmarks/evb_1", () => HttpResponse.json(harborBench)),
-    http.get("*/v1/oma/evals/benchmarks/evb_m", () => HttpResponse.json(messagesBench)),
+    http.get("*/v1/maishu/evals/benchmarks/evb_1", () => HttpResponse.json(harborBench)),
+    http.get("*/v1/maishu/evals/benchmarks/evb_m", () => HttpResponse.json(messagesBench)),
     http.get("*/v1/environments", () => HttpResponse.json({ data: [{ id: "env_1", name: "sandbox" }], next_page: null })),
     http.get("*/v1/agents", () => HttpResponse.json({
       data: [
@@ -203,7 +204,7 @@ describe("EvalRunsList", () => {
   it("renders harbor and legacy runs with benchmark, mode, progress and score", async () => {
     const queries: URLSearchParams[] = [];
     server.use(
-      http.get("*/v1/oma/evals/runs", ({ request }) => {
+      http.get("*/v1/maishu/evals/runs", ({ request }) => {
         queries.push(new URL(request.url).searchParams);
         return HttpResponse.json({ data: [harborRun, legacyRun] });
       }),
@@ -232,7 +233,7 @@ describe("EvalRunsList", () => {
   it("filters by ?benchmark=", async () => {
     const queries: URLSearchParams[] = [];
     server.use(
-      http.get("*/v1/oma/evals/runs", ({ request }) => {
+      http.get("*/v1/maishu/evals/runs", ({ request }) => {
         queries.push(new URL(request.url).searchParams);
         return HttpResponse.json({ data: [harborRun] });
       }),
@@ -245,7 +246,7 @@ describe("EvalRunsList", () => {
 
 describe("EvalRunDetail (harbor)", () => {
   it("shows the header and expands a task into its trials", async () => {
-    server.use(http.get("*/v1/oma/evals/runs/evr_1", () => HttpResponse.json(harborRun)));
+    server.use(http.get("*/v1/maishu/evals/runs/evr_1", () => HttpResponse.json(harborRun)));
     renderRoutes([{ path: "/evals/:id", element: <EvalRunDetail /> }], "/evals/evr_1");
 
     expect(await screen.findByText("0.76")).toBeInTheDocument();
@@ -266,9 +267,9 @@ describe("EvalRunDetail (harbor)", () => {
   it("cancels an active run", async () => {
     let cancelled = false;
     server.use(
-      http.get("*/v1/oma/evals/runs/evr_1", () =>
+      http.get("*/v1/maishu/evals/runs/evr_1", () =>
         HttpResponse.json(cancelled ? { ...harborRun, status: "cancelled" } : harborRun)),
-      http.post("*/v1/oma/evals/runs/evr_1/cancel", () => {
+      http.post("*/v1/maishu/evals/runs/evr_1/cancel", () => {
         cancelled = true;
         return HttpResponse.json({ ...harborRun, status: "cancelled" });
       }),
@@ -286,11 +287,11 @@ describe("EvalBenchmarksList", () => {
   it("lists benchmarks and creates a messages benchmark", async () => {
     let body: unknown;
     server.use(
-      http.post("*/v1/oma/evals/benchmarks", async ({ request }) => {
+      http.post("*/v1/maishu/evals/benchmarks", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json({ ...messagesBench, id: "evb_new", name: "fresh", case_count: 0, cases: [] }, { status: 201 });
       }),
-      http.get("*/v1/oma/evals/benchmarks/evb_new", () =>
+      http.get("*/v1/maishu/evals/benchmarks/evb_new", () =>
         HttpResponse.json({ ...messagesBench, id: "evb_new", name: "fresh", case_count: 0, cases: [] })),
     );
     const user = userEvent.setup();
@@ -317,8 +318,8 @@ describe("EvalBenchmarksList", () => {
     let body: unknown;
     const asked: string[] = [];
     server.use(
-      http.get("*/v1/oma/evals/benchmarks/builtin", () => HttpResponse.json({ data: [] })),
-      http.get("*/v1/oma/evals/git-refs", ({ request }) => {
+      http.get("*/v1/maishu/evals/benchmarks/builtin", () => HttpResponse.json({ data: [] })),
+      http.get("*/v1/maishu/evals/git-refs", ({ request }) => {
         asked.push(new URL(request.url).searchParams.get("url") ?? "");
         return HttpResponse.json({
           url: "https://huggingface.co/datasets/acme/tb",
@@ -328,7 +329,7 @@ describe("EvalBenchmarksList", () => {
           truncated: false,
         });
       }),
-      http.post("*/v1/oma/evals/benchmarks", async ({ request }) => {
+      http.post("*/v1/maishu/evals/benchmarks", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json({ ...harborBench, id: "evb_git" }, { status: 201 });
       }),
@@ -404,7 +405,7 @@ describe("EvalBenchmarkDetail (harbor)", () => {
   it("shows an old revision read-only and keeps the revision in case links", async () => {
     const asked: (string | null)[] = [];
     server.use(
-      http.get("*/v1/oma/evals/benchmarks/evb_1", ({ request }) => {
+      http.get("*/v1/maishu/evals/benchmarks/evb_1", ({ request }) => {
         asked.push(new URL(request.url).searchParams.get("revision"));
         return HttpResponse.json({ ...harborBench, cases_revision: 1, case_count: 1, cases: [harborBench.cases![0]] });
       }),
@@ -428,11 +429,11 @@ describe("EvalBenchmarkDetail (harbor)", () => {
     let body: unknown;
     const sha = "d".repeat(40);
     server.use(
-      http.post("*/v1/oma/evals/benchmarks/evb_1/sync", async ({ request }) => {
+      http.post("*/v1/maishu/evals/benchmarks/evb_1/sync", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json({ changed, benchmark: { ...harborBench, revision } });
       }),
-      http.get("*/v1/oma/evals/git-refs", () => HttpResponse.json({
+      http.get("*/v1/maishu/evals/git-refs", () => HttpResponse.json({
         url: "https://github.com/acme/tasks",
         default_branch: "main",
         branches: [{ name: "main", commit: "a".repeat(40) }],
@@ -461,10 +462,10 @@ describe("EvalBenchmarkDetail (harbor)", () => {
   it("syncs an upload benchmark with a new archive", async () => {
     let body: unknown;
     server.use(
-      http.get("*/v1/oma/evals/benchmarks/evb_1", () =>
+      http.get("*/v1/maishu/evals/benchmarks/evb_1", () =>
         HttpResponse.json({ ...harborBench, source: { type: "upload", file_id: "file_0" } })),
       http.post("*/v1/files", () => HttpResponse.json({ id: "file_1", filename: "t.tar.gz" })),
-      http.post("*/v1/oma/evals/benchmarks/evb_1/sync", async ({ request }) => {
+      http.post("*/v1/maishu/evals/benchmarks/evb_1/sync", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json({ changed: true, benchmark: { ...harborBench, revision: 3 } });
       }),
@@ -497,7 +498,7 @@ describe("EvalBenchmarkDetail (messages)", () => {
   it("adds a case from the form", async () => {
     let body: unknown;
     server.use(
-      http.post("*/v1/oma/evals/benchmarks/evb_m/cases", async ({ request }) => {
+      http.post("*/v1/maishu/evals/benchmarks/evb_m/cases", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json(messagesBench, { status: 201 });
       }),
@@ -519,7 +520,7 @@ describe("EvalBenchmarkDetail (messages)", () => {
   it("edits a case with PUT", async () => {
     let body: any;
     server.use(
-      http.put("*/v1/oma/evals/benchmarks/evb_m/cases/greet", async ({ request }) => {
+      http.put("*/v1/maishu/evals/benchmarks/evb_m/cases/greet", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json(greetCase);
       }),
@@ -539,7 +540,7 @@ describe("EvalBenchmarkDetail (messages)", () => {
   it("deletes a case, and shows a 409 while a run is active", async () => {
     let deletes = 0;
     server.use(
-      http.delete("*/v1/oma/evals/benchmarks/evb_m/cases/greet", () => {
+      http.delete("*/v1/maishu/evals/benchmarks/evb_m/cases/greet", () => {
         deletes++;
         return HttpResponse.json({ error: "Benchmark is used by active run evrun-x; cancel it first" }, { status: 409 });
       }),
@@ -558,7 +559,7 @@ describe("EvalCaseDetail", () => {
   it("shows a harbor case's instruction and files, read-only, at the URL's revision", async () => {
     let asked: string | null = null;
     server.use(
-      http.get("*/v1/oma/evals/benchmarks/evb_1/cases/hello-world", ({ request }) => {
+      http.get("*/v1/maishu/evals/benchmarks/evb_1/cases/hello-world", ({ request }) => {
         asked = new URL(request.url).searchParams.get("revision");
         return HttpResponse.json({
           ...harborBench.cases![0],
@@ -602,7 +603,7 @@ describe("NewEvalRunDialog", () => {
   it("posts a harbor benchmark run with agent, case subset, trials and concurrency", async () => {
     let body: unknown;
     server.use(
-      http.post("*/v1/oma/evals/runs", async ({ request }) => {
+      http.post("*/v1/maishu/evals/runs", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json({ run_id: "evr_new", task_count: 1 });
       }),
@@ -642,7 +643,7 @@ describe("NewEvalRunDialog", () => {
 
   it("shows the API error text when the run is rejected", async () => {
     server.use(
-      http.post("*/v1/oma/evals/runs", () =>
+      http.post("*/v1/maishu/evals/runs", () =>
         HttpResponse.json({ error: "benchmark has no runnable cases" }, { status: 400 })),
     );
     const user = userEvent.setup();
@@ -658,7 +659,7 @@ describe("NewEvalRunDialog", () => {
   it("runs a messages benchmark with an environment; oracle is disabled", async () => {
     let body: unknown;
     server.use(
-      http.post("*/v1/oma/evals/runs", async ({ request }) => {
+      http.post("*/v1/maishu/evals/runs", async ({ request }) => {
         body = await request.json();
         return HttpResponse.json({ run_id: "evr_m", task_count: 1 });
       }),

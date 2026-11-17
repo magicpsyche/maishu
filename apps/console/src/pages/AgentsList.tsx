@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArchiveIcon, PencilIcon } from "lucide-react";
@@ -19,9 +21,9 @@ import { useI18n } from "../i18n";
 type StatusValue = "any" | "active" | "archived";
 
 const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
-  { value: "any", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
+  { value: "any", label: uiText("All") },
+  { value: "active", label: uiText("Active") },
+  { value: "archived", label: uiText("Archived") },
 ];
 
 export function AgentsList() {
@@ -108,9 +110,9 @@ export function AgentsList() {
           );
         })().catch((e) => console.warn("[AgentsList] /v1/skills aux fetch failed", e)),
         (async () => {
-          const mc = await api<{ data: ModelCard[] }>("/v1/oma/model_cards?limit=200");
+          const mc = await api<{ data: ModelCard[] }>("/v1/maishu/model_cards?limit=200");
           setModelCards(mc.data ?? []);
-        })().catch((e) => console.warn("[AgentsList] /v1/oma/model_cards aux fetch failed", e)),
+        })().catch((e) => console.warn("[AgentsList] /v1/maishu/model_cards aux fetch failed", e)),
       ]);
     } finally {
       setAuxLoading(false);
@@ -217,7 +219,7 @@ export function AgentsList() {
   const filters = (
     <>
       <FilterChip
-        label="Status"
+        label={uiText("Status")}
         active={status !== "any"}
         display={statusDisplay}
         onClear={() => setStatus("any")}
@@ -236,7 +238,7 @@ export function AgentsList() {
             options={STATUS_OPTIONS}
             value={status}
             onValueChange={(v) => setStatus(v as StatusValue)}
-            searchPlaceholder="Status..."
+            searchPlaceholder={uiText("Status...")}
           />
         </PopoverContent>
       </FilterChip>
@@ -273,7 +275,7 @@ export function AgentsList() {
           <>
             <p>{t.agents.createFirstAgent}</p>
             <Button variant="ghost"
-              onClick={() => nav("/")}
+              onClick={() => nav("/help")}
               className="inline-flex items-center min-h-11 sm:min-h-0 mt-3 text-sm text-brand hover:underline"
             >
               {t.agents.getStartedGuide}

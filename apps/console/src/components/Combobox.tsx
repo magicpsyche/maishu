@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -329,13 +331,12 @@ export function Combobox<T>({
                 container so its own visibility tracks scroll position. */}
             {hasMore && (
               <div ref={listEndRef} className="py-2 text-center text-sm text-fg-subtle">
-                {infiniteQuery.isFetchingNextPage ? "Loading..." : ""}
+                {infiniteQuery.isFetchingNextPage ? uiText("Loading...") : ""}
               </div>
             )}
             {showInitialLoading && (
               <div className="px-3 py-6 text-center text-sm text-fg-subtle">
-                Loading...
-              </div>
+                 {uiText("Loading...")} </div>
             )}
           </CommandList>
         </Command>

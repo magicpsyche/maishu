@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
@@ -49,10 +50,10 @@ export function TenantSwitcher() {
 
   // TQ replaces the previous mount-once useEffect that hand-rolled a fetch
   // + setState. Dedup means a re-mount (sidebar collapse/expand) reuses the
-  // cached membership list rather than re-hitting /v1/oma/me/tenants. A 401 on
+  // cached membership list rather than re-hitting /v1/maishu/me/tenants. A 401 on
   // first paint (pre-auth) is silenced by useApi's auth-error list.
   const { data: tenantsRes } = useApiQuery<{ data: Tenant[] }>(
-    "/v1/oma/me/tenants",
+    "/v1/maishu/me/tenants",
   );
   const tenants = tenantsRes?.data ?? [];
 
@@ -79,7 +80,7 @@ export function TenantSwitcher() {
     window.location.reload();
   };
 
-  // Always render the row — even before `/v1/oma/me/tenants` resolves —
+  // Always render the row — even before `/v1/maishu/me/tenants` resolves —
   // so the sidebar layout doesn't change height between empty and
   // loaded states. Previously this returned null pre-fetch, which made
   // the SidebarFooter shorter on first paint and then grew by 44 px
@@ -205,7 +206,7 @@ function CreateTenantModal({
     setWorking(true);
     setError("");
     try {
-      const res = await api<Tenant>("/v1/oma/tenants", {
+      const res = await api<Tenant>("/v1/maishu/tenants", {
         method: "POST",
         body: JSON.stringify({ name: trimmed }),
       });

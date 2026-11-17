@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
@@ -102,7 +103,7 @@ describe("Managed Agents list contract", () => {
       .mockResolvedValueOnce({ data: [{ id: "card_2" }] });
 
     const { result } = renderHook(
-      () => useOmaInfiniteApiQuery<{ id: string }>("/v1/oma/model_cards", { limit: 20 }),
+      () => useOmaInfiniteApiQuery<{ id: string }>("/v1/maishu/model_cards", { limit: 20 }),
       { wrapper: createWrapper() },
     );
 
@@ -111,7 +112,7 @@ describe("Managed Agents list contract", () => {
     await waitFor(() => expect(result.current.items).toHaveLength(2));
     expect(api).toHaveBeenNthCalledWith(
       2,
-      "/v1/oma/model_cards?limit=20&cursor=cursor_2",
+      "/v1/maishu/model_cards?limit=20&cursor=cursor_2",
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });

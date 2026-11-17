@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 const BASE = "";
 export const CONSOLE_API_BETAS = [
   "managed-agents-2026-04-01",
@@ -104,18 +106,18 @@ export function setActiveTenantId(id: string | null): void {
 /** Endpoints whose 401/403 are part of normal app flow and should NOT
  *  surface as a toast. /auth-info is checked on every page load to decide
  *  whether to show the login screen — a 401 means "not logged in", which
- *  the login screen already communicates. /v1/oma/me 401 is handled the same
+ *  the login screen already communicates. /v1/maishu/me 401 is handled the same
  *  way by the sidebar bootstrapping path. */
-const SILENT_AUTH_PATHS = ["/auth-info", "/v1/oma/me"];
+const SILENT_AUTH_PATHS = ["/auth-info", "/v1/maishu/me"];
 
 /** Optional OMA capability probes: a 404 only means "this deployment does
  *  not offer it", which the caller renders as an absent feature. */
-const SILENT_NOT_FOUND_PATHS = ["/v1/oma/sandbox_images"];
+const SILENT_NOT_FOUND_PATHS = ["/v1/maishu/sandbox_images"];
 // Managed Console sessions currently load the optional trajectory envelope
 // through the legacy OMA route. A missing envelope is rendered inline by
 // SessionDetail as “Trajectory unavailable”; it must not surface the
 // generic API toast “Session not found”.
-const TRAJECTORY_PATH = /^\/v1\/oma\/sessions\/[^/?]+\/trajectory(?:\?.*)?$/;
+const TRAJECTORY_PATH = /^\/v1\/maishu\/sessions\/[^/?]+\/trajectory(?:\?.*)?$/;
 const SESSION_RETRIEVE_PATH = /^\/v1\/sessions\/[^/?]+(?:\?.*)?$/;
 
 /** Exported for tests. */
@@ -137,9 +139,9 @@ function shouldSilenceAuthError(path: string, status: number): boolean {
 }
 
 function getApiToastMessage(info: ApiErrorInfo, status: number): string {
-  if (info.message !== `HTTP ${status}`) return info.message;
-  if (status >= 500) return "Server error. Please try again.";
-  return `Request failed (HTTP ${status}).`;
+  if (info.message !== `HTTP ${status}`) return uiText(info.message);
+  if (status >= 500) return uiText("Server error. Please try again.");
+  return uiText(`Request failed (HTTP ${status}).`);
 }
 
 export function useApi() {
@@ -157,6 +159,7 @@ export function useApi() {
       path: string,
       init?: RequestInit
     ): Promise<Response> {
+      path = path.replace(/^\/v1\/oma(?=\/|\?|$)/, "/v1/maishu");
       const activeTenant = getActiveTenantId();
       // Don't auto-set JSON content-type for FormData — the browser must add
       // multipart boundaries itself, and a manually set content-type without
@@ -187,7 +190,7 @@ export function useApi() {
           // User-facing toast: skip the METHOD path: prefix (debug noise);
           // log the full thing to console for dev triage.
           console.error(`[api] ${(init?.method || "GET")} ${path}: ${msg}`);
-          toast.error(`Network error: ${msg}`);
+          toast.error(uiText(`Network error: ${msg}`));
         }
         throw err;
       }
@@ -218,7 +221,7 @@ export function useApi() {
         ) {
           sessionStorage.setItem("oma_tenant_self_heal", "1");
           setActiveTenantId(null);
-          toast.info("Reset stored workspace pin (was unrecognized) — reloading");
+          toast.info(uiText("Reset stored workspace pin (was unrecognized) — reloading"));
           // Give the toast a tick to render before navigation.
           setTimeout(() => location.reload(), 250);
           throw new ApiError({ ...info, status: res.status });
@@ -278,7 +281,7 @@ export function useApi() {
         },
       });
       if (!response.body) {
-        throw new Error("Managed Agents event stream response has no body");
+        throw new Error(uiText("Managed Agents event stream response has no body"));
       }
       return iterateJsonSseStream<T>(response.body);
     },

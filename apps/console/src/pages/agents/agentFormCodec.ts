@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 /**
  * Pure create/edit codec for AgentFormDialog.
  *
@@ -22,7 +24,7 @@ export function parseAgentConfigText(
     throw new Error(`Invalid ${format.toUpperCase()}${detail}`);
   }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("Agent config must be an object");
+    throw new Error(uiText("Agent config must be an object"));
   }
   return parsed as Record<string, unknown>;
 }
@@ -35,7 +37,7 @@ export function prepareCodePayload(
   const payload = structuredClone(parsed);
   if (!opts.forUpdate) {
     if (typeof payload.name !== "string" || payload.name.length === 0) {
-      throw new Error("name is required");
+      throw new Error(uiText("name is required"));
     }
     if (payload.tools === undefined) {
       payload.tools = [{ type: "agent_toolset_20260401" }];
@@ -53,11 +55,11 @@ function parseMetadataJson(source: string): Record<string, string> {
     throw new Error(`Invalid metadata JSON${detail}`);
   }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("Metadata JSON must be an object");
+    throw new Error(uiText("Metadata JSON must be an object"));
   }
   for (const value of Object.values(parsed)) {
     if (typeof value !== "string") {
-      throw new Error("Metadata JSON values must be strings");
+      throw new Error(uiText("Metadata JSON values must be strings"));
     }
   }
   return parsed as Record<string, string>;
@@ -99,11 +101,11 @@ export function materializeAgentUpdate(
         for (const [metadataKey, metadataValue] of Object.entries(value)) {
           if (metadataValue === null) delete metadata[metadataKey];
           else if (typeof metadataValue === "string") metadata[metadataKey] = metadataValue;
-          else throw new Error("Metadata patch values must be strings or null");
+          else throw new Error(uiText("Metadata patch values must be strings or null"));
         }
         next.metadata = metadata;
       } else {
-        throw new Error("Metadata patch must be an object or null");
+        throw new Error(uiText("Metadata patch must be an object or null"));
       }
       continue;
     }

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { CustomToolResults } from "../components/session/CustomToolResults";
 import { pendingCustomResults } from "../lib/pending-custom-results";
 import { Input } from "@/components/ui/input";
@@ -176,7 +178,7 @@ export function SessionDetail() {
     publicationId?: string;
   } | null>(null);
   const [status, setStatus] = useState("idle");
-  /** On-demand Trajectory v1 envelope (GET /v1/oma/sessions/:id/trajectory).
+  /** On-demand Trajectory v1 envelope (GET /v1/maishu/sessions/:id/trajectory).
    *  Fetched when the Trace tab is opened; drives the outcome + reward
    *  chips in the header strip and Trace's Download / Raw JSON.
    *  "loading" while in flight, "error" if the fetch failed (404 =
@@ -850,8 +852,8 @@ export function SessionDetail() {
       sessionThreadId: activeThreadId !== "sthr_primary" ? activeThreadId : undefined,
     });
     if (!encoded.ok) {
-      toast.error(encoded.error || "Could not encode tool confirmation");
-      throw new Error(encoded.error || "encode failed");
+      toast.error(encoded.error || uiText("Could not encode tool confirmation"));
+      throw new Error(encoded.error || uiText("encode failed"));
     }
     await managedApi.sessions.events.send(id, {
       events: [encoded.wire as {
@@ -888,7 +890,7 @@ export function SessionDetail() {
     markQueueBusy(messageId, busy);
     try {
       const res = await fetch(
-        `/v1/oma/sessions/${encodeURIComponent(id)}/pending/${encodeURIComponent(messageId)}`,
+        `/v1/maishu/sessions/${encodeURIComponent(id)}/pending/${encodeURIComponent(messageId)}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -1066,7 +1068,7 @@ export function SessionDetail() {
         <SessionTokenUsage usage={sessionMeta.usage} />
         <div className="flex items-center gap-2 flex-wrap">
           <StatusPill
-            label={needsAction ? "Needs action" : undefined}
+            label={needsAction ? uiText("Needs action") : undefined}
             status={needsAction ? "awaiting" : status as "idle" | "running" | "terminated" | "error" | string}
           />
           {/* Trajectory outcome chip — only when the trajectory has actually
@@ -1122,9 +1124,9 @@ export function SessionDetail() {
                 onClick={() => void interrupt()}
                 disabled={interrupting}
                 className="inline-flex items-center justify-center px-2.5 py-1 min-h-11 sm:min-h-0 rounded-md text-xs font-medium bg-bg-surface/60 text-fg-muted hover:bg-bg-surface hover:text-fg disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
-                title="Interrupt the active turn on this thread"
+                title={uiText("Interrupt the active turn on this thread")}
               >
-                {interrupting ? "Stopping…" : "Stop"}
+                {interrupting ? uiText("Stopping…") : uiText("Stop")}
               </Button>
             )}
             <Button variant="ghost"
@@ -1134,10 +1136,9 @@ export function SessionDetail() {
                   ? "bg-bg-surface text-fg"
                   : "bg-bg-surface/60 text-fg-muted hover:bg-bg-surface hover:text-fg"
               }`}
-              title="Files the agent wrote to /mnt/session/outputs/"
+              title={uiText("Files the agent wrote to /mnt/session/outputs/")}
             >
-              Files
-            </Button>
+               {uiText("Files")} </Button>
           </div>
         </div>
       </div>
@@ -1158,14 +1159,14 @@ export function SessionDetail() {
       )}
 
       {/* View tabs */}
-      <div role="tablist" aria-label="Session view" className="pl-3 pr-4 flex items-center gap-1 shrink-0">
-        <ViewTab label="Conversation" active={view === "chat"} onClick={() => setView("chat")} />
+      <div role="tablist" aria-label={uiText("Session view")} className="pl-3 pr-4 flex items-center gap-1 shrink-0">
+        <ViewTab label={uiText("Conversation")} active={view === "chat"} onClick={() => setView("chat")} />
         {/* Trace = the single execution viewer (overview + turn tree +
             inspector). Opening it fetches the trajectory envelope on demand
             (never loaded, last attempt failed, or the run was still going)
             for outcome / reward / Download JSON. */}
         <ViewTab
-          label="Trace"
+          label={uiText("Trace")}
           active={view === "trace"}
           onClick={() => {
             startTransition(() => setView("trace"));
@@ -1194,8 +1195,7 @@ export function SessionDetail() {
               rel="noreferrer"
               className="ml-auto hover:underline"
             >
-              Open in Linear ↗
-            </a>
+               {uiText("Open in Linear ↗")} </a>
           )}
         </div>
       )}
@@ -1212,7 +1212,7 @@ export function SessionDetail() {
                 <a
                   href={`slack://channel?team=${slack.workspaceId}&id=${slack.channelId}`}
                   className="font-mono underline hover:no-underline"
-                  title="Open in Slack desktop"
+                  title={uiText("Open in Slack desktop")}
                 >
                   channel {slack.channelId} ↗
                 </a>
@@ -1242,10 +1242,9 @@ export function SessionDetail() {
               <Link
                 to={`/integrations/slack/publish?pub=${slack.publicationId}`}
                 className="underline hover:no-underline"
-                title="Open the Slack publication this session is bound to"
+                title={uiText("Open the Slack publication this session is bound to")}
               >
-                publication →
-              </Link>
+                 {uiText("publication →")} </Link>
             </>
           )}
         </div>
@@ -1465,7 +1464,7 @@ function ThreadTree({
     childrenOf.set(parent, arr);
   }
   const flat: Array<{ id: string; label: string; depth: number }> = [
-    { id: "sthr_primary", label: "Main", depth: 0 },
+    { id: "sthr_primary", label: uiText("Main"), depth: 0 },
   ];
   const walk = (parentId: string, depth: number) => {
     const kids = childrenOf.get(parentId) ?? [];
@@ -1485,7 +1484,7 @@ function ThreadTree({
     ? "pl-3 pr-4 flex items-center gap-1 shrink-0 overflow-x-auto"
     : `console-scroll-fade ${listFade.className} pl-3 pr-4 py-1 flex flex-col items-stretch gap-0 shrink-0 overflow-y-auto max-h-40`;
   return (
-    <div ref={isFlat ? undefined : listFade.ref} role="tablist" aria-label="Threads" className={containerClass}>
+    <div ref={isFlat ? undefined : listFade.ref} role="tablist" aria-label={uiText("Threads")} className={containerClass}>
       {flat.map((n) => (
         <ThreadTab
           key={n.id}
@@ -1518,7 +1517,7 @@ function SessionDurationBadge({ events }: { events: Event[] }) {
     <Badge
       icon={<DurationIcon />}
       label={formatDuration(last - first)}
-      title="Wall-clock from first to last event"
+      title={uiText("Wall-clock from first to last event")}
     />
   );
 }
@@ -1572,8 +1571,7 @@ function SessionTransientActivity({
             {partial ? (
               <div className="space-y-2 overflow-hidden">
                 <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Streaming input
-                </h4>
+                   {uiText("Streaming input")} </h4>
                 <div className="rounded-md bg-muted/50">
                   <CodeBlock code={partial} language="json" />
                 </div>
@@ -1594,7 +1592,7 @@ function SessionTransientActivity({
         && streams.size === 0
         && thinkingStreams.size === 0
         && toolInputStreams.size === 0 ? (
-        <div aria-label="Agent is working" className="flex gap-1 py-2" role="status">
+        <div aria-label={uiText("Agent is working")} className="flex gap-1 py-2" role="status">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-fg-subtle" />
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-fg-subtle [animation-delay:150ms]" />
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-fg-subtle [animation-delay:300ms]" />
@@ -1680,11 +1678,10 @@ function EventRender({
             <div className="flex items-center gap-1.5 text-xs text-fg-subtle mb-1">
               <span
                 className="inline-flex items-center gap-1 rounded-full bg-info-subtle text-info px-2 py-0.5 font-medium text-xs"
-                title={scheduledAt ? `Scheduled at ${scheduledAt}` : undefined}
+                title={scheduledAt ? uiText(`Scheduled at ${scheduledAt}`) : undefined}
               >
                 <span aria-hidden>🕒</span>
-                Scheduled wakeup
-              </span>
+                 {uiText("Scheduled wakeup")} </span>
             </div>
             <MessageContent className="rounded-2xl rounded-bl-sm px-4 py-3 bg-info-subtle text-info">
               {text}
@@ -1702,7 +1699,7 @@ function EventRender({
           {isPending && (
             <div className="text-xs text-fg-subtle text-right flex items-center justify-end gap-1">
               <span aria-hidden>⏳</span>
-              <span>Queued…</span>
+              <span>{uiText("Queued…")}</span>
             </div>
           )}
           <MessageContent className={isPending ? pendingOverride : undefined}>
@@ -1826,10 +1823,10 @@ function EventRender({
     case "session.error":
       return (
         <div className="max-w-2xl bg-danger-subtle rounded-lg px-4 py-2.5 text-sm text-danger">
-          <div>Error: {event.error}</div>
+          <div>{uiText("Error:")} {event.error}</div>
           {modelErrorCause && (
             <div className="mt-1.5 pt-1.5 text-sm opacity-90">
-              <span className="font-medium">Cause</span>
+              <span className="font-medium">{uiText("Cause")}</span>
               {modelErrorCause.model && (
                 <span className="ml-1 font-mono opacity-75">({modelErrorCause.model})</span>
               )}
@@ -1842,7 +1839,7 @@ function EventRender({
     case "session.warning":
       return (
         <div className="max-w-2xl bg-warning-subtle rounded-lg px-4 py-2.5 text-sm text-warning">
-          <div className="font-medium mb-0.5">Warning ({String(event.source ?? "")})</div>
+          <div className="font-medium mb-0.5">{uiText("Warning (")}{String(event.source ?? "")})</div>
           <div>{String(event.message ?? "")}</div>
         </div>
       );
@@ -1864,17 +1861,14 @@ export function SessionNotFound({ id }: { id?: string }) {
       <EmptyState
         size="lg"
         kind="session"
-        title="Session not found"
+        title={uiText("Session not found")}
         body={
           <>
-            No session with id <code className="font-mono">{id}</code> exists in this
-            workspace. It may have been deleted, or the link is wrong.
-          </>
+             {uiText("No session with id")} <code className="font-mono">{id}</code>  {uiText("exists in this workspace. It may have been deleted, or the link is wrong.")} </>
         }
         action={
           <Link to="/sessions" className="text-sm text-brand underline-offset-2 hover:underline">
-            Back to Sessions
-          </Link>
+             {uiText("Back to Sessions")} </Link>
         }
       />
     </div>

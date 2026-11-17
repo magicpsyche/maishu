@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +56,7 @@ export function MemoryStoreDetail() {
     if (!storeId) return;
     if (
       !confirm(
-        "Archive this store? It will become read-only and no new sessions can attach it. Archive is one-way.",
+        uiText("Archive this store? It will become read-only and no new sessions can attach it. Archive is one-way."),
       )
     )
       return;
@@ -70,7 +72,7 @@ export function MemoryStoreDetail() {
     if (!storeId) return;
     if (
       !confirm(
-        "Delete this store and ALL its memories + version history? This cannot be undone.",
+        uiText("Delete this store and ALL its memories + version history? This cannot be undone."),
       )
     )
       return;
@@ -82,7 +84,7 @@ export function MemoryStoreDetail() {
     }
   };
 
-  if (!storeId) return <div className="p-8">Missing store id.</div>;
+  if (!storeId) return <div className="p-8">{uiText("Missing store id.")}</div>;
   if (error) return (
     <div className="flex-1 p-8">
       <ErrorBanner message={error} onDismiss={() => setError(null)} />
@@ -104,7 +106,7 @@ export function MemoryStoreDetail() {
                 {store.id} · /mnt/memory/{store.name}/
                 {store.archived_at && (
                   <span className="ml-2 text-fg-muted">
-                    · archived {new Date(store.archived_at).toLocaleDateString()}
+                     {uiText("· archived")} {new Date(store.archived_at).toLocaleDateString()}
                   </span>
                 )}
               </span>
@@ -114,32 +116,30 @@ export function MemoryStoreDetail() {
             <>
               {!store.archived_at && (
                 <Button variant="outline" size="sm" onClick={archive}>
-                  Archive
-                </Button>
+                   {uiText("Archive")} </Button>
               )}
               <Button variant="destructive" size="sm" onClick={del}>
-                Delete
-              </Button>
+                 {uiText("Delete")} </Button>
             </>
           }
           toolbar={
             <div
               role="tablist"
-              aria-label="Memory store sections"
+              aria-label={uiText("Memory store sections")}
               className="flex items-center gap-1 -my-1.5"
             >
               <SectionTab
-                label="Memories"
+                label={uiText("Memories")}
                 active={tab === "memories"}
                 onClick={() => setTab("memories")}
               />
               <SectionTab
-                label="Version history"
+                label={uiText("Version history")}
                 active={tab === "versions"}
                 onClick={() => setTab("versions")}
               />
               <SectionTab
-                label="Settings"
+                label={uiText("Settings")}
                 active={tab === "settings"}
                 onClick={() => setTab("settings")}
               />
@@ -253,15 +253,15 @@ function MemoriesPanel({ storeId, archived }: { storeId: string; archived: boole
 
       <div className="flex gap-2 mb-4">
         <Input
-          placeholder="Filter by path prefix (e.g. /preferences/)"
-          aria-label="Filter by path prefix"
+          placeholder={uiText("Filter by path prefix (e.g. /preferences/)")}
+          aria-label={uiText("Filter by path prefix")}
           value={pathPrefix}
           onChange={(e) => setPathPrefix(e.target.value)}
           className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-bg text-fg outline-none focus:border-border-strong"
         />
         <Input
-          placeholder="Depth"
-          aria-label="Depth filter"
+          placeholder={uiText("Depth")}
+          aria-label={uiText("Depth filter")}
           value={depth}
           onChange={(e) => setDepth(e.target.value.replace(/[^0-9]/g, ""))}
           className="w-24 border border-border rounded-lg px-3 py-2 min-h-11 sm:min-h-0 text-sm bg-bg text-fg outline-none focus:border-border-strong"
@@ -269,8 +269,7 @@ function MemoriesPanel({ storeId, archived }: { storeId: string; archived: boole
         {!archived && (
           <Button variant="ghost" onClick={() => setShowWrite(true)}
             className="inline-flex items-center justify-center px-4 py-2 min-h-11 sm:min-h-0 bg-brand text-brand-fg rounded-lg text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] whitespace-nowrap">
-            + New memory
-          </Button>
+             {uiText("+ New memory")} </Button>
         )}
       </div>
 
@@ -283,15 +282,15 @@ function MemoriesPanel({ storeId, archived }: { storeId: string; archived: boole
         />
       )}
 
-      {loading ? <p className="text-fg-subtle text-sm py-4">Loading...</p> : (
+      {loading ? <p className="text-fg-subtle text-sm py-4">{uiText("Loading...")}</p> : (
         <div className="console-detail-table-wrap">
           <Table className="console-detail-table">
             <TableHeader variant="wireless">
               <TableRow variant="wireless">
-                <TableHead>Path</TableHead>
-                <TableHead>Size</TableHead>
+                <TableHead>{uiText("Path")}</TableHead>
+                <TableHead>{uiText("Size")}</TableHead>
                 <TableHead>SHA-256</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead>{uiText("Updated")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -329,7 +328,7 @@ function MemoriesPanel({ storeId, archived }: { storeId: string; archived: boole
                 onLoadMore={loadMore}
               />
               {!memories.length && (
-                <TableRow><TableCell colSpan={4} className="px-4 py-8 text-center text-fg-subtle">No memories</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="px-4 py-8 text-center text-fg-subtle">{uiText("No memories")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -415,7 +414,7 @@ function MemoryDetailDialog({
 
   const rollback = async (v: MemoryVersion) => {
     if (v.content === undefined || v.content === null) {
-      alert("This version's content has been redacted — can't roll back.");
+      alert(uiText("This version's content has been redacted — can't roll back."));
       return;
     }
     if (!confirm(`Roll back to version ${v.id} (${new Date(v.created_at).toLocaleString()})?\n\nThis writes a new version with the old content.`)) return;
@@ -435,7 +434,7 @@ function MemoryDetailDialog({
 
   const redact = async (v: MemoryVersion) => {
     if (v.content_sha256 && v.content_sha256 === memory.content_sha256) {
-      alert("Can't redact the live head version. Write a new version first or delete the memory.");
+      alert(uiText("Can't redact the live head version. Write a new version first or delete the memory."));
       return;
     }
     if (!confirm(`Redact version ${v.id}? Content will be wiped; audit row stays.`)) return;
@@ -464,8 +463,7 @@ function MemoryDetailDialog({
               onClick={() => setEditing(true)}
               className="inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 bg-brand text-brand-fg rounded-lg text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
             >
-              Edit
-            </Button>
+               {uiText("Edit")} </Button>
           )}
           {editing && (
             <>
@@ -473,8 +471,7 @@ function MemoryDetailDialog({
                 onClick={save}
                 className="inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 bg-brand text-brand-fg rounded-lg text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
               >
-                Save
-              </Button>
+                 {uiText("Save")} </Button>
               <Button variant="ghost"
                 onClick={() => {
                   setEditing(false);
@@ -483,8 +480,7 @@ function MemoryDetailDialog({
                 }}
                 className="inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 border border-border rounded-lg text-sm hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
               >
-                Cancel
-              </Button>
+                 {uiText("Cancel")} </Button>
             </>
           )}
           {!editing && (
@@ -496,16 +492,14 @@ function MemoryDetailDialog({
               className="inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 border border-border rounded-lg text-sm hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
               aria-expanded={showVersions}
             >
-              {showVersions ? "Hide" : "Show"} version history
-            </Button>
+              {showVersions ? uiText("Hide") : uiText("Show")}  {uiText("version history")} </Button>
           )}
           {!archived && !editing && (
             <Button variant="ghost"
               onClick={remove}
               className="ml-auto inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 bg-danger/10 border border-danger/30 text-danger rounded-lg text-sm hover:bg-danger/20 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
             >
-              Delete memory
-            </Button>
+               {uiText("Delete memory")} </Button>
           )}
         </div>
       }
@@ -514,7 +508,7 @@ function MemoryDetailDialog({
 
       {editing && (
         <div className="mb-3">
-          <Label htmlFor="memory-edit-path" className="sr-only">Memory path</Label>
+          <Label htmlFor="memory-edit-path" className="sr-only">{uiText("Memory path")}</Label>
           <Input
             id="memory-edit-path"
             value={path}
@@ -529,7 +523,7 @@ function MemoryDetailDialog({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={20}
-          aria-label="Memory content"
+          aria-label={uiText("Memory content")}
           className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-bg text-fg font-mono outline-none focus:border-border-strong"
         />
       ) : (
@@ -543,9 +537,9 @@ function MemoryDetailDialog({
           <Table className="console-detail-table">
             <TableHeader variant="wireless">
               <TableRow variant="wireless">
-                <TableHead>When</TableHead>
-                <TableHead>Op</TableHead>
-                <TableHead>Actor</TableHead>
+                <TableHead>{uiText("When")}</TableHead>
+                <TableHead>{uiText("Op")}</TableHead>
+                <TableHead>{uiText("Actor")}</TableHead>
                 <TableHead>SHA-256</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
@@ -556,31 +550,29 @@ function MemoryDetailDialog({
                 return (
                   <TableRow variant="wireless" key={v.id}>
                     <TableCell className="px-3 py-2 text-fg-muted">{new Date(v.created_at).toLocaleString()}</TableCell>
-                    <TableCell className="px-3 py-2 font-mono">{v.operation}{v.redacted_at && " · redacted"}</TableCell>
+                    <TableCell className="px-3 py-2 font-mono">{v.operation}{v.redacted_at && uiText("· redacted")}</TableCell>
                     <TableCell className="px-3 py-2 font-mono text-fg-muted">{formatMemoryActor(v.created_by)}</TableCell>
                     <TableCell className="px-3 py-2 font-mono text-fg-muted">
                       {v.content_sha256 ? v.content_sha256.slice(0, 12) + "…" : "—"}
-                      {isLiveHead && <span className="ml-2 text-brand">(head)</span>}
+                      {isLiveHead && <span className="ml-2 text-brand">{uiText("(head)")}</span>}
                     </TableCell>
                     <TableCell className="px-3 py-2 text-right">
                       {!archived && !v.redacted_at && v.content !== undefined && v.content !== null && !isLiveHead && (
                         <Button variant="ghost" onClick={() => rollback(v)}
                           className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 text-xs text-brand hover:underline mr-1 sm:mr-2">
-                          Roll back
-                        </Button>
+                           {uiText("Roll back")} </Button>
                       )}
                       {!archived && !v.redacted_at && !isLiveHead && (
                         <Button variant="ghost" onClick={() => redact(v)}
                           className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 text-xs text-danger hover:underline">
-                          Redact
-                        </Button>
+                           {uiText("Redact")} </Button>
                       )}
                     </TableCell>
                   </TableRow>
                 );
               })}
               {!versions.length && (
-                <TableRow><TableCell colSpan={5} className="px-3 py-4 text-center text-fg-subtle">No versions</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="px-3 py-4 text-center text-fg-subtle">{uiText("No versions")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -612,18 +604,18 @@ function VersionsPanel({ storeId }: { storeId: string }) {
   }, [queryError]);
 
   if (error) return <ErrorBanner message={error} onDismiss={() => setError(null)} />;
-  if (loading) return <p className="text-fg-subtle text-sm py-4">Loading...</p>;
-  if (!versions.length) return <p className="text-fg-subtle text-sm py-4">No versions yet.</p>;
+  if (loading) return <p className="text-fg-subtle text-sm py-4">{uiText("Loading...")}</p>;
+  if (!versions.length) return <p className="text-fg-subtle text-sm py-4">{uiText("No versions yet.")}</p>;
 
   return (
     <div className="console-detail-table-wrap">
       <Table className="console-detail-table">
         <TableHeader variant="wireless">
           <TableRow variant="wireless">
-            <TableHead>When</TableHead>
-            <TableHead>Op</TableHead>
-            <TableHead>Path</TableHead>
-            <TableHead>Actor</TableHead>
+            <TableHead>{uiText("When")}</TableHead>
+            <TableHead>{uiText("Op")}</TableHead>
+            <TableHead>{uiText("Path")}</TableHead>
+            <TableHead>{uiText("Actor")}</TableHead>
             <TableHead>SHA-256</TableHead>
           </TableRow>
         </TableHeader>
@@ -631,7 +623,7 @@ function VersionsPanel({ storeId }: { storeId: string }) {
           {versions.map((v) => (
             <TableRow variant="wireless" key={v.id}>
               <TableCell className="px-4 py-3 text-fg-muted">{new Date(v.created_at).toLocaleString()}</TableCell>
-              <TableCell className="px-4 py-3 font-mono text-xs">{v.operation}{v.redacted_at && " · redacted"}</TableCell>
+              <TableCell className="px-4 py-3 font-mono text-xs">{v.operation}{v.redacted_at && uiText("· redacted")}</TableCell>
               <TableCell className="px-4 py-3 font-mono text-xs">{v.path ?? "—"}</TableCell>
               <TableCell className="px-4 py-3 font-mono text-xs text-fg-muted">{formatMemoryActor(v.created_by)}</TableCell>
               <TableCell className="px-4 py-3 font-mono text-xs text-fg-muted">
@@ -815,7 +807,7 @@ function WriteMemoryDialog({
     <Modal
       open
       onClose={onClose}
-      title="New memory"
+      title={uiText("New memory")}
       maxWidth="max-w-2xl"
       footer={
         <>
@@ -823,20 +815,18 @@ function WriteMemoryDialog({
             onClick={onClose}
             className="inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 border border-border rounded-lg text-sm hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            Cancel
-          </Button>
+             {uiText("Cancel")} </Button>
           <Button variant="ghost"
             onClick={save}
             className="inline-flex items-center justify-center px-3 py-1.5 min-h-11 sm:min-h-0 bg-brand text-brand-fg rounded-lg text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            Create
-          </Button>
+             {uiText("Create")} </Button>
         </>
       }
     >
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-      <Label htmlFor="new-memory-path" className="block text-xs font-medium uppercase tracking-wider text-fg-muted mb-1">Path</Label>
+      <Label htmlFor="new-memory-path" className="block text-xs font-medium uppercase tracking-wider text-fg-muted mb-1">{uiText("Path")}</Label>
       <Input
         id="new-memory-path"
         placeholder="/preferences/formatting.md"
@@ -845,7 +835,7 @@ function WriteMemoryDialog({
         className="w-full font-mono border border-border rounded-lg px-3 py-2 text-sm mb-3 bg-bg text-fg outline-none focus:border-border-strong"
       />
 
-      <Label htmlFor="new-memory-content" className="block text-xs font-medium uppercase tracking-wider text-fg-muted mb-1">Content (max 100KB)</Label>
+      <Label htmlFor="new-memory-content" className="block text-xs font-medium uppercase tracking-wider text-fg-muted mb-1">{uiText("Content (max 100KB)")}</Label>
       <Textarea
         id="new-memory-content"
         value={content}
@@ -861,7 +851,7 @@ function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () =>
   return (
     <div className="bg-danger/10 border border-danger/30 rounded-lg px-4 py-3 mb-4 flex items-start justify-between gap-4">
       <p className="text-danger text-sm">{message}</p>
-      <Button variant="ghost" onClick={onDismiss} className="inline-flex items-center min-h-11 sm:min-h-0 text-danger/70 hover:text-danger text-sm flex-shrink-0">Dismiss</Button>
+      <Button variant="ghost" onClick={onDismiss} className="inline-flex items-center min-h-11 sm:min-h-0 text-danger/70 hover:text-danger text-sm flex-shrink-0">{uiText("Dismiss")}</Button>
     </div>
   );
 }
@@ -908,7 +898,7 @@ function FeedMoreRow({
   return (
     <TableRow variant="wireless">
       <TableCell colSpan={colSpan} className="text-center text-xs text-fg-subtle">
-        <div ref={ref}>{loading ? "Loading more…" : "More items load as you scroll"}</div>
+        <div ref={ref}>{loading ? uiText("Loading more…") : uiText("More items load as you scroll")}</div>
       </TableCell>
     </TableRow>
   );

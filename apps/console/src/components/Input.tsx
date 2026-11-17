@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useState, type InputHTMLAttributes, type ReactNode } from "react";
 
 import { Input } from "@/components/ui/input";
@@ -97,8 +99,8 @@ export function SecretInput({
         size="icon-sm"
         onClick={() => setRevealed((r) => !r)}
         className="absolute inset-y-0 right-1 my-auto text-fg-subtle hover:text-fg-muted"
-        title={revealed ? "Hide" : "Show"}
-        aria-label={revealed ? "Hide secret" : "Show secret"}
+        title={revealed ? uiText("Hide") : uiText("Show")}
+        aria-label={revealed ? uiText("Hide secret") : uiText("Show secret")}
       >
         {revealed ? <EyeOffIcon /> : <EyeIcon />}
       </Button>

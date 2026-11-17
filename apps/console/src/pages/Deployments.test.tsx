@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -106,7 +107,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem("oma-locale", "en");
+  localStorage.setItem("maishu-locale", "en");
+  localStorage.setItem("maishu-locale", "en");
   mockCatalog();
 });
 
@@ -411,7 +413,7 @@ describe("DeploymentNew", () => {
   });
 
   it("localizes schedule controls and validation in Chinese", async () => {
-    localStorage.setItem("oma-locale", "zh-CN");
+    localStorage.setItem("maishu-locale", "zh-CN");
     const user = userEvent.setup();
     renderAt("/deployments/new");
     await user.click(screen.getByRole("tab", { name: "定时" }));

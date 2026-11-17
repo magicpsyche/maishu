@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,7 +63,7 @@ function credentialTypeView(credential: Credential): {
       };
     case "environment_variable":
       return {
-        label: "Environment variable",
+        label: uiText("Environment variable"),
         className: "bg-brand-subtle text-brand",
         target: credential.auth.secret_name,
       };
@@ -99,9 +101,9 @@ const CAP_CLIS: Array<{ cli_id: string; label: string; helper: string; oauth?: b
 type StatusValue = "any" | "active" | "archived";
 
 const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
-  { value: "any", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
+  { value: "any", label: uiText("All") },
+  { value: "active", label: uiText("Active") },
+  { value: "archived", label: uiText("Archived") },
 ];
 
 const inputCls =
@@ -169,7 +171,7 @@ export function VaultDetail() {
     if (!id) return;
     if (
       !confirm(
-        "Archive this vault? Its credentials will not be archived, but this vault cannot be used for credential injection after archive. Archive is one-way.",
+        uiText("Archive this vault? Its credentials will not be archived, but this vault cannot be used for credential injection after archive. Archive is one-way."),
       )
     )
       return;
@@ -185,7 +187,7 @@ export function VaultDetail() {
     if (!id) return;
     if (
       !confirm(
-        "Delete this vault and ALL its credentials? This cannot be undone.",
+        uiText("Delete this vault and ALL its credentials? This cannot be undone."),
       )
     )
       return;
@@ -199,7 +201,7 @@ export function VaultDetail() {
 
   const deleteCred = async (credId: string) => {
     if (!id) return;
-    if (!confirm("Delete this credential?")) return;
+    if (!confirm(uiText("Delete this credential?"))) return;
     try {
       await managedApi.vaults.credentials.delete(credId, { vault_id: id });
       reloadCredentials();
@@ -215,9 +217,9 @@ export function VaultDetail() {
         ? String(vaultError)
         : null;
 
-  if (!id) return <div className="flex-1 p-8">Missing vault id.</div>;
+  if (!id) return <div className="flex-1 p-8">{uiText("Missing vault id.")}</div>;
   if (errorMsg)
-    return <div className="flex-1 p-8 text-danger">Error: {errorMsg}</div>;
+    return <div className="flex-1 p-8 text-danger">{uiText("Error:")} {errorMsg}</div>;
   if (!vault) return <div className="flex flex-1 items-center justify-center p-8"><OpenmaStartupLoader /></div>;
 
   const archived = !!vault.archived_at;
@@ -253,19 +255,19 @@ export function VaultDetail() {
         />
       }
       rail={
-        <section className="console-property-group" aria-label="Vault properties">
-          <h2 className="console-property-group-title">Properties</h2>
+        <section className="console-property-group" aria-label={uiText("Vault properties")}>
+          <h2 className="console-property-group-title">{uiText("Properties")}</h2>
           <dl className="console-property-list">
             <PropertyRow label="ID"><span className="font-mono">{vault.id}</span></PropertyRow>
-            <PropertyRow label="Status">
+            <PropertyRow label={uiText("Status")}>
               <span className={archived ? "text-fg-muted" : "text-success"}>
-                {archived ? "Archived" : "Active"}
+                {archived ? uiText("Archived") : uiText("Active")}
               </span>
             </PropertyRow>
-            <PropertyRow label="Created">{new Date(vault.created_at).toLocaleString()}</PropertyRow>
-            <PropertyRow label="Updated">{new Date(updatedAt).toLocaleString()}</PropertyRow>
+            <PropertyRow label={uiText("Created")}>{new Date(vault.created_at).toLocaleString()}</PropertyRow>
+            <PropertyRow label={uiText("Updated")}>{new Date(updatedAt).toLocaleString()}</PropertyRow>
             {archived && (
-              <PropertyRow label="Archived">
+              <PropertyRow label={uiText("Archived")}>
                 {new Date(vault.archived_at!).toLocaleString()}
               </PropertyRow>
             )}
@@ -276,15 +278,14 @@ export function VaultDetail() {
       <div className="console-detail-stack">
         <header className="console-detail-title-block">
           <h1>{vault.display_name}</h1>
-          <p>Credentials and delegated access available to managed agents.</p>
+          <p>{uiText("Credentials and delegated access available to managed agents.")}</p>
         </header>
         <section className="console-detail-section">
           <header className="flex items-center gap-3 mb-3 flex-wrap">
             <h2 className="font-display text-base font-semibold text-fg mr-auto">
-              Credentials
-            </h2>
+               {uiText("Credentials")} </h2>
             <FilterChip
-              label="Status"
+              label={uiText("Status")}
               active={status !== "any"}
               display={statusDisplay}
               onClear={() => setStatus("any")}
@@ -299,7 +300,7 @@ export function VaultDetail() {
                   options={STATUS_OPTIONS}
                   value={status}
                   onValueChange={(v) => setStatus(v as StatusValue)}
-                  searchPlaceholder="Status..."
+                  searchPlaceholder={uiText("Status...")}
                 />
               </PopoverContent>
             </FilterChip>
@@ -309,19 +310,18 @@ export function VaultDetail() {
                 size="sm"
                 onClick={() => setShowAddCred(true)}
               >
-                + Add credential
-              </Button>
+                 {uiText("+ Add credential")} </Button>
             )}
           </header>
 
           <div className="console-detail-table-wrap" data-testid="credential-list-surface">
             {credsLoading ? (
-              <div className="text-fg-subtle text-sm py-4">Loading...</div>
+              <div className="text-fg-subtle text-sm py-4">{uiText("Loading...")}</div>
             ) : filteredCreds.length === 0 ? (
               <div className="rounded-[var(--console-radius-row)] bg-[var(--data-row-bg)] px-3 py-8 text-center text-fg-subtle text-sm">
                 {credentials.length === 0
-                  ? "No credentials yet. Connect an MCP server or add a CLI token."
-                  : "No credentials match the current filter."}
+                  ? uiText("No credentials yet. Connect an MCP server or add a CLI token.")
+                  : uiText("No credentials match the current filter.")}
               </div>
             ) : (
               <Table container={false} className="console-detail-table console-vault-credentials-table">
@@ -336,12 +336,12 @@ export function VaultDetail() {
                 </colgroup>
                 <TableHeader variant="wireless">
                   <TableRow variant="wireless">
-                    <TableHead>Name</TableHead>
+                    <TableHead>{uiText("Name")}</TableHead>
                     <TableHead>ID</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>MCP server URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Updated</TableHead>
+                    <TableHead>{uiText("Type")}</TableHead>
+                    <TableHead>{uiText("MCP server URL")}</TableHead>
+                    <TableHead>{uiText("Status")}</TableHead>
+                    <TableHead>{uiText("Updated")}</TableHead>
                     <TableHead className="text-right"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -351,7 +351,7 @@ export function VaultDetail() {
                     return (
                       <TableRow variant="wireless" key={c.id}>
                         <TableCell textOverflow="play" className="font-medium text-fg">
-                          {c.display_name || "Untitled credential"}
+                          {c.display_name || uiText("Untitled credential")}
                         </TableCell>
                         <TableCell textOverflow="play" className="font-mono text-xs text-fg-muted">
                           {c.id}
@@ -483,7 +483,7 @@ function RenameVaultModal({
       await managedApi.vaults.update(vault.id, { display_name: trimmed });
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to rename vault");
+      setError(e instanceof Error ? e.message : uiText("Failed to rename vault"));
     } finally {
       setSaving(false);
     }
@@ -570,7 +570,7 @@ function EditCredentialModal({
       await managedApi.vaults.credentials.update(credential.id, body);
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update credential");
+      setError(e instanceof Error ? e.message : uiText("Failed to update credential"));
     } finally {
       setSaving(false);
     }
@@ -614,7 +614,7 @@ function EditCredentialModal({
           />
         </div>
         <div className="text-xs text-fg-subtle">
-          Type: <span className="font-mono">{credential.auth.type}</span>
+           {uiText("Type:")} <span className="font-mono">{credential.auth.type}</span>
           {(credential.auth.type === "mcp_oauth" ||
             credential.auth.type === "static_bearer") && (
             <>
@@ -751,12 +751,12 @@ function AddCredentialModal({
         // VaultsList modal.
         const svc = data.service ?? "MCP server";
         if (data.probe_ok === true) {
-          toast.success(`Connected to ${svc} — token verified.`);
+          toast.success(uiText(`Connected to ${svc} — token verified.`));
         } else if (data.probe_ok === false) {
           toast.warning(
             data.probe_reason
-              ? `Connected to ${svc}, but: ${data.probe_reason}`
-              : `Connected to ${svc}, but the server rejected our token.`,
+              ? uiText(`Connected to ${svc}, but: ${data.probe_reason}`)
+              : uiText(`Connected to ${svc}, but the server rejected our token.`),
           );
         }
       }
@@ -789,12 +789,12 @@ function AddCredentialModal({
     // Open during the click, before awaiting HTTP, so popup blockers allow it.
     const popup = window.open("about:blank", "oauth", "width=600,height=700,popup=yes");
     if (!popup) {
-      toast.error("Allow popups to connect this MCP server.");
+      toast.error(uiText("Allow popups to connect this MCP server."));
       return;
     }
     setConnecting(entry.name);
     try {
-      const result = await api<{ authorization_url: string }>("/v1/oma/oauth/authorize", {
+      const result = await api<{ authorization_url: string }>("/v1/maishu/oauth/authorize", {
         method: "POST",
         body: JSON.stringify({
           mcp_server_url: entry.url,
@@ -864,7 +864,7 @@ function AddCredentialModal({
     //   - Bearer type or Access token filled → POST a credential
     //     immediately (mcp_oauth if refresh_token present, else
     //     static_bearer). Button reads "Add credential".
-    //   - Otherwise → start /v1/oma/oauth/authorize popup. Button reads
+    //   - Otherwise → start /v1/maishu/oauth/authorize popup. Button reads
     //     "Connect". Picking a registry row only fills the MCP Server
     //     field, never auto-connects.
     if (!customForm.url) return;
@@ -985,29 +985,25 @@ function AddCredentialModal({
     <Modal
       open
       onClose={onClose}
-      title="Add credential"
+      title={uiText("Add credential")}
       maxWidth="max-w-lg"
       footer={
         addTab === "cli" ? (
           deviceFlow?.status === "polling" ? (
             <Button variant="ghost" onClick={() => setDeviceFlow(null)}>
-              Cancel
-            </Button>
+               {uiText("Cancel")} </Button>
           ) : (
             <>
               <Button variant="ghost" onClick={onClose}>
-                Cancel
-              </Button>
+                 {uiText("Cancel")} </Button>
               <Button onClick={createCapCliCred} disabled={!cliForm.token}>
-                Create
-              </Button>
+                 {uiText("Create")} </Button>
             </>
           )
         ) : (
           <>
             <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
+               {uiText("Cancel")} </Button>
             <Button
               onClick={submitCustom}
               disabled={
@@ -1017,8 +1013,8 @@ function AddCredentialModal({
               }
             >
               {customForm.token || customForm.type === "bearer"
-                ? "Add credential"
-                : "Connect"}
+                ? uiText("Add credential")
+                : uiText("Connect")}
             </Button>
           </>
         )
@@ -1027,39 +1023,37 @@ function AddCredentialModal({
       <Tabs
         value={addTab}
         onValueChange={(v) => setAddTab(v as "mcp" | "cli")}
-        aria-label="Add credential"
+        aria-label={uiText("Add credential")}
       >
         <TabsList className="mb-3">
-          <TabsTrigger value="mcp">MCP server</TabsTrigger>
+          <TabsTrigger value="mcp">{uiText("MCP server")}</TabsTrigger>
           <TabsTrigger value="cli">CLI</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mcp" className="space-y-4">
           <div className="text-sm text-fg-muted">
-            Authorize an MCP server for delegated user authentication.
-          </div>
+             {uiText("Authorize an MCP server for delegated user authentication.")} </div>
 
           <div>
             <Label
               htmlFor="vault-mcp-name"
               className="text-sm font-medium text-fg block mb-1"
             >
-              Name{" "}
+               {uiText("Name")}{" "}
               <span className="text-xs text-fg-muted ml-1 px-1.5 py-0.5 rounded bg-bg-surface">
-                Optional
-              </span>
+                 {uiText("Optional")} </span>
             </Label>
             <Input
               id="vault-mcp-name"
               value={customForm.name}
               onChange={(e) => setCustomForm({ ...customForm, name: e.target.value })}
-              placeholder="Example MCP"
+              placeholder={uiText("Example MCP")}
               className={inputCls}
             />
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-fg block mb-1">Type</Label>
+            <Label className="text-sm font-medium text-fg block mb-1">{uiText("Type")}</Label>
             <div className="inline-flex rounded-md border border-border p-0.5">
               {(["oauth", "bearer"] as const).map((t) => (
                 <Button variant="ghost"
@@ -1068,7 +1062,7 @@ function AddCredentialModal({
                   onClick={() => setCustomForm({ ...customForm, type: t })}
                   className={`inline-flex items-center justify-center px-3 py-1 min-h-11 sm:min-h-0 text-sm rounded ${customForm.type === t ? "bg-bg-surface text-fg font-medium" : "text-fg-muted"}`}
                 >
-                  {t === "oauth" ? "OAuth" : "Bearer token"}
+                  {t === "oauth" ? "OAuth" : uiText("Bearer token")}
                 </Button>
               ))}
             </div>
@@ -1076,8 +1070,7 @@ function AddCredentialModal({
 
           <div>
             <Label className="text-sm font-medium text-fg block mb-1">
-              MCP Server
-            </Label>
+               {uiText("MCP Server")} </Label>
             {/* Combobox: input filters the registry as you type. Pick a
                 row to fill the URL + show the favicon as a left-side
                 prefix; type a custom URL to ignore the registry. The
@@ -1148,7 +1141,7 @@ function AddCredentialModal({
                   />
                 ) : null
               }
-              placeholder="Search Anthropic's MCP registry or enter a custom URL"
+              placeholder={uiText("Search Anthropic's MCP registry or enter a custom URL")}
               emptyHint="No matches — keep typing for a custom URL"
             />
           </div>
@@ -1158,11 +1151,10 @@ function AddCredentialModal({
               "Add credential". Visible regardless of Type so the user can
               supply a pre-issued OAuth access_token without a handshake. */}
           <Disclosure
-            title="Access token"
+            title={uiText("Access token")}
             meta={
               <span className="px-1.5 py-0.5 rounded bg-bg-surface">
-                Optional
-              </span>
+                 {uiText("Optional")} </span>
             }
             open={tokenSectionOpen}
             onOpenChange={setTokenSectionOpen}
@@ -1174,24 +1166,21 @@ function AddCredentialModal({
               }
               type="password"
               placeholder="••••••••"
-              aria-label="Access token"
+              aria-label={uiText("Access token")}
               className={inputCls}
             />
             <div className="text-xs text-fg-subtle mt-1">
-              If filled, the credential is stored as a static bearer token (no
-              OAuth handshake).
-            </div>
+               {uiText("If filled, the credential is stored as a static bearer token (no OAuth handshake).")} </div>
           </Disclosure>
 
           {/* Refresh token block (Optional) — only meaningful when an
               Access token is also set (RFC 6749 §6 refresh_token grant). */}
           {customForm.token && (
             <Disclosure
-              title="Refresh token"
+              title={uiText("Refresh token")}
               meta={
                 <span className="px-1.5 py-0.5 rounded bg-bg-surface">
-                  Optional
-                </span>
+                   {uiText("Optional")} </span>
               }
               open={refreshSectionOpen}
               onOpenChange={setRefreshSectionOpen}
@@ -1207,8 +1196,8 @@ function AddCredentialModal({
                         refreshToken: e.target.value,
                       })
                     }
-                    placeholder="OAuth refresh token"
-                    aria-label="Refresh token"
+                    placeholder={uiText("OAuth refresh token")}
+                    aria-label={uiText("Refresh token")}
                     className={inputCls}
                   />
                 </div>
@@ -1217,8 +1206,7 @@ function AddCredentialModal({
                     htmlFor="vault-token-endpoint"
                     className="text-sm font-medium text-fg block mb-1"
                   >
-                    Token endpoint
-                  </Label>
+                     {uiText("Token endpoint")} </Label>
                   <Input
                     id="vault-token-endpoint"
                     value={customForm.tokenEndpoint}
@@ -1237,8 +1225,7 @@ function AddCredentialModal({
                     htmlFor="vault-auth-method"
                     className="text-sm font-medium text-fg block mb-1"
                   >
-                    Auth method
-                  </Label>
+                     {uiText("Auth method")} </Label>
                   <Select
                     id="vault-auth-method"
                     value={customForm.authMethod}
@@ -1256,9 +1243,7 @@ function AddCredentialModal({
                   </Select>
                 </div>
                 <div className="text-xs text-fg-subtle">
-                  RFC 8414 token_endpoint_auth_methods_supported. Used when the
-                  server refreshes on 401.
-                </div>
+                   {uiText("RFC 8414 token_endpoint_auth_methods_supported. Used when the server refreshes on 401.")} </div>
               </div>
             </Disclosure>
           )}
@@ -1268,11 +1253,10 @@ function AddCredentialModal({
               any provider that doesn't support DCR). */}
           {customForm.type === "oauth" && !customForm.token && (
             <Disclosure
-              title="OAuth client credentials"
+              title={uiText("OAuth client credentials")}
               meta={
                 <span className="px-1.5 py-0.5 rounded bg-bg-surface">
-                  Optional
-                </span>
+                   {uiText("Optional")} </span>
               }
               open={clientCredsSectionOpen}
               onOpenChange={setClientCredsSectionOpen}
@@ -1283,8 +1267,8 @@ function AddCredentialModal({
                   onChange={(e) =>
                     setCustomForm({ ...customForm, clientId: e.target.value })
                   }
-                  placeholder="Client ID"
-                  aria-label="OAuth client ID"
+                  placeholder={uiText("Client ID")}
+                  aria-label={uiText("OAuth client ID")}
                   className={inputCls}
                 />
                 <Input
@@ -1296,15 +1280,12 @@ function AddCredentialModal({
                     })
                   }
                   type="password"
-                  placeholder="Client secret"
-                  aria-label="OAuth client secret"
+                  placeholder={uiText("Client secret")}
+                  aria-label={uiText("OAuth client secret")}
                   className={inputCls}
                 />
                 <div className="text-xs text-fg-subtle">
-                  For OAuth providers that don't support Dynamic Client
-                  Registration (GitHub, Feishu) — supply a client_id/secret from
-                  a pre-registered app.
-                </div>
+                   {uiText("For OAuth providers that don't support Dynamic Client Registration (GitHub, Feishu) — supply a client_id/secret from a pre-registered app.")} </div>
               </div>
             </Disclosure>
           )}
@@ -1331,7 +1312,7 @@ function AddCredentialModal({
               {CAP_CLIS.map((c) => (
                 <SelectOption key={c.cli_id} value={c.cli_id}>
                   {c.label}
-                  {c.oauth ? " (OAuth supported)" : ""}
+                  {c.oauth ? uiText("(OAuth supported)") : ""}
                 </SelectOption>
               ))}
             </Select>
@@ -1344,13 +1325,13 @@ function AddCredentialModal({
             <div className="border border-border rounded-md p-3 bg-bg-surface">
               {!deviceFlow && (
                 <Button variant="outline" size="sm" onClick={startDeviceFlow}>
-                  Sign in via {cliForm.cli_id} OAuth
+                   {uiText("Sign in via")} {cliForm.cli_id} OAuth
                 </Button>
               )}
               {deviceFlow?.status === "polling" && (
                 <div className="space-y-2 text-sm">
                   <div className="text-fg-muted">
-                    Open{" "}
+                     {uiText("Open")}{" "}
                     <a
                       href={
                         deviceFlow.verification_uri_complete ??
@@ -1363,31 +1344,28 @@ function AddCredentialModal({
                       {deviceFlow.verification_uri_complete ??
                         deviceFlow.verification_uri}
                     </a>{" "}
-                    and enter:
-                  </div>
+                     {uiText("and enter:")} </div>
                   <div className="font-mono text-xl text-center tracking-widest text-fg py-2 select-all">
                     {deviceFlow.user_code}
                   </div>
                   <div className="text-xs text-fg-subtle text-center">
-                    Waiting for confirmation… (polls every{" "}
-                    {deviceFlow.interval_seconds}s)
-                  </div>
+                     {uiText("Waiting for confirmation… (polls every")}{" "}
+                    {deviceFlow.interval_seconds}{uiText("s)")} </div>
                 </div>
               )}
               {deviceFlow?.status === "ready" && (
                 <div className="text-sm text-success">
-                  ✓ Token acquired and stored.
-                </div>
+                   {uiText("✓ Token acquired and stored.")} </div>
               )}
               {(deviceFlow?.status === "expired" ||
                 deviceFlow?.status === "denied" ||
                 deviceFlow?.status === "error") && (
                 <div className="text-sm text-danger">
                   {deviceFlow.status === "denied"
-                    ? "Access denied by user."
+                    ? uiText("Access denied by user.")
                     : deviceFlow.status === "expired"
-                      ? "Code expired — try again."
-                      : `OAuth error: ${deviceFlow.error ?? "unknown"}`}
+                      ? uiText("Code expired — try again.")
+                      : uiText(`OAuth error: ${deviceFlow.error ?? "unknown"}`)}
                 </div>
               )}
             </div>
@@ -1398,8 +1376,8 @@ function AddCredentialModal({
               htmlFor="vault-cli-display-name"
               className="text-sm text-fg-muted block mb-1"
             >
-              Display Name{" "}
-              <span className="text-fg-subtle">(optional)</span>
+               {uiText("Display Name")}{" "}
+              <span className="text-fg-subtle">{uiText("(optional)")}</span>
             </Label>
             <TextInput
               id="vault-cli-display-name"
@@ -1420,10 +1398,9 @@ function AddCredentialModal({
               htmlFor="vault-cli-token"
               className="text-sm text-fg-muted block mb-1"
             >
-              Token{" "}
+               {uiText("Token")}{" "}
               <span className="text-fg-subtle">
-                (write-only — leave blank to use OAuth above)
-              </span>
+                 {uiText("(write-only — leave blank to use OAuth above)")} </span>
             </Label>
             <SecretInput
               id="vault-cli-token"

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMemo, useState } from "react";
@@ -17,9 +19,9 @@ import { useI18n } from "../i18n";
 type StatusValue = "any" | "active" | "archived";
 
 const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
-  { value: "any", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
+  { value: "any", label: uiText("All") },
+  { value: "active", label: uiText("Active") },
+  { value: "archived", label: uiText("Archived") },
 ];
 
 export function VaultsList() {
@@ -79,7 +81,7 @@ export function VaultsList() {
       {
         id: "name",
         accessorKey: "display_name",
-        header: "Name",
+        header: uiText("Name"),
         cell: ({ row }) => <span className="font-medium text-fg">{row.original.display_name}</span>,
         enableHiding: false,
       },
@@ -97,7 +99,7 @@ export function VaultsList() {
       {
         id: "status",
         accessorFn: (v) => (v.archived_at ? "archived" : "active"),
-        header: "Status",
+        header: uiText("Status"),
         cell: ({ row }) => (
           <span
             className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full ${
@@ -113,7 +115,7 @@ export function VaultsList() {
       {
         id: "created",
         accessorFn: (v) => v.created_at,
-        header: "Created",
+        header: uiText("Created"),
         cell: ({ row }) => (
           <span className="text-fg-muted">
             {new Date(row.original.created_at).toLocaleDateString()}
@@ -132,7 +134,7 @@ export function VaultsList() {
   const filters = (
     <>
       <FilterChip
-        label="Status"
+        label={uiText("Status")}
         active={status !== "any"}
         display={statusDisplay}
         onClear={() => setStatus("any")}
@@ -147,7 +149,7 @@ export function VaultsList() {
             options={STATUS_OPTIONS}
             value={status}
             onValueChange={(v) => setStatus(v as StatusValue)}
-            searchPlaceholder="Status..."
+            searchPlaceholder={uiText("Status...")}
           />
         </PopoverContent>
       </FilterChip>
@@ -167,11 +169,11 @@ export function VaultsList() {
       onRowClick={(v) => nav(`/vaults/${v.id}`)}
       rowActions={(vault) => [
         {
-          label: "Archive",
+          label: uiText("Archive"),
           icon: <ArchiveIcon className="size-4" />,
           disabled: Boolean(vault.archived_at),
           onSelect: async () => {
-            if (!confirm(`Archive vault ${vault.display_name}? Its credentials will not be archived, but this vault cannot be used for credential injection after archive. Archive is one-way.`)) return;
+            if (!confirm(uiText(`Archive vault ${vault.display_name}? Its credentials will not be archived, but this vault cannot be used for credential injection after archive. Archive is one-way.`))) return;
             try {
               await managedApi.vaults.archive(vault.id);
               load();
@@ -179,11 +181,11 @@ export function VaultsList() {
           },
         },
         {
-          label: "Delete",
+          label: uiText("Delete"),
           icon: <TrashIcon className="size-4" />,
           destructive: true,
           onSelect: async () => {
-            if (!confirm(`Delete vault ${vault.display_name}? This can't be undone.`)) return;
+            if (!confirm(uiText(`Delete vault ${vault.display_name}? This can't be undone.`))) return;
             try {
               await managedApi.vaults.delete(vault.id);
               load();
@@ -205,23 +207,23 @@ export function VaultsList() {
       <Modal
         open={showCreateVault}
         onClose={() => setShowCreateVault(false)}
-        title="New Vault"
+        title={uiText("New Vault")}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowCreateVault(false)}>Cancel</Button>
-            <Button onClick={createVault} disabled={!vaultName}>Create</Button>
+            <Button variant="ghost" onClick={() => setShowCreateVault(false)}>{uiText("Cancel")}</Button>
+            <Button onClick={createVault} disabled={!vaultName}>{uiText("Create")}</Button>
           </>
         }
       >
         <div className="space-y-4">
           <div>
-            <Label htmlFor="vault-name" className="text-sm text-fg-muted block mb-1">Name</Label>
+            <Label htmlFor="vault-name" className="text-sm text-fg-muted block mb-1">{uiText("Name")}</Label>
             <Input
               id="vault-name"
               value={vaultName}
               onChange={(e) => setVaultName(e.target.value.slice(0, 30))}
               className={inputCls}
-              placeholder="My Vault"
+              placeholder={uiText("My Vault")}
             />
           </div>
         </div>

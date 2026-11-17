@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import type { ReactNode } from "react";
 import { LayoutGroup, MotionConfig, motion, useReducedMotion } from "motion/react";
 
@@ -21,7 +23,7 @@ export function ModernLoginShell({ children, className }: ModernLoginShellProps)
       className="flex h-full min-h-full w-full overflow-y-auto bg-bg"
     >
       <section
-        aria-label="Account access"
+        aria-label={uiText("Account access")}
         className="flex min-h-full w-full items-center justify-center px-6 py-12 sm:px-8"
       >
         <MotionConfig reducedMotion="user" transition={{ duration: reducedMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}>

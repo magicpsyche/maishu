@@ -1,4 +1,7 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 import { XCircleIcon } from "lucide-react";
 import { useApi } from "../lib/api";
 import { useApiQuery } from "../lib/useApiQuery";
@@ -39,9 +42,9 @@ interface Runtime {
 type StatusValue = "any" | "online" | "offline";
 
 const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
-  { value: "any", label: "All" },
-  { value: "online", label: "Online" },
-  { value: "offline", label: "Offline" },
+  { value: "any", label: uiText("All") },
+  { value: "online", label: uiText("Online") },
+  { value: "offline", label: uiText("Offline") },
 ];
 
 /** Local Runtimes — user-registered laptops/VMs running `oma bridge daemon`.
@@ -50,6 +53,7 @@ const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
  *  to one of these. */
 export function RuntimesList() {
   const { api } = useApi();
+  const capabilities = useApiQuery<{ runtime_bridge: boolean; remote_sandbox: boolean }>("/v1/maishu/capabilities");
   const [showInstructions, setShowInstructions] = useState(false);
   const [status, setStatus] = useState<StatusValue>("any");
 
@@ -62,7 +66,7 @@ export function RuntimesList() {
     isLoading: loading,
     refetch,
   } = useApiQuery<{ runtimes: Runtime[] }>(
-    "/v1/oma/runtimes",
+    capabilities.data?.runtime_bridge ? "/v1/maishu/runtimes" : null,
     undefined,
     { refetchInterval: 15_000 },
   );
@@ -70,7 +74,7 @@ export function RuntimesList() {
 
   // Client-side status filter. Unlike AgentsList (server-paginated, server-
   // filtered), this list is small — a handful of runtimes per tenant — and
-  // already fully loaded by `/v1/oma/runtimes`. The 15s heartbeat poll keeps
+  // already fully loaded by `/v1/maishu/runtimes`. The 15s heartbeat poll keeps
   // online/offline fresh, so filtering the array in-memory dodges a server
   // round-trip per chip toggle and avoids resetting the polled query each
   // time the user flips the chip. If runtimes ever grow into the hundreds
@@ -81,9 +85,9 @@ export function RuntimesList() {
   );
 
   const remove = async (id: string) => {
-    if (!confirm("Revoke this runtime? Daemon on that machine will stop being able to attach.")) return;
+    if (!confirm(uiText("Revoke this runtime? Daemon on that machine will stop being able to attach."))) return;
     try {
-      await api(`/v1/oma/runtimes/${id}`, { method: "DELETE" });
+      await api(`/v1/maishu/runtimes/${id}`, { method: "DELETE" });
       void refetch();
     } catch { /* ignore */ }
   };
@@ -93,7 +97,7 @@ export function RuntimesList() {
       {
         id: "hostname",
         accessorKey: "hostname",
-        header: "Hostname",
+        header: uiText("Hostname"),
         cell: ({ row }) => {
           const r = row.original;
           const totalSkills = Object.values(r.local_skills ?? {}).reduce(
@@ -107,7 +111,7 @@ export function RuntimesList() {
               {totalSkills > 0 && (
                 <details className="mt-2 text-xs">
                   <summary className="cursor-pointer text-fg-muted hover:text-fg select-none">
-                    {totalSkills} local skill{totalSkills === 1 ? "" : "s"} detected
+                    {totalSkills}  {uiText("local skill")}{totalSkills === 1 ? "" : "s"} detected
                   </summary>
                   <div className="mt-1.5 ml-2 space-y-1.5">
                     {Object.entries(r.local_skills ?? {}).map(([acpId, skills]) =>
@@ -140,13 +144,13 @@ export function RuntimesList() {
       {
         id: "os",
         accessorKey: "os",
-        header: "OS",
+        header: uiText("OS"),
         cell: ({ row }) => <span className="text-fg-muted">{row.original.os}</span>,
       },
       {
         id: "status",
         accessorFn: (r) => r.status,
-        header: "Status",
+        header: uiText("Status"),
         cell: ({ row }) => {
           const r = row.original;
           return (
@@ -172,7 +176,7 @@ export function RuntimesList() {
       {
         id: "agents",
         accessorFn: (r) => (r.agents ?? []).map((a) => a.id).join(", "),
-        header: "Agents detected",
+        header: uiText("Agents detected"),
         cell: ({ row }) => (
           <span className="font-mono text-xs text-fg-muted">
             {(row.original.agents ?? []).length === 0 ? "—" : (row.original.agents ?? []).map((a) => a.id).join(", ")}
@@ -182,7 +186,7 @@ export function RuntimesList() {
       {
         id: "heartbeat",
         accessorFn: (r) => r.last_heartbeat ?? 0,
-        header: "Heartbeat",
+        header: uiText("Heartbeat"),
         cell: ({ row }) => (
           <span className="text-fg-muted text-xs">
             {row.original.last_heartbeat ? formatHeartbeat(row.original.last_heartbeat) : "—"}
@@ -203,7 +207,7 @@ export function RuntimesList() {
 
   const filters = (
     <FilterChip
-      label="Status"
+      label={uiText("Status")}
       active={status !== "any"}
       display={statusDisplay}
       onClear={() => setStatus("any")}
@@ -218,15 +222,24 @@ export function RuntimesList() {
           options={STATUS_OPTIONS}
           value={status}
           onValueChange={(v) => setStatus(v as StatusValue)}
-          searchPlaceholder="Status..."
+          searchPlaceholder={uiText("Status...")}
         />
       </PopoverContent>
     </FilterChip>
   );
 
+  if (!capabilities.data?.runtime_bridge) return <main className="p-6 md:p-8 max-w-3xl space-y-4">
+    <h1 className="text-2xl font-semibold">接入机器</h1>
+    {capabilities.isLoading ? <p role="status">正在检查部署能力…</p> : <>
+      <p className="text-sm text-fg-muted">{capabilities.error ? "无法确认当前部署的机器接入能力，请检查连接后重试。" : "当前部署使用远程沙箱服务，暂不提供 Bridge 机器接入。"}</p>
+      <p className="text-sm text-fg-muted">Codex、Claude Code 和 DeepSeek Harness 在沙箱中执行，可在沙箱后端页面配置执行服务。</p>
+      <Button asChild><Link to="/settings/sandbox">配置沙箱后端</Link></Button>
+    </>}
+  </main>;
+
   return (
     <DataTable<Runtime>
-      createLabel="+ Connect machine"
+      createLabel={uiText("+ Connect machine")}
       onCreate={() => setShowInstructions(true)}
       filters={filters}
       data={filtered}
@@ -234,21 +247,20 @@ export function RuntimesList() {
       getRowId={(r) => r.id}
       rowActions={(runtime) => [
         {
-          label: "Revoke",
+          label: uiText("Revoke"),
           icon: <XCircleIcon className="size-4" />,
           destructive: true,
           onSelect: () => void remove(runtime.id),
         },
       ]}
-      emptyTitle={status === "any" ? "No runtimes connected" : "No matching runtimes"}
+      emptyTitle={status === "any" ? uiText("No runtimes connected") : uiText("No matching runtimes")}
       emptyKind="runtime"
       emptySubtitle={
         status === "any" ? (
           <>
-            Run <code className="text-xs bg-bg-surface px-1 py-0.5 rounded">npx @openma/cli bridge setup</code> on the machine you want to connect.
-          </>
+             {uiText("Run")} <code className="text-xs bg-bg-surface px-1 py-0.5 rounded">maishu bridge setup --server-url {window.location.origin}</code>  {uiText("on the machine you want to connect.")} </>
         ) : (
-          "Try a different status filter."
+          uiText("Try a different status filter.")
         )
       }
       columns={columns}
@@ -256,49 +268,42 @@ export function RuntimesList() {
       <Modal
         open={showInstructions}
         onClose={() => setShowInstructions(false)}
-        title="Connect a local machine"
-        footer={<Button onClick={() => setShowInstructions(false)}>Done</Button>}
+        title={uiText("Connect a local machine")}
+        footer={<Button onClick={() => setShowInstructions(false)}>{uiText("Done")}</Button>}
       >
         <div className="space-y-4 text-sm">
           <p className="text-fg-muted">
-            On the machine you want to connect, run:
-          </p>
+             {uiText("On the machine you want to connect, run:")} </p>
           <div className="bg-bg-surface border border-border rounded-lg p-3 font-mono text-xs space-y-1">
-            <div className="text-fg select-all">npx @openma/cli bridge setup</div>
+            <div className="text-fg select-all">maishu bridge setup --server-url {window.location.origin}</div>
           </div>
+          <p className="text-xs text-fg-muted">请先在目标机器安装麦枢命令行工具，再执行上方连接命令。</p>
           <HeadlessPairing />
           <p className="text-fg-muted text-xs">
-            Setup opens this browser for OAuth, writes credentials to{" "}
-            <code className="bg-bg-surface px-1 rounded">~/.oma/bridge/</code>, and (on macOS) installs a launchd job
-            that keeps the daemon running across reboots. The daemon scans your <code className="bg-bg-surface px-1 rounded">$PATH</code> for
-            ACP-compatible agents and reports them here.
-          </p>
+             {uiText("Setup opens this browser for OAuth, writes credentials to")}{" "}
+            <code className="bg-bg-surface px-1 rounded">~/.maishu/bridge/</code>{uiText(", and (on macOS) installs a launchd job that keeps the daemon running across reboots. The daemon scans your")} <code className="bg-bg-surface px-1 rounded">$PATH</code>  {uiText("for ACP-compatible agents and reports them here.")} </p>
           <div>
             <p className="text-fg-muted text-xs mb-1.5">
-              <strong>★ Featured agents</strong> — OMA's recommended set:
-            </p>
+              <strong>{uiText("★ Featured agents")}</strong>  {uiText("— OMA's recommended set:")} </p>
             <ul className="text-xs text-fg-muted space-y-1 ml-4 list-disc font-mono">
-              <li><span className="text-fg">claude-acp</span> · <code className="bg-bg-surface px-1 rounded">npx -y @agentclientprotocol/claude-agent-acp</code> (auto-installed if <code className="bg-bg-surface px-1 rounded">claude</code> is on PATH)</li>
-              <li><span className="text-fg">codex-acp</span> · download from <a href="https://github.com/zed-industries/codex-acp/releases" target="_blank" rel="noreferrer" className="underline">zed-industries/codex-acp releases</a></li>
+              <li><span className="text-fg">claude-acp</span> · <code className="bg-bg-surface px-1 rounded">npx -y @agentclientprotocol/claude-agent-acp</code>  {uiText("(auto-installed if")} <code className="bg-bg-surface px-1 rounded">claude</code>  {uiText("is on PATH)")}</li>
+              <li><span className="text-fg">codex-acp</span>  {uiText("· download from")} <a href="https://github.com/zed-industries/codex-acp/releases" target="_blank" rel="noreferrer" className="underline">zed-industries/codex-acp releases</a></li>
               <li><span className="text-fg">hermes</span> · <code className="bg-bg-surface px-1 rounded">curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code></li>
             </ul>
           </div>
           <div>
             <p className="text-fg-muted text-xs mb-1.5">
-              Setup auto-installs an ACP wrapper when an upstream binary is on <code className="bg-bg-surface px-1 rounded">$PATH</code>:
+               {uiText("Setup auto-installs an ACP wrapper when an upstream binary is on")} <code className="bg-bg-surface px-1 rounded">$PATH</code>:
             </p>
             <ul className="text-xs text-fg-muted space-y-1 ml-4 list-disc">
-              <li><code className="bg-bg-surface px-1 rounded">claude</code> → installs <code className="bg-bg-surface px-1 rounded">@agentclientprotocol/claude-agent-acp</code></li>
-              <li><code className="bg-bg-surface px-1 rounded">codex</code> → installs <code className="bg-bg-surface px-1 rounded">@normahq/codex-acp-bridge</code> (drives codex over ACP)</li>
-              <li><code className="bg-bg-surface px-1 rounded">gemini</code> missing → installs <code className="bg-bg-surface px-1 rounded">@google/gemini-cli</code> (ships ACP natively)</li>
+              <li><code className="bg-bg-surface px-1 rounded">claude</code>  {uiText("→ installs")} <code className="bg-bg-surface px-1 rounded">@agentclientprotocol/claude-agent-acp</code></li>
+              <li><code className="bg-bg-surface px-1 rounded">codex</code>  {uiText("→ installs")} <code className="bg-bg-surface px-1 rounded">@normahq/codex-acp-bridge</code>  {uiText("(drives codex over ACP)")}</li>
+              <li><code className="bg-bg-surface px-1 rounded">gemini</code>  {uiText("missing → installs")} <code className="bg-bg-surface px-1 rounded">@google/gemini-cli</code>  {uiText("(ships ACP natively)")}</li>
             </ul>
           </div>
           <p className="text-fg-muted text-xs">
-            30+ other agents (gemini, opencode, cline, cursor, kimi, qwen-code, …) come from the
-            <a href="https://agentclientprotocol.com/get-started/registry" target="_blank" rel="noreferrer" className="underline hover:text-fg ml-1">
-              official ACP Registry
-            </a> — daemon fetches the manifest at startup and any installed binary becomes selectable.
-          </p>
+             {uiText("30+ other agents (gemini, opencode, cline, cursor, kimi, qwen-code, …) come from the")} <a href="https://agentclientprotocol.com/get-started/registry" target="_blank" rel="noreferrer" className="underline hover:text-fg ml-1">
+               {uiText("official ACP Registry")} </a>  {uiText("— daemon fetches the manifest at startup and any installed binary becomes selectable.")} </p>
         </div>
       </Modal>
     </DataTable>
@@ -316,7 +321,7 @@ export function HeadlessPairing() {
   const generate = async () => {
     setWorking(true);
     try {
-      setMinted(await api<RuntimePairingTokenResponse>("/v1/oma/runtimes/pairing-tokens", {
+      setMinted(await api<RuntimePairingTokenResponse>("/v1/maishu/runtimes/pairing-tokens", {
         method: "POST",
         body: JSON.stringify({}),
       }));
@@ -330,20 +335,18 @@ export function HeadlessPairing() {
   return (
     <div className="border border-border rounded-lg p-3 space-y-2">
       <p className="text-fg-muted text-xs">
-        <strong>No browser on that machine?</strong> Generate a one-time command instead (valid 1 hour, single use).
-      </p>
+        <strong>{uiText("No browser on that machine?")}</strong>  {uiText("Generate a one-time command instead (valid 1 hour, single use).")} </p>
       {minted ? (
         <>
           <div className="bg-bg-surface border border-border rounded-lg p-3 font-mono text-xs break-all text-fg select-all" data-testid="pairing-command">
             {minted.install_command}
           </div>
           <p className="text-fg-subtle text-xs">
-            Expires {new Date(minted.expires_at * 1000).toLocaleString()}. Treat it like a password until used.
-          </p>
+             {uiText("Expires")} {new Date(minted.expires_at * 1000).toLocaleString()}{uiText(". Treat it like a password until used.")} </p>
         </>
       ) : (
         <Button variant="outline" size="sm" onClick={generate} disabled={working}>
-          {working ? "Generating…" : "Generate pairing command"}
+          {working ? uiText("Generating…") : uiText("Generate pairing command")}
         </Button>
       )}
     </div>

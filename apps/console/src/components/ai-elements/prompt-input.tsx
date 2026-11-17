@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 "use client";
 
@@ -125,7 +127,7 @@ const captureScreenshot = async (): Promise<File | null> => {
       // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
       video.onloadedmetadata = () => resolve();
       // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
-      video.onerror = () => reject(new Error("Failed to load screen stream"));
+      video.onerror = () => reject(new Error(uiText("Failed to load screen stream")));
     });
 
     await video.play();
@@ -917,12 +919,12 @@ export const PromptInput = ({
     <>
       <Input
         accept={accept}
-        aria-label="Upload files"
+        aria-label={uiText("Upload files")}
         className="hidden"
         multiple={multiple}
         onChange={handleChange}
         ref={inputRef}
-        title="Upload files"
+        title={uiText("Upload files")}
         type="file"
       />
       <form
@@ -1259,7 +1261,7 @@ export const PromptInputSubmit = ({
 
   return (
     <InputGroupButton
-      aria-label={isGenerating ? "Stop" : "Submit"}
+      aria-label={isGenerating ? uiText("Stop") : uiText("Submit")}
       className={cn(className)}
       onClick={handleClick}
       size={size}

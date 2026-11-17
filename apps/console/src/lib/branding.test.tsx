@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -46,7 +47,7 @@ describe("console branding", () => {
     expect(b.faviconUrl).toBeNull();
     expect(b.stylesheetUrl).toBe("/branding/theme.css");
     expect(parseBranding(null)).toEqual(DEFAULT_BRANDING);
-    expect(parseBranding({}).productName).toBe("openma");
+    expect(parseBranding({}).productName).toBe("麦枢");
   });
 
   it("reads server-injected settings without a request", async () => {
@@ -75,9 +76,9 @@ describe("console branding", () => {
     await loadBranding((async () => Response.json({ error: "not found" }, { status: 404 })) as never);
     expect(document.title).toBe("Open Managed Agents");
     render(<ProductName />);
-    expect(screen.getByTestId("product")).toHaveTextContent("openma");
+    expect(screen.getByTestId("product")).toHaveTextContent("麦枢");
     render(<Logo />);
-    expect(screen.getByRole("img", { name: "openma" }).tagName.toLowerCase()).toBe("svg");
+    expect(screen.getByRole("img", { name: "麦枢" }).tagName.toLowerCase()).toBe("svg");
   });
 
   it("brands the logo and the sign-in page", () => {

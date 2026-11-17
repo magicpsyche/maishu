@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -62,32 +64,27 @@ export function IntegrationsLinearList() {
         <header className="flex items-start justify-between gap-6 mb-8">
           <div className="min-w-0">
             <h1 className="font-display text-xl leading-tight font-semibold tracking-tight text-fg">
-              Linear integrations
-            </h1>
+               {uiText("Linear integrations")} </h1>
             <p className="mt-1.5 text-base text-fg-muted max-w-xl">
-              Make your agents teammates in Linear — assign them issues, mention them
-              in comments, watch them push status.
-            </p>
+               {uiText("Make your agents teammates in Linear — assign them issues, mention them in comments, watch them push status.")} </p>
           </div>
           <div className="shrink-0 flex items-center gap-2">
             <Link
               to="/integrations/linear/install-pat"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-border rounded-md text-sm font-medium hover:border-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] whitespace-nowrap"
-              title="Symphony-equivalent: paste a Linear PAT, no OAuth dance"
+              title={uiText("Symphony-equivalent: paste a Linear PAT, no OAuth dance")}
             >
-              Install via PAT
-            </Link>
+               {uiText("Install via PAT")} </Link>
             <Link
               to="/integrations/linear/publish"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] whitespace-nowrap"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-              Publish agent
-            </Link>
+               {uiText("Publish agent")} </Link>
           </div>
         </header>
 
-        {loading && <p className="text-sm text-fg-muted">Loading…</p>}
+        {loading && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
         {error && (
           <div className="rounded-md border border-danger/30 bg-danger-subtle px-3 py-2 text-sm text-danger">
             {error}
@@ -97,8 +94,7 @@ export function IntegrationsLinearList() {
         {pending.length > 0 && (
           <section className="mb-6">
             <h2 className="text-sm font-medium text-fg-muted uppercase tracking-wider mb-2">
-              In-progress installs
-            </h2>
+               {uiText("In-progress installs")} </h2>
             <ul className="space-y-2">
               {pending.map((p) => (
                 <PendingRow key={p.id} pub={p} onDiscard={() => discardPending(p.id)} />
@@ -109,14 +105,13 @@ export function IntegrationsLinearList() {
 
         {!loading && items.length === 0 && pending.length === 0 && (
           <EmptyState
-            title="No Linear workspaces connected yet."
+            title={uiText("No Linear workspaces connected yet.")}
             action={
               <Link
                 to="/integrations/linear/publish"
                 className="text-brand hover:underline text-sm"
               >
-                Publish your first agent →
-              </Link>
+                 {uiText("Publish your first agent →")} </Link>
             }
           />
         )}
@@ -156,27 +151,25 @@ function PendingRow({
             {pub.persona.name}
           </span>
           <span className="text-xs text-warning">
-            ● Step {stepNum} of 3 ({statusLabel})
+             {uiText("● Step")} {stepNum}  {uiText("of 3 (")}{statusLabel})
           </span>
         </div>
         <p className="text-sm text-fg-muted">
-          Started {formatRelative(Date.now() - pub.created_at)} ago
+           {uiText("Started")} {formatRelative(Date.now() - pub.created_at)} ago
         </p>
       </div>
       <Link
         to={`/integrations/linear/publish?pub=${encodeURIComponent(pub.id)}`}
         className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-md bg-brand text-brand-fg hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
       >
-        Resume install ↗
-      </Link>
+         {uiText("Resume install ↗")} </Link>
       <Button variant="ghost"
         type="button"
         onClick={onDiscard}
         className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-fg-muted hover:text-danger transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
-        title="Discard this in-progress install"
+        title={uiText("Discard this in-progress install")}
       >
-        Discard ✕
-      </Button>
+         {uiText("Discard ✕")} </Button>
     </li>
   );
 }
@@ -201,7 +194,7 @@ function WorkspaceCard({
             </span>
           </div>
           <p className="mt-0.5 text-sm text-fg-muted">
-            Dedicated app · full identity ·{" "}
+             {uiText("Dedicated app · full identity ·")}{" "}
             <span className="text-fg">
               {publications.length} agent{publications.length === 1 ? "" : "s"}
             </span>
@@ -211,8 +204,7 @@ function WorkspaceCard({
           to={`/integrations/linear/installations/${installation.id}`}
           className="shrink-0 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          Manage →
-        </Link>
+           {uiText("Manage →")} </Link>
       </div>
 
       {publications.length > 0 && (
@@ -242,27 +234,27 @@ function StatusPill({ status }: { status: LinearPublication["status"] }) {
     { label: string; cls: string; dot: string }
   > = {
     live: {
-      label: "Live",
+      label: uiText("Live"),
       cls: "text-success bg-success-subtle",
       dot: "bg-success",
     },
     pending_setup: {
-      label: "Pending setup",
+      label: uiText("Pending setup"),
       cls: "text-fg-muted bg-bg-surface",
       dot: "bg-fg-muted",
     },
     awaiting_install: {
-      label: "Awaiting install",
+      label: uiText("Awaiting install"),
       cls: "text-warning bg-warning-subtle",
       dot: "bg-warning",
     },
     needs_reauth: {
-      label: "Needs reauth",
+      label: uiText("Needs reauth"),
       cls: "text-danger bg-danger-subtle",
       dot: "bg-danger",
     },
     unpublished: {
-      label: "Unpublished",
+      label: uiText("Unpublished"),
       cls: "text-fg-subtle bg-bg-surface",
       dot: "bg-fg-subtle",
     },

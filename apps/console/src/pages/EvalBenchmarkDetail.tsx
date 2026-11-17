@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
@@ -343,7 +345,7 @@ export function EvalBenchmarkDetail() {
                         {secs(c.agent_timeout_sec)} / {secs(c.verifier_timeout_sec)}
                       </TableCell>
                       <TableCell className="px-3 py-2 text-xs text-fg-muted tabular-nums align-top whitespace-normal">
-                        {c.cpus ?? "—"} CPU · {c.memory_mb != null ? `${c.memory_mb} MB` : "—"}
+                        {c.cpus ?? "—"}  {uiText("CPU ·")} {c.memory_mb != null ? `${c.memory_mb} MB` : "—"}
                       </TableCell>
                       <TableCell className="px-3 py-2 text-xs text-fg-muted align-top">{c.has_solution ? m.yes : m.no}</TableCell>
                       <TableCell className="px-3 py-2 text-xs text-fg-muted align-top" title={c.updated_at}>{timeAgo(c.updated_at)}</TableCell>

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { useCallback, useRef, useState } from "react";
 
 /**
@@ -6,7 +7,7 @@ import { useCallback, useRef, useState } from "react";
  * Returns a `{ run, loading }` pair to wire into Button:
  *
  *   const create = useAsyncAction(async () => {
- *     await api("/v1/oma/api_keys", { method: "POST", body: ... });
+ *     await api("/v1/maishu/api_keys", { method: "POST", body: ... });
  *   });
  *   <Button onClick={create.run} loading={create.loading} loadingLabel="Creating…">
  *     Create

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -30,17 +32,17 @@ interface PublishWizardProps {
 type Step = "pick" | "credentials" | "install";
 
 const STEPS: Array<{ id: Step; label: string }> = [
-  { id: "pick", label: "Configure" },
-  { id: "credentials", label: "Credentials" },
-  { id: "install", label: "Install" },
+  { id: "pick", label: uiText("Configure") },
+  { id: "credentials", label: uiText("Credentials") },
+  { id: "install", label: uiText("Install") },
 ];
 
 /**
  * Publication-first wizard. Three discrete steps, each touching exactly
  * one anchor row server-side:
  *
- *   1. POST  /v1/oma/integrations/linear/publications      → creates pending pub
- *   2. PATCH /v1/oma/integrations/linear/publications/:id/credentials
+ *   1. POST  /v1/maishu/integrations/linear/publications      → creates pending pub
+ *   2. PATCH /v1/maishu/integrations/linear/publications/:id/credentials
  *                                                       → fills + advances
  *   3. <a href={install_url}>                           → OAuth callback
  *                                                         binds installation
@@ -161,7 +163,7 @@ export function IntegrationsLinearPublishWizard({
 
   async function startPublish() {
     if (!agentId || !envId || !personaName) {
-      setError("Pick agent, environment, and persona name first");
+      setError(uiText("Pick agent, environment, and persona name first"));
       return;
     }
     setError(null);
@@ -215,16 +217,13 @@ export function IntegrationsLinearPublishWizard({
           to="/integrations/linear"
           className="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          ← Linear integrations
-        </Link>
+           {uiText("← Linear integrations")} </Link>
 
         <header className="mt-3 mb-6">
           <h1 className="font-display text-xl leading-tight font-semibold tracking-tight text-fg">
-            Publish agent to Linear
-          </h1>
+             {uiText("Publish agent to Linear")} </h1>
           <p className="mt-1.5 text-base text-fg-muted">
-            Make this agent a teammate in your Linear workspace.
-          </p>
+             {uiText("Make this agent a teammate in your Linear workspace.")} </p>
         </header>
 
         <StepIndicator current={step} />
@@ -237,8 +236,7 @@ export function IntegrationsLinearPublishWizard({
 
         {hydrating && (
           <div className="rounded-md border border-border bg-bg-surface/30 px-3.5 py-3 text-sm text-fg-muted">
-            Resuming in-progress install…
-          </div>
+             {uiText("Resuming in-progress install…")} </div>
         )}
 
         {!hydrating && step === "pick" && (
@@ -281,7 +279,7 @@ export function IntegrationsLinearPublishWizard({
 function StepIndicator({ current }: { current: Step }) {
   const currentIdx = STEPS.findIndex((s) => s.id === current);
   return (
-    <ol className="flex items-center gap-2 mb-7" aria-label="Wizard progress">
+    <ol className="flex items-center gap-2 mb-7" aria-label={uiText("Wizard progress")}>
       {STEPS.map((s, i) => {
         const state =
           i < currentIdx ? "done" : i === currentIdx ? "current" : "todo";
@@ -346,7 +344,7 @@ function PickStep(props: {
   return (
     <div className="space-y-5">
       <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Agent">
+        <Field label={uiText("Agent")}>
           <Combobox<{ id: string; name: string }>
             value={props.agentId}
             onValueChange={(v) => props.setAgentId(v)}
@@ -354,11 +352,11 @@ function PickStep(props: {
             getValue={(a) => a.id}
             getLabel={(a) => a.name}
             getTextLabel={(a) => a.name}
-            placeholder="Pick an agent…"
+            placeholder={uiText("Pick an agent…")}
           />
         </Field>
 
-        <Field label="Environment">
+        <Field label={uiText("Environment")}>
           <Combobox<{ id: string; name: string }>
             value={props.envId}
             onValueChange={(v) => props.setEnvId(v)}
@@ -366,22 +364,22 @@ function PickStep(props: {
             getValue={(e) => e.id}
             getLabel={(e) => e.name}
             getTextLabel={(e) => e.name}
-            placeholder="Pick an environment…"
+            placeholder={uiText("Pick an environment…")}
           />
         </Field>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Persona name (shown in Linear)">
+        <Field label={uiText("Persona name (shown in Linear)")}>
           <TextInput
             value={props.personaName}
             onChange={(e) => props.setPersonaName(e.target.value)}
-            placeholder="e.g. Coder, Designer, Triage"
+            placeholder={uiText("e.g. Coder, Designer, Triage")}
             className={inputCls}
           />
         </Field>
 
-        <Field label="Avatar URL (optional)">
+        <Field label={uiText("Avatar URL (optional)")}>
           <TextInput
             value={props.personaAvatar}
             onChange={(e) => props.setPersonaAvatar(e.target.value)}
@@ -392,9 +390,7 @@ function PickStep(props: {
       </div>
 
       <div className="rounded-md border border-border bg-bg-surface/30 px-3.5 py-3 text-sm text-fg-muted">
-        Your agent becomes a real Linear teammate with @autocomplete and a slot in the
-        assignee dropdown. Setup ~3 min, requires Linear admin (or send a setup link).
-      </div>
+         {uiText("Your agent becomes a real Linear teammate with @autocomplete and a slot in the assignee dropdown. Setup ~3 min, requires Linear admin (or send a setup link).")} </div>
 
       <div className="pt-1">
         <Button variant="ghost"
@@ -402,7 +398,7 @@ function PickStep(props: {
           disabled={props.working}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          {props.working ? "Working…" : "Continue"}
+          {props.working ? uiText("Working…") : uiText("Continue")}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </Button>
       </div>
@@ -425,10 +421,9 @@ function CredentialsStep(props: {
     <div className="space-y-7">
       <section>
         <h2 className="text-base font-medium text-fg mb-1.5">
-          Create a Linear OAuth app
-        </h2>
+           {uiText("Create a Linear OAuth app")} </h2>
         <p className="text-sm text-fg-muted mb-3">
-          Open{" "}
+           {uiText("Open")}{" "}
           <a
             href="https://linear.app/settings/api/applications/new"
             target="_blank"
@@ -437,68 +432,53 @@ function CredentialsStep(props: {
           >
             Linear → Settings → API → New application
           </a>{" "}
-          and register a new OAuth application with these values:
-        </p>
+           {uiText("and register a new OAuth application with these values:")} </p>
         <div className="rounded-md border border-border bg-bg-surface/30 divide-y divide-border">
-          <CopyRow label="Application name" value={props.shell.suggested_app_name} />
-          <CopyRow label="Developer name" value={props.shell.suggested_app_name} />
-          <CopyRow label="Developer URL" value={window.location.origin} />
+          <CopyRow label={uiText("Application name")} value={props.shell.suggested_app_name} />
+          <CopyRow label={uiText("Developer name")} value={props.shell.suggested_app_name} />
+          <CopyRow label={uiText("Developer URL")} value={window.location.origin} />
           <CopyRow
-            label="Description"
+            label={uiText("Description")}
             value={`OMA-managed agent — ${props.shell.suggested_app_name}.`}
           />
-          <CopyRow label="Callback URLs" value={props.shell.callback_url} />
-          <CopyRow label="Webhook URL" value={props.shell.webhook_url} />
+          <CopyRow label={uiText("Callback URLs")} value={props.shell.callback_url} />
+          <CopyRow label={uiText("Webhook URL")} value={props.shell.webhook_url} />
         </div>
         <ul className="text-sm text-fg-muted mt-3 space-y-1.5 list-disc pl-5">
           <li>
-            <strong className="text-fg">GitHub username</strong> — leave empty.
-            Only relevant if you also bind this OAuth app to a GitHub App with
-            <code className="mx-0.5">actor=app</code>; not used by OMA's
-            Linear-only flow.
-          </li>
+            <strong className="text-fg">{uiText("GitHub username")}</strong>  {uiText("— leave empty. Only relevant if you also bind this OAuth app to a GitHub App with")} <code className="mx-0.5">actor=app</code>{uiText("; not used by OMA's Linear-only flow.")} </li>
           <li>
-            <strong className="text-fg">Public</strong> — leave OFF. Public is
-            for app marketplace listings; this app is private to your workspace.
-          </li>
+            <strong className="text-fg">{uiText("Public")}</strong>  {uiText("— leave OFF. Public is for app marketplace listings; this app is private to your workspace.")} </li>
           <li>
-            <strong className="text-fg">Client credentials</strong> — leave OFF.
-            OMA uses the standard authorization-code OAuth flow.
-          </li>
+            <strong className="text-fg">{uiText("Client credentials")}</strong>  {uiText("— leave OFF. OMA uses the standard authorization-code OAuth flow.")} </li>
           <li>
-            <strong className="text-fg">Webhooks</strong> — toggle ON, paste the
-            Webhook URL above, and subscribe to{" "}
+            <strong className="text-fg">{uiText("Webhooks")}</strong>  {uiText("— toggle ON, paste the Webhook URL above, and subscribe to")}{" "}
             <code>App user notifications</code> +{" "}
-            <code>Agent session events</code>. Linear shows the signing secret
-            (<code>lin_wh_…</code>) once you save — copy it back below.
-          </li>
+            <code>Agent session events</code>{uiText(". Linear shows the signing secret (")}<code>lin_wh_…</code>{uiText(") once you save — copy it back below.")} </li>
         </ul>
       </section>
 
       <section>
         <h2 className="text-base font-medium text-fg mb-1.5">
-          Paste credentials Linear gave you
-        </h2>
+           {uiText("Paste credentials Linear gave you")} </h2>
         <p className="text-sm text-fg-muted mb-3">
-          From the OAuth app you just created. The webhook signing secret is on
-          the same page (Webhooks → Signing secret).
-        </p>
+           {uiText("From the OAuth app you just created. The webhook signing secret is on the same page (Webhooks → Signing secret).")} </p>
         <div className="grid md:grid-cols-2 gap-4">
-          <Field label="Client ID">
+          <Field label={uiText("Client ID")}>
             <TextInput
               value={props.clientId}
               onChange={(e) => props.setClientId(e.target.value)}
               className={inputCls}
             />
           </Field>
-          <Field label="Client Secret">
+          <Field label={uiText("Client Secret")}>
             <SecretInput
               value={props.clientSecret}
               onChange={(e) => props.setClientSecret(e.target.value)}
               className={inputCls}
             />
           </Field>
-          <Field label="Webhook signing secret (lin_wh_…)">
+          <Field label={uiText("Webhook signing secret (lin_wh_…)")}>
             <SecretInput
               value={props.webhookSecret}
               onChange={(e) => props.setWebhookSecret(e.target.value)}
@@ -514,7 +494,7 @@ function CredentialsStep(props: {
             disabled={props.working || !props.clientId || !props.clientSecret || !props.webhookSecret}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            {props.working ? "Validating…" : "Continue"}
+            {props.working ? uiText("Validating…") : uiText("Continue")}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </Button>
         </div>
@@ -528,29 +508,24 @@ function InstallStep({ link }: { link: LinearPublicationInstallLink }) {
     <div className="space-y-4">
       <div>
         <h2 className="text-base font-medium text-fg mb-1.5">
-          Install the app in your workspace
-        </h2>
+           {uiText("Install the app in your workspace")} </h2>
         <p className="text-sm text-fg-muted">
-          We've stored your credentials. Click below to authorize the install in
-          Linear — you'll be redirected back here automatically.
-        </p>
+           {uiText("We've stored your credentials. Click below to authorize the install in Linear — you'll be redirected back here automatically.")} </p>
       </div>
 
       <a
         href={link.install_url}
         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
       >
-        Install in Linear
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
+         {uiText("Install in Linear")} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
       </a>
 
       <details className="text-sm text-fg-muted mt-3">
         <summary className="cursor-pointer hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]">
-          Verify the URLs Linear should now show
-        </summary>
+           {uiText("Verify the URLs Linear should now show")} </summary>
         <div className="mt-2 rounded-md border border-border bg-bg-surface/30 divide-y divide-border">
-          <CopyRow label="Callback URL" value={link.callback_url} />
-          <CopyRow label="Webhook URL" value={link.webhook_url} />
+          <CopyRow label={uiText("Callback URL")} value={link.callback_url} />
+          <CopyRow label={uiText("Webhook URL")} value={link.webhook_url} />
         </div>
       </details>
     </div>
@@ -579,9 +554,9 @@ function CopyRow({ label, value, secret = false }: { label: string; value: strin
           <Button variant="ghost"
             onClick={() => setReveal((r) => !r)}
             className="text-xs text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] px-1.5 py-0.5 rounded"
-            title={reveal ? "Hide" : "Reveal"}
+            title={reveal ? uiText("Hide") : uiText("Reveal")}
           >
-            {reveal ? "Hide" : "Show"}
+            {reveal ? uiText("Hide") : uiText("Show")}
           </Button>
         )}
         <Button variant="ghost"
@@ -592,7 +567,7 @@ function CopyRow({ label, value, secret = false }: { label: string; value: strin
               : "text-fg-muted hover:text-fg hover:bg-bg-surface"
           }`}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? uiText("Copied") : uiText("Copy")}
         </Button>
       </div>
     </div>

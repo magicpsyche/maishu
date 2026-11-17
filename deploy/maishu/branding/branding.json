@@ -1,0 +1,11 @@
+{
+  "product_name": "麦枢",
+  "logo": "logo.svg",
+  "logo_dark": "logo-dark.svg",
+  "favicon": "favicon.svg",
+  "stylesheet": "theme.css",
+  "login": {
+    "title": "登录麦枢",
+    "subtitle": "企业智能体执行与管理平台"
+  }
+}

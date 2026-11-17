@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useEffect, useMemo, useState } from "react";
 import { useScrollFade } from "../hooks/useScrollFade";
 import { useApi } from "../lib/api";
@@ -16,10 +18,10 @@ import { Logo } from "../components/Logo";
 // Flow:
 //   1. Read query params (callback, state, hostname, tenant?).
 //   2. If no cookie session → bounce through /login with `next=` set to here.
-//   3. Fetch /v1/oma/me to learn user + memberships.
+//   3. Fetch /v1/maishu/me to learn user + memberships.
 //   4. Show approval UI: when N==1, just an Approve button; when N>1, a
 //      checkbox list (defaults: ?tenant pre-selected, otherwise all).
-//   5. POST /v1/oma/me/cli-tokens N times — one token per selected tenant.
+//   5. POST /v1/maishu/me/cli-tokens N times — one token per selected tenant.
 //   6. window.location = `${callback}?tokens=<base64-json>&user=...&state=...`
 //      — the array form so the CLI can populate every selected tenant's
 //      profile in one round trip.
@@ -115,23 +117,23 @@ export function CliLogin() {
   const [error, setError] = useState<string>("");
   const listFade = useScrollFade<HTMLDivElement>();
 
-  // /v1/oma/me lookup via TQ. `enabled: callbackOk` defers the fetch until
+  // /v1/maishu/me lookup via TQ. `enabled: callbackOk` defers the fetch until
   // we've validated the callback URL — an invalid callback short-circuits
-  // straight to the error banner with no API roundtrip. /v1/oma/me's 401 is
+  // straight to the error banner with no API roundtrip. /v1/maishu/me's 401 is
   // already on useApi's silent-auth list so a pre-auth visit doesn't
   // produce a stray toast.
   const meQuery = useApiQuery<MeResponse>(
-    callbackOk ? "/v1/oma/me" : null,
+    callbackOk ? "/v1/maishu/me" : null,
   );
   const loading = callbackOk ? meQuery.isLoading : false;
 
-  // Apply the side effects of a successful /v1/oma/me — seed the default
+  // Apply the side effects of a successful /v1/maishu/me — seed the default
   // workspace selection and stash the response for the render path.
   // Kept in an effect so a TQ refetch (tab focus, etc.) re-applies the
   // same defaults if data changes shape.
   useEffect(() => {
     if (!callbackOk) {
-      setError("Invalid callback URL — only loopback addresses (127.0.0.1, localhost) are permitted.");
+      setError(uiText("Invalid callback URL — only loopback addresses (127.0.0.1, localhost) are permitted."));
       return;
     }
     const res = meQuery.data;
@@ -148,7 +150,7 @@ export function CliLogin() {
     }
   }, [callbackOk, meQuery.data, requestedTenant]);
 
-  // /v1/oma/me failure handling: 401 → bounce to /login; anything else → show
+  // /v1/maishu/me failure handling: 401 → bounce to /login; anything else → show
   // the message inline. Matches the prior .catch() branch.
   useEffect(() => {
     const err = meQuery.error;
@@ -192,7 +194,7 @@ export function CliLogin() {
       const minted = await Promise.all(
         orderedSelection.map(async (t) => {
           const res = await api<{ token: string; tenant_id: string; user_id: string; key_id: string }>(
-            "/v1/oma/me/cli-tokens",
+            "/v1/maishu/me/cli-tokens",
             {
               method: "POST",
               body: JSON.stringify({
@@ -242,12 +244,12 @@ export function CliLogin() {
         <div className="flex items-center gap-3 mb-6">
           <Logo size="md" />
           <div>
-            <h1 className="font-display text-lg font-semibold">Authorize CLI</h1>
-            <div className="text-xs text-fg-subtle">openma command-line client</div>
+            <h1 className="font-display text-lg font-semibold">{uiText("Authorize CLI")}</h1>
+            <div className="text-xs text-fg-subtle">{uiText("openma command-line client")}</div>
           </div>
         </div>
 
-        {loading && <div className="text-sm text-fg-subtle">Checking session…</div>}
+        {loading && <div className="text-sm text-fg-subtle">{uiText("Checking session…")}</div>}
 
         {!loading && error && (
           <div className="bg-danger-subtle border border-danger/30 text-danger text-sm rounded-lg px-4 py-3 mb-4">
@@ -258,35 +260,30 @@ export function CliLogin() {
         {!loading && authNeeded && (
           <>
             <p className="text-sm text-fg-muted mb-4">
-              Sign in to continue authorizing the CLI on{" "}
+               {uiText("Sign in to continue authorizing the CLI on")}{" "}
               <span className="font-mono text-fg">{hostname}</span>.
             </p>
             <Button onClick={goLogin} className="w-full">
-              Sign in
-            </Button>
+               {uiText("Sign in")} </Button>
           </>
         )}
 
         {!loading && !authNeeded && me && callbackOk && (
           <>
             <p className="text-sm text-fg-muted mb-2">
-              The CLI on{" "}
-              <span className="font-mono text-fg">{hostname}</span> wants to
-              act on your behalf as{" "}
+               {uiText("The CLI on")}{" "}
+              <span className="font-mono text-fg">{hostname}</span>  {uiText("wants to act on your behalf as")}{" "}
               <span className="font-mono text-fg">{userDisplayLabel(me.user)}</span>.
             </p>
             <p className="text-xs text-fg-subtle mb-5">
-              Approving mints one API key per selected workspace — visible
-              on the API Keys page, revocable at any time.
-            </p>
+               {uiText("Approving mints one API key per selected workspace — visible on the API Keys page, revocable at any time.")} </p>
 
             {me.tenants.length === 0 ? (
               <div className="text-sm text-danger mb-4">
-                No workspaces found on this account.
-              </div>
+                 {uiText("No workspaces found on this account.")} </div>
             ) : me.tenants.length === 1 ? (
               <div className="mb-5">
-                <div className="console-cli-workspace-heading">Workspace</div>
+                <div className="console-cli-workspace-heading">{uiText("Workspace")}</div>
                 <div className="console-cli-workspace-list">
                   {me.tenants.map((t) => {
                     const display = tenantDisplayName(t);
@@ -307,7 +304,7 @@ export function CliLogin() {
               <div className="mb-5">
                 <div className="console-cli-workspace-heading">
                   <span>
-                    Workspaces ({selected.size}/{me.tenants.length})
+                     {uiText("Workspaces (")}{selected.size}/{me.tenants.length})
                   </span>
                   <span className="console-cli-workspace-actions">
                     <Button
@@ -316,8 +313,7 @@ export function CliLogin() {
                       onClick={selectAll}
                       className="console-cli-workspace-action"
                     >
-                      All
-                    </Button>
+                       {uiText("All")} </Button>
                     <span aria-hidden="true">·</span>
                     <Button
                       variant="ghost"
@@ -325,8 +321,7 @@ export function CliLogin() {
                       onClick={selectNone}
                       className="console-cli-workspace-action"
                     >
-                      None
-                    </Button>
+                       {uiText("None")} </Button>
                   </span>
                 </div>
                 <div
@@ -363,9 +358,9 @@ export function CliLogin() {
                 className="flex-1"
               >
                 {working
-                  ? "Authorizing…"
+                  ? uiText("Authorizing…")
                   : me.tenants.length <= 1
-                    ? "Approve"
+                    ? uiText("Approve")
                     : `Approve ${selected.size} workspace${selected.size === 1 ? "" : "s"}`}
               </Button>
               <Button variant="ghost"
@@ -373,8 +368,7 @@ export function CliLogin() {
                 disabled={working}
                 className="inline-flex items-center justify-center px-4 py-2.5 min-h-11 sm:min-h-0 rounded-lg border border-border text-sm text-fg-muted hover:bg-bg disabled:opacity-40"
               >
-                Cancel
-              </Button>
+                 {uiText("Cancel")} </Button>
             </div>
           </>
         )}

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 "use client";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
@@ -156,12 +158,12 @@ export type ReasoningTriggerProps = ComponentProps<
 
 const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
   if (isStreaming || duration === 0) {
-    return <Shimmer duration={1}>Thinking...</Shimmer>;
+    return <Shimmer duration={1}>{uiText("Thinking...")}</Shimmer>;
   }
   if (duration === undefined) {
-    return <p>Thought for a few seconds</p>;
+    return <p>{uiText("Thought for a few seconds")}</p>;
   }
-  return <p>Thought for {duration} seconds</p>;
+  return <p>{uiText("Thought for")} {duration} seconds</p>;
 };
 
 export const ReasoningTrigger = memo(

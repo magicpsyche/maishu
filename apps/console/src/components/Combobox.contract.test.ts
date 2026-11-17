@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { describe, expect, it } from "vitest";
 import { buildComboboxPageUrl, readComboboxNextPage } from "./Combobox";
 
@@ -18,22 +19,22 @@ describe("Combobox Managed Agents contract", () => {
 
   it("only sends q when a product endpoint opts into it", () => {
     expect(
-      buildComboboxPageUrl("/v1/oma/model_cards", {
+      buildComboboxPageUrl("/v1/maishu/model_cards", {
         limit: 20,
         search: "claude",
         searchParam: "q",
       }),
-    ).toBe("/v1/oma/model_cards?limit=20&q=claude");
+    ).toBe("/v1/maishu/model_cards?limit=20&q=claude");
   });
 
   it("adapts an explicit product cursor while preserving infinite-feed behavior", () => {
     expect(
-      buildComboboxPageUrl("/v1/oma/model_cards", {
+      buildComboboxPageUrl("/v1/maishu/model_cards", {
         limit: 20,
         page: "cursor_2",
         pagination: "oma",
       }),
-    ).toBe("/v1/oma/model_cards?limit=20&cursor=cursor_2");
+    ).toBe("/v1/maishu/model_cards?limit=20&cursor=cursor_2");
     expect(
       readComboboxNextPage({ data: [], next_cursor: "cursor_3" }, "oma"),
     ).toBe("cursor_3");

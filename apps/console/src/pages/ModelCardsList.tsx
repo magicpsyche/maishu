@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import { useScrollFade } from "@/hooks/useScrollFade";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +34,7 @@ const PROVIDERS = [
 type ProviderValue = string;
 
 const PROVIDER_FILTER_OPTIONS: { value: ProviderValue | "any"; label: string }[] = [
-  { value: "any", label: "All" },
+  { value: "any", label: uiText("All") },
   ...PROVIDERS.map((p) => ({ value: p.value, label: p.label })),
 ];
 
@@ -88,7 +90,7 @@ export function ModelCardsList() {
     isLoadingMore,
     loadMore,
     refresh: load,
-  } = useOmaInfiniteApiQuery<ModelCard>("/v1/oma/model_cards", { limit: 20, params: cardsParams });
+  } = useOmaInfiniteApiQuery<ModelCard>("/v1/maishu/model_cards", { limit: 20, params: cardsParams });
 
   // Provider discovery is Pi catalog metadata; credentials stay in the Model
   // Card create/rotate request and are never forwarded just to browse models.
@@ -99,7 +101,7 @@ export function ModelCardsList() {
     }
     setModelsLoading(true);
     try {
-      const result = await api<{ data: Array<{ id: string; name: string }> }>("/v1/oma/models/list", {
+      const result = await api<{ data: Array<{ id: string; name: string }> }>("/v1/maishu/models/list", {
         method: "POST",
         body: JSON.stringify({ provider }),
       });
@@ -114,7 +116,7 @@ export function ModelCardsList() {
   const save = async () => {
     setError("");
     if (!form.model_id || (!editingId && !form.api_key)) {
-      setError("Model ID and API Key are required.");
+      setError(uiText("Model ID and API Key are required."));
       return;
     }
     try {
@@ -141,11 +143,11 @@ export function ModelCardsList() {
         try {
           piConfig = JSON.parse(form.pi_config);
         } catch {
-          setError("Pi Config must be valid JSON.");
+          setError(uiText("Pi Config must be valid JSON."));
           return;
         }
         if (typeof piConfig !== "object" || piConfig === null || Array.isArray(piConfig)) {
-          setError("Pi Config must be a JSON object.");
+          setError(uiText("Pi Config must be a JSON object."));
           return;
         }
         payload.pi_config = piConfig;
@@ -159,12 +161,12 @@ export function ModelCardsList() {
       else if (editingId) payload.pricing = null;
       if (editingId) {
         if (!form.api_key) delete payload.api_key;
-        await api(`/v1/oma/model_cards/${editingId}`, { method: "POST", body: JSON.stringify(payload) });
+        await api(`/v1/maishu/model_cards/${editingId}`, { method: "POST", body: JSON.stringify(payload) });
       } else {
         // Create returns the card + a probe result. Surface it so the user
         // finds out NOW if their api_key / base_url / model id is broken.
         const created = await api<{ probe?: { ok: boolean | null; message?: string; reason?: string } }>(
-          "/v1/oma/model_cards",
+          "/v1/maishu/model_cards",
           { method: "POST", body: JSON.stringify(payload) },
         );
         const probe = created.probe;
@@ -174,17 +176,17 @@ export function ModelCardsList() {
           toast.warning(
             probe.message
               ? `Model card saved but the key didn't work: ${probe.message}`
-              : "Model card saved but the key didn't work — check api_key / base_url / model id.",
+              : uiText("Model card saved but the key didn't work — check api_key / base_url / model id."),
           );
         }
         // ok === null (unsupported provider) → no toast, success is implicit.
       }
       closeDialog(); load();
-    } catch (e: any) { setError(e?.message || "Failed to save"); }
+    } catch (e: any) { setError(e?.message || uiText("Failed to save")); }
   };
 
   const remove = async (id: string) => {
-    try { await api(`/v1/oma/model_cards/${id}`, { method: "DELETE" }); load(); } catch {}
+    try { await api(`/v1/maishu/model_cards/${id}`, { method: "DELETE" }); load(); } catch {}
   };
 
   const startEdit = (card: ModelCard) => {
@@ -234,7 +236,7 @@ export function ModelCardsList() {
       {
         id: "model_id",
         accessorKey: "model_id",
-        header: "Model ID",
+        header: uiText("Model ID"),
         cell: ({ row }) => (
           <>
             <div className="font-medium text-fg">{row.original.model_id}</div>
@@ -246,7 +248,7 @@ export function ModelCardsList() {
       {
         id: "provider",
         accessorKey: "provider",
-        header: "API Format",
+        header: uiText("API Format"),
         cell: ({ row }) => (
           <span className={`px-2 py-0.5 rounded text-xs font-medium ${providerBadge(row.original.provider)}`}>
             {providerLabel(row.original.provider)}
@@ -256,10 +258,10 @@ export function ModelCardsList() {
       {
         id: "model",
         accessorKey: "model",
-        header: "Wire Model",
+        header: uiText("Wire Model"),
         cell: ({ row }) =>
           row.original.model === row.original.model_id ? (
-            <span className="text-fg-subtle">(same)</span>
+            <span className="text-fg-subtle">{uiText("(same)")}</span>
           ) : (
             <span className="font-mono text-xs text-fg-muted">{row.original.model}</span>
           ),
@@ -267,7 +269,7 @@ export function ModelCardsList() {
       {
         id: "api_key",
         accessorFn: (c) => c.api_key_preview ?? "",
-        header: "API Key",
+        header: uiText("API Key"),
         cell: ({ row }) => (
           <span className="font-mono text-xs text-fg-subtle">
             ****{row.original.api_key_preview}
@@ -277,7 +279,7 @@ export function ModelCardsList() {
       {
         id: "base_url",
         accessorFn: (c) => c.base_url ?? "",
-        header: "Base URL",
+        header: uiText("Base URL"),
         cell: ({ row }) => (
           <span className="text-fg-muted text-xs">{row.original.base_url || "—"}</span>
         ),
@@ -285,7 +287,7 @@ export function ModelCardsList() {
       {
         id: "default",
         accessorFn: (c) => (c.is_default ? "default" : ""),
-        header: "Default",
+        header: uiText("Default"),
         cell: ({ row }) =>
           row.original.is_default ? (
             <span className="text-xs text-fg-muted bg-bg-surface px-1.5 py-0.5 rounded">
@@ -296,7 +298,7 @@ export function ModelCardsList() {
       {
         id: "created",
         accessorFn: (c) => c.created_at,
-        header: "Created",
+        header: uiText("Created"),
         cell: ({ row }) => (
           <span className="text-fg-muted">
             {new Date(row.original.created_at).toLocaleDateString()}
@@ -322,7 +324,7 @@ export function ModelCardsList() {
   const filters = (
     <>
       <FilterChip
-        label="Provider"
+        label={uiText("Provider")}
         active={provider !== "any"}
         display={providerDisplay}
         onClear={() => setProvider("any")}
@@ -337,7 +339,7 @@ export function ModelCardsList() {
             options={PROVIDER_FILTER_OPTIONS}
             value={provider}
             onValueChange={(v) => setProvider(v as ProviderValue | "any")}
-            searchPlaceholder="Provider..."
+            searchPlaceholder={uiText("Provider...")}
           />
         </PopoverContent>
       </FilterChip>
@@ -348,9 +350,9 @@ export function ModelCardsList() {
 
   return (
     <DataTable<ModelCard>
-      createLabel="+ New model card"
+      createLabel={uiText("+ New model card")}
       onCreate={() => { setShowCreate(true); setError(""); }}
-      searchPlaceholder="Search model cards..."
+      searchPlaceholder={uiText("Search model cards...")}
       searchValue={search}
       onSearchChange={setSearch}
       filters={filters}
@@ -361,61 +363,57 @@ export function ModelCardsList() {
       hasMore={hasMore}
       loadingMore={isLoadingMore}
       onLoadMore={loadMore}
-      emptyTitle={search ? "No matching model cards" : "No model cards yet"}
+      emptyTitle={search ? uiText("No matching model cards") : uiText("No model cards yet")}
       emptyKind="model_card"
       emptyAction={
         !search && (
           <Button onClick={() => { setShowCreate(true); setError(""); }}>
-            + New model card
-          </Button>
+             {uiText("+ New model card")} </Button>
         )
       }
       emptySubtitle={
         search ? (
-          "Try a different search term."
+          uiText("Try a different search term.")
         ) : (
           <>
-            <p>Add a model card to configure API credentials for your agents.</p>
+            <p>{uiText("Add a model card to configure API credentials for your agents.")}</p>
             <p className="text-xs mt-3">
-              Without model cards, agents use the environment ANTHROPIC_API_KEY.
-            </p>
+               {uiText("Without model cards, agents use the environment ANTHROPIC_API_KEY.")} </p>
           </>
         )
       }
       columns={columns}
     >
-      <Modal open={showCreate} onClose={closeDialog} title={editingId ? "Edit Model Card" : "New Model Card"}
+      <Modal open={showCreate} onClose={closeDialog} title={editingId ? uiText("Edit Model Card") : uiText("New Model Card")}
         footer={
           <>
             {editingId && (
               <Button
                 variant="ghost"
                 onClick={async () => {
-                  if (!confirm(`Delete model card ${form.model_id}? This can't be undone.`)) return;
+                  if (!confirm(uiText(`Delete model card ${form.model_id}? This can't be undone.`))) return;
                   await remove(editingId);
                   closeDialog();
                 }}
                 className="text-danger hover:text-danger hover:bg-danger-subtle mr-auto"
               >
-                Delete
-              </Button>
+                 {uiText("Delete")} </Button>
             )}
-            <Button variant="ghost" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={save} disabled={!form.model_id || (!editingId && !form.api_key)}>{editingId ? "Save" : "Create"}</Button>
+            <Button variant="ghost" onClick={closeDialog}>{uiText("Cancel")}</Button>
+            <Button onClick={save} disabled={!form.model_id || (!editingId && !form.api_key)}>{editingId ? uiText("Save") : uiText("Create")}</Button>
           </>
         }>
         <form autoComplete="off" onSubmit={(e) => e.preventDefault()} className="space-y-3">
           {error && <div className="text-sm text-danger bg-danger-subtle border border-danger/30 rounded-lg px-3 py-2">{error}</div>}
           <div>
             <Label htmlFor="modelcard-id" className="text-sm text-fg-muted block mb-1">
-              Model ID *
-              <span className="ml-1 text-xs text-fg-subtle">(tenant-unique handle agents reference)</span>
+               {uiText("Model ID *")} <span className="ml-1 text-xs text-fg-subtle">{uiText("(tenant-unique handle agents reference)")}</span>
             </Label>
             <TextInput id="modelcard-id" value={form.model_id} onChange={(e) => setForm({ ...form, model_id: e.target.value })} className={inputCls}
               placeholder="claude-prod, claude-sonnet-4-6, bedrock-sonnet, ..." />
           </div>
           <div role="group" aria-labelledby="modelcard-provider-label">
-            <span id="modelcard-provider-label" className="text-sm text-fg-muted block mb-1">Pi Provider *</span>
+            <span id="modelcard-provider-label" className="text-sm text-fg-muted block mb-1">{uiText("Pi Provider *")}</span>
             <div className="grid grid-cols-2 gap-2">
               {PROVIDERS.map((p) => (
                 <Button variant="ghost"
@@ -446,23 +444,22 @@ export function ModelCardsList() {
               }}
               onBlur={() => void fetchModels(form.provider)}
               className={`${inputCls} mt-2`}
-              placeholder="Pi provider id, e.g. anthropic, deepseek, my-vllm"
-              aria-label="Pi provider id"
+              placeholder={uiText("Pi provider id, e.g. anthropic, deepseek, my-vllm")}
+              aria-label={uiText("Pi provider id")}
             />
           </div>
           <div>
-            <Label htmlFor="modelcard-api-key" className="text-sm text-fg-muted block mb-1">API Key {editingId ? "" : "*"}</Label>
+            <Label htmlFor="modelcard-api-key" className="text-sm text-fg-muted block mb-1">{uiText("API Key")} {editingId ? "" : "*"}</Label>
             <SecretInput id="modelcard-api-key" value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} className={inputCls}
-              placeholder={editingId ? "Leave blank to keep current key" : "sk-..."}
+              placeholder={editingId ? uiText("Leave blank to keep current key") : "sk-..."}
               name="model-api-key-field" />
             {modelsLoading && (
-              <p className="text-xs text-fg-subtle mt-1">Loading models...</p>
+              <p className="text-xs text-fg-subtle mt-1">{uiText("Loading models...")}</p>
             )}
           </div>
           <div className="relative">
             <Label htmlFor="modelcard-wire-model" className="text-sm text-fg-muted block mb-1">
-              Wire Model
-              <span className="ml-1 text-xs text-fg-subtle">(sent to provider; defaults to Model ID)</span>
+               {uiText("Wire Model")} <span className="ml-1 text-xs text-fg-subtle">{uiText("(sent to provider; defaults to Model ID)")}</span>
             </Label>
             <Input id="modelcard-wire-model" value={form.model}
               onChange={(e) => { setForm({ ...form, model: e.target.value }); setShowModelSuggestions(true); }}
@@ -489,11 +486,11 @@ export function ModelCardsList() {
               </div>
             )}
             {!availableModels.length && !modelsLoading && form.provider && (
-              <p className="text-xs text-fg-subtle mt-1">No Pi catalog entries loaded — enter a wire model manually for custom providers.</p>
+              <p className="text-xs text-fg-subtle mt-1">{uiText("No Pi catalog entries loaded — enter a wire model manually for custom providers.")}</p>
             )}
           </div>
           <div>
-            <Label htmlFor="modelcard-base-url" className="text-sm text-fg-muted block mb-1">Base URL <span className="text-fg-subtle">(optional for Pi built-ins)</span></Label>
+            <Label htmlFor="modelcard-base-url" className="text-sm text-fg-muted block mb-1">{uiText("Base URL")} <span className="text-fg-subtle">{uiText("(optional for Pi built-ins)")}</span></Label>
             <Input id="modelcard-base-url" value={form.base_url} onChange={(e) => setForm({ ...form, base_url: e.target.value })} className={inputCls}
               placeholder="https://your-provider.example/v1" autoComplete="off" />
           </div>
@@ -516,7 +513,7 @@ export function ModelCardsList() {
             </div>
           </fieldset>
           <div>
-            <Label htmlFor="modelcard-pi-config" className="text-sm text-fg-muted block mb-1">Pi Config <span className="text-fg-subtle">(JSON; custom provider requires api)</span></Label>
+            <Label htmlFor="modelcard-pi-config" className="text-sm text-fg-muted block mb-1">{uiText("Pi Config")} <span className="text-fg-subtle">{uiText("(JSON; custom provider requires api)")}</span></Label>
             <Textarea
               id="modelcard-pi-config"
               value={form.pi_config}
@@ -527,7 +524,7 @@ export function ModelCardsList() {
             />
           </div>
           <div>
-              <Label className="text-sm text-fg-muted block mb-1">Custom Headers <span className="text-fg-subtle">(optional)</span></Label>
+              <Label className="text-sm text-fg-muted block mb-1">{uiText("Custom Headers")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
               <div className="space-y-1.5">
                 {form.custom_headers.map((h, i) => (
                   <div key={i} className="flex gap-2 items-center">
@@ -535,20 +532,20 @@ export function ModelCardsList() {
                       const hdrs = [...form.custom_headers];
                       hdrs[i] = { ...hdrs[i], key: e.target.value };
                       setForm({ ...form, custom_headers: hdrs });
-                    }} className={inputCls} placeholder="Header-Name" aria-label={`Custom header ${i + 1} name`} autoComplete="off" />
+                    }} className={inputCls} placeholder="Header-Name" aria-label={uiText(`Custom header ${i + 1} name`)} autoComplete="off" />
                     <Input value={h.value} onChange={(e) => {
                       const hdrs = [...form.custom_headers];
                       hdrs[i] = { ...hdrs[i], value: e.target.value };
                       setForm({ ...form, custom_headers: hdrs });
-                    }} className={inputCls} placeholder="value" aria-label={`Custom header ${i + 1} value`} autoComplete="off" />
+                    }} className={inputCls} placeholder="value" aria-label={uiText(`Custom header ${i + 1} value`)} autoComplete="off" />
                     {form.custom_headers.length > 1 && (
                       <Button variant="ghost" type="button" onClick={() => setForm({ ...form, custom_headers: form.custom_headers.filter((_, j) => j !== i) })}
-                        className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 text-fg-subtle hover:text-danger text-xs shrink-0">Remove</Button>
+                        className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 text-fg-subtle hover:text-danger text-xs shrink-0">{uiText("Remove")}</Button>
                     )}
                   </div>
                 ))}
                 <Button variant="ghost" type="button" onClick={() => setForm({ ...form, custom_headers: [...form.custom_headers, { key: "", value: "" }] })}
-                  className="inline-flex items-center justify-center min-h-11 sm:min-h-0 px-2 text-xs text-fg-muted hover:text-fg">+ Add header</Button>
+                  className="inline-flex items-center justify-center min-h-11 sm:min-h-0 px-2 text-xs text-fg-muted hover:text-fg">{uiText("+ Add header")}</Button>
               </div>
           </div>
           <Label className="flex items-center gap-2 text-sm text-fg-muted cursor-pointer">
@@ -558,8 +555,7 @@ export function ModelCardsList() {
                 setForm({ ...form, is_default: checked === true })
               }
             />
-            Set as default model card
-          </Label>
+             {uiText("Set as default model card")} </Label>
         </form>
       </Modal>
     </DataTable>

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -44,7 +45,7 @@ vi.mock("../lib/useManagedApi", () => ({
 
 vi.mock("../lib/useApiQuery", () => ({
   useApiQuery: (path: string | null) => {
-    if (path === "/v1/oma/sandbox_images") return { data: { data: state.images }, error: null };
+    if (path === "/v1/maishu/sandbox_images") return { data: { data: state.images }, error: null };
     return { data: state.environment, error: null };
   },
   useInfiniteApiQuery: () => ({

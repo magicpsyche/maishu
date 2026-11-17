@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { formatDuration } from "../../lib/format";
 import type { Event } from "../../lib/events";
 import { isQueuedSessionEvent } from "../../lib/session-event-queue";
@@ -293,7 +295,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
         // turn trigger); keep a lifecycle marker there so the trigger row
         // isn't empty. Built-in/MCP results are folded into the call.
         if (e.type === "user.custom_tool_result") {
-          instant({ key: `ctr-${id ?? i}`, family: "custom_tool", kind: "lifecycle", label: "custom tool result", detail: oneLine(eventText(e as Rec)) || undefined, callId: resultCallId(e) ?? id });
+          instant({ key: `ctr-${id ?? i}`, family: "custom_tool", kind: "lifecycle", label: uiText("custom tool result"), detail: oneLine(eventText(e as Rec)) || undefined, callId: resultCallId(e) ?? id });
         }
         continue;
       }
@@ -303,7 +305,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
         key: `orphan-${id ?? i}`,
         family: e.type === "agent.mcp_tool_result" ? "mcp" : e.type === "agent.tool_result" ? "tool" : "custom_tool",
         kind: "tool",
-        label: "tool result (no matching call)",
+        label: uiText("tool result (no matching call)"),
         detail: oneLine(out) || undefined,
         toolName: "result",
         callId: resultCallId(e),
@@ -329,7 +331,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
         key: `model-${id ?? i}`,
         family: "model",
         kind: "model",
-        label: model ? `Generation · ${model}` : "Generation",
+        label: model ? `Generation · ${model}` : uiText("Generation"),
         detail: [finishReason, ttftMs !== undefined ? `TTFT ${formatDuration(ttftMs)}` : undefined, tok].filter(Boolean).join(" · ") || undefined,
         model,
         usage,
@@ -364,7 +366,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
         key: `compact-end-${i}`,
         family: "compaction",
         kind: "lifecycle",
-        label: "compaction end (no matching start)",
+        label: uiText("compaction end (no matching start)"),
         detail: f.detail,
         model: f.model,
         usage: f.usage,
@@ -377,7 +379,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
     } else if (e.type === "span.outcome_evaluation_start") {
       const end = outcomeEnds[outcomeIdx++];
       const result = end ? str(field(end.e, "result")) : undefined;
-      ranged({ key: `outcome-${i}`, family: "outcome", kind: "lifecycle", label: "outcome eval", detail: result, isError: result === "failed" }, end);
+      ranged({ key: `outcome-${i}`, family: "outcome", kind: "lifecycle", label: uiText("outcome eval"), detail: result, isError: result === "failed" }, end);
     } else if (
       e.type === "span.model_request_end" ||
       e.type === "span.model_first_token" ||
@@ -390,7 +392,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
       // parent_event_id is this span's id (mint-then-emit, see
       // session-do.ts:scheduleWakeup). Known wait, not between-turn idle.
       const fired = id ? childByParent.get(id) : undefined;
-      ranged({ key: `sched-${id ?? i}`, family: "schedule", kind: "lifecycle", label: "schedule waiting", detail: fired ? "fired" : "pending" }, fired);
+      ranged({ key: `sched-${id ?? i}`, family: "schedule", kind: "lifecycle", label: uiText("schedule waiting"), detail: fired ? "fired" : "pending" }, fired);
       // The fired user.message also stays its own (trigger) step.
     } else if (e.type === "user.message") {
       const md = (e as { metadata?: { harness?: string; kind?: string } }).metadata;
@@ -411,7 +413,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
         key: `confirm-${id ?? i}`,
         family: "custom_tool",
         kind: "lifecycle",
-        label: "tool confirmation",
+        label: uiText("tool confirmation"),
         detail: [result, str(field(e, "deny_message"))].filter(Boolean).join(" · ") || undefined,
         callId: str(e.tool_use_id),
       });
@@ -441,7 +443,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
         key: `compact-marker-${i}`,
         family: "compaction",
         kind: "lifecycle",
-        label: "thread compacted",
+        label: uiText("thread compacted"),
         detail: [counts, info.trigger, info.summary ? oneLine(info.summary, 80) : undefined].filter(Boolean).join(" · ") || undefined,
         text: info.summary,
         compaction: info,
@@ -455,7 +457,7 @@ export function deriveTraceSteps(events: readonly Event[]): TraceStep[] {
       instant({ key: `warn-${i}`, family: "warn", kind: "lifecycle", label: `warning:${String(e.source ?? "")}`, detail: String(e.message ?? "") || undefined });
     } else if (e.type === "session.outcome_evaluated") {
       const result = str(field(e, "result"));
-      instant({ key: `outcome-r-${i}`, family: "outcome", kind: "lifecycle", label: "outcome evaluated", detail: [result, oneLine(eventText(e as Rec))].filter(Boolean).join(" — ") || undefined, isError: result === "failed" });
+      instant({ key: `outcome-r-${i}`, family: "outcome", kind: "lifecycle", label: uiText("outcome evaluated"), detail: [result, oneLine(eventText(e as Rec))].filter(Boolean).join(" — ") || undefined, isError: result === "failed" });
     } else if (e.type.startsWith("session.")) {
       const stop = (e.stop_reason as { type?: string } | undefined)?.type;
       instant({ key: `s-${i}`, family: "system", kind: "lifecycle", label: e.type, detail: stop ? `stop_reason: ${stop}` : undefined });

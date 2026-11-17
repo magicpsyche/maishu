@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import {
   useCallback,
@@ -204,7 +206,7 @@ export function ConsoleShell({
             variant="ghost"
             type="button"
             className="console-sidebar-resize"
-            aria-label="Resize sidebar"
+            aria-label={uiText("Resize sidebar")}
             onPointerDown={(event) => {
               event.preventDefault();
               dragRef.current = { startX: event.clientX, startWidth: sidebarWidth };
@@ -227,7 +229,7 @@ export function ConsoleShell({
           variant="ghost"
           type="button"
           className="console-sidebar-scrim"
-          aria-label="Close sidebar"
+          aria-label={uiText("Close sidebar")}
           onClick={closeSidebar}
         />
       )}
@@ -252,7 +254,7 @@ export function ConsoleShell({
               variant="ghost"
               type="button"
               className="console-sidebar-restore"
-              aria-label="Show sidebar"
+              aria-label={uiText("Show sidebar")}
               onClick={showSidebar}
             >
               <PanelLeftOpenIcon aria-hidden="true" />

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import type { QueryClient } from "@tanstack/react-query";
 import type {
   EvalCase,
@@ -33,7 +34,7 @@ export type {
   ReplaceEvalCaseRequest,
 } from "@open-managed-agents/api-types";
 
-export const EVALS_BASE = "/v1/oma/evals";
+export const EVALS_BASE = "/v1/maishu/evals";
 
 export const BENCHMARKS_BASE = `${EVALS_BASE}/benchmarks`;
 

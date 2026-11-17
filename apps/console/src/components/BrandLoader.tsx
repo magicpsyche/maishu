@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 /**
  * Brand-mark loader — `[ … ]` with three pulsing dots inside the
  * JetBrains Mono brackets. Reuses the brand identity (the openma logo
@@ -31,7 +33,7 @@ export function BrandLoader({ size = "md", label = "Loading", className = "" }: 
   return (
     <span
       role="status"
-      aria-label={label}
+      aria-label={uiText(label)}
       className={`inline-flex items-center font-mono ${s.weight} text-brand select-none ${s.text} ${className}`.trim()}
     >
       <span aria-hidden="true">[</span>

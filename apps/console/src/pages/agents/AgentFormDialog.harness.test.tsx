@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -22,7 +23,7 @@ const catalog = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json(catalog)));
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json(catalog)));
 });
 function open(oma?: Record<string, unknown>, edit = false) {
   render(<MemoryRouter><I18nProvider><AgentFormDialog open onClose={() => {}} allAgents={[]} customSkills={[]} modelCards={[]}
@@ -90,7 +91,7 @@ it("blocks a missing required advanced field even in JSON, then accepts the real
 });
 
 it("accepts either alternative of a one-of requirement and names both when neither is set", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ ...catalog, data: [
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ ...catalog, data: [
     ...catalog.data,
     { ...catalog.data[1], id: "acp-sandbox", requirements: ["acp.agent.command|acp.agent.registry"] },
   ] })));
@@ -108,7 +109,7 @@ it("accepts either alternative of a one-of requirement and names both when neith
 });
 
 it("lists one-of requirements of unavailable choices as alternatives, not raw paths", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ ...catalog, data: [
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ ...catalog, data: [
     ...catalog.data,
     { ...catalog.data[1], id: "acp-sandbox", label: "ACP sandbox", requirements: ["acp.agent.command|acp.agent.registry"] },
   ] })));
@@ -119,7 +120,7 @@ it("lists one-of requirements of unavailable choices as alternatives, not raw pa
 });
 
 it("validates required appendable prompts against the current form and saves without switching modes", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ ...catalog, data: [
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ ...catalog, data: [
     ...catalog.data,
     { ...catalog.data[0], id: "prompt-host", requirements: ["appendable_prompts"] },
   ] })));
@@ -138,7 +139,7 @@ it("validates required appendable prompts against the current form and saves wit
 });
 
 it("validates the required auxiliary model against the current form and saves without switching modes", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ ...catalog, data: [
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ ...catalog, data: [
     ...catalog.data,
     { ...catalog.data[0], id: "aux-host", requirements: ["aux_model.id"] },
   ] })));
@@ -196,17 +197,17 @@ it("preserves advanced ACP, runtime binding and unknown nulls during an untouche
 });
 
 it("reports an unavailable catalog and can retry without falling back", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => new HttpResponse(null, { status: 503 })));
+  server.use(http.get("/v1/maishu/harnesses", () => new HttpResponse(null, { status: 503 })));
   open();
   expect(await screen.findByText(/Unable to load harness catalog/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Create Agent" })).toBeDisabled();
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json(catalog)));
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json(catalog)));
   fireEvent.click(screen.getByRole("button", { name: "Retry harness catalog" }));
   await screen.findByText(/Control-plane process/);
 });
 
 it("blocks submission while the directory is loading but leaves JSON editable", async () => {
-  server.use(http.get("/v1/oma/harnesses", async () => { await delay(100); return HttpResponse.json(catalog); }));
+  server.use(http.get("/v1/maishu/harnesses", async () => { await delay(100); return HttpResponse.json(catalog); }));
   open();
   expect(screen.getByText("Loading harness catalog…")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Create Agent" })).toBeDisabled();
@@ -216,23 +217,49 @@ it("blocks submission while the directory is loading but leaves JSON editable", 
 });
 
 it("can display a registered implementation when deployment default is null", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ ...catalog, default_harness_id: null })));
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ ...catalog, default_harness_id: null })));
   open({ harness: "custom-host" }, true);
   expect(await screen.findByText("Execution strategy: Control-plane process")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
 });
 
 it("rejects malformed catalog metadata instead of inventing a fallback", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ object: "list", data: [{ id: "bad" }], default_harness_id: "bad" })));
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ object: "list", data: [{ id: "bad" }], default_harness_id: "bad" })));
   open();
   expect(await screen.findByText(/Unable to load harness catalog/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Create Agent" })).toBeDisabled();
 });
 
 it("shows an empty directory and no deployment default, without manufacturing options", async () => {
-  server.use(http.get("/v1/oma/harnesses", () => HttpResponse.json({ object: "list", data: [], default_harness_id: null })));
+  server.use(http.get("/v1/maishu/harnesses", () => HttpResponse.json({ object: "list", data: [], default_harness_id: null })));
   open();
   expect(await screen.findByText(/No harnesses are registered/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Create Agent" })).toBeDisabled();
   expect(json()._oma?.harness).toBeUndefined();
+});
+
+it("configures the sandbox Codex preset and credential without editing JSON", async () => {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+  server.use(
+    http.get("/v1/maishu/harnesses", () => HttpResponse.json({ ...catalog, data: [...catalog.data,
+      { ...catalog.data[1], id: "acp-sandbox", label: "ACP Sandbox", requirements: ["acp.agent.command|acp.agent.registry"] },
+    ] })),
+    http.get("/v1/maishu/admin/harness-credentials", () => HttpResponse.json({ data: [{ id: "cred_test", name: "任务专用账号", kind: "codex" }] })),
+  );
+  open();
+  await screen.findByRole("combobox", { name: "Harness" });
+  fireEvent.keyDown(screen.getByRole("combobox", { name: "Harness" }), { key: "ArrowDown" });
+  const choice = await screen.findByRole("option", { name: "ACP Sandbox (acp-sandbox)" });
+  expect(choice).not.toHaveAttribute("data-disabled");
+  fireEvent.click(choice);
+  expect(await screen.findByText("请选择引擎凭证，或切换为平台托管模型。")).toBeInTheDocument();
+  fireEvent.keyDown(screen.getByRole("combobox", { name: "引擎凭证" }), { key: "ArrowDown" });
+  fireEvent.click(await screen.findByRole("option", { name: "任务专用账号" }));
+  expect(screen.getByText("原生认证模式直接使用执行引擎账号及其模型配置，无需添加平台模型配置。")).toBeInTheDocument();
+  const config = json();
+  expect(config.model).toBe("native");
+  expect(config._oma).toMatchObject({ harness: "acp-sandbox", acp: { agent: {
+    id: "codex-acp", command: "/usr/local/bin/maishu-harness", args: ["codex"],
+    env: { MAISHU_AUTH_MODE: "native", MAISHU_CREDENTIAL_REF: "cred_test" },
+  } } });
 });

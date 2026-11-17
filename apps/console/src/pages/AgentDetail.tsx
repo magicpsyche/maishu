@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
@@ -59,17 +61,17 @@ export function AgentDetail() {
   // to the /linear/agents/:id/publications + /slack/agents/:id/publications
   // + /github/agents/:id/publications routes added on the main worker.
   const { data: linearRes } = useApiQuery<{ data: Pub[] }>(
-    id ? `/v1/oma/integrations/linear/agents/${id}/publications` : null,
+    id ? `/v1/maishu/integrations/linear/agents/${id}/publications` : null,
     undefined,
     { enabled },
   );
   const { data: githubRes } = useApiQuery<{ data: Pub[] }>(
-    id ? `/v1/oma/integrations/github/agents/${id}/publications` : null,
+    id ? `/v1/maishu/integrations/github/agents/${id}/publications` : null,
     undefined,
     { enabled },
   );
   const { data: slackRes } = useApiQuery<{ data: Pub[] }>(
-    id ? `/v1/oma/integrations/slack/agents/${id}/publications` : null,
+    id ? `/v1/maishu/integrations/slack/agents/${id}/publications` : null,
     undefined,
     { enabled },
   );
@@ -101,9 +103,9 @@ export function AgentDetail() {
           }
         })().catch((e) => console.warn("[AgentDetail] /v1/skills aux fetch failed", e)),
         (async () => {
-          const mc = await api<{ data: ModelCard[] }>("/v1/oma/model_cards?limit=200");
+          const mc = await api<{ data: ModelCard[] }>("/v1/maishu/model_cards?limit=200");
           if (!cancelled) setModelCards(mc.data ?? []);
-        })().catch((e) => console.warn("[AgentDetail] /v1/oma/model_cards aux fetch failed", e)),
+        })().catch((e) => console.warn("[AgentDetail] /v1/maishu/model_cards aux fetch failed", e)),
       ]);
     })();
     return () => {
@@ -139,13 +141,13 @@ export function AgentDetail() {
   };
 
   const archive = async () => {
-    if (!confirm("Archive this agent?")) return;
+    if (!confirm(uiText("Archive this agent?"))) return;
     if (!id) return;
     await managedApi.agents.archive(id);
     nav("/agents");
   };
 
-  if (error) return <div className="p-10 text-danger">Error: {error}</div>;
+  if (error) return <div className="p-10 text-danger">{uiText("Error:")} {error}</div>;
   if (!agent) return <div className="flex flex-1 items-center justify-center p-10"><OpenmaStartupLoader /></div>;
 
   const archived = !!agent.archived_at;
@@ -170,23 +172,23 @@ export function AgentDetail() {
         />
       }
       rail={
-        <section className="console-property-group" aria-label="Agent properties">
-          <h2 className="console-property-group-title">Properties</h2>
+        <section className="console-property-group" aria-label={uiText("Agent properties")}>
+          <h2 className="console-property-group-title">{uiText("Properties")}</h2>
           <dl className="console-property-list">
             <PropertyRow label="ID"><span className="font-mono">{agent.id}</span></PropertyRow>
-            <PropertyRow label="Model">{modelStr(agent.model)}</PropertyRow>
-            <PropertyRow label="Version">v{agent.version}</PropertyRow>
-            <PropertyRow label="Tools">
+            <PropertyRow label={uiText("Model")}>{modelStr(agent.model)}</PropertyRow>
+            <PropertyRow label={uiText("Version")}>v{agent.version}</PropertyRow>
+            <PropertyRow label={uiText("Tools")}>
               {(agent.tools || [])
-                .map((tool: any) => tool.type === "custom" ? `Custom: ${tool.name}` : tool.type)
-                .join(", ") || "None"}
+                .map((tool: any) => tool.type === "custom" ? uiText(`Custom: ${tool.name}`) : tool.type)
+                .join(", ") || uiText("None")}
             </PropertyRow>
-            <PropertyRow label="Created">{new Date(agent.created_at).toLocaleString()}</PropertyRow>
-            <PropertyRow label="Updated">
+            <PropertyRow label={uiText("Created")}>{new Date(agent.created_at).toLocaleString()}</PropertyRow>
+            <PropertyRow label={uiText("Updated")}>
               {new Date(agent.updated_at || agent.created_at).toLocaleString()}
             </PropertyRow>
             {agent.archived_at && (
-              <PropertyRow label="Archived">
+              <PropertyRow label={uiText("Archived")}>
                 <span className="text-warning">{new Date(agent.archived_at).toLocaleString()}</span>
               </PropertyRow>
             )}
@@ -205,7 +207,7 @@ export function AgentDetail() {
           there's at least one live publication so the user sees what's wired
           up at a glance; otherwise default-closed. */}
       <section className="console-detail-section">
-        <h2>Integrations</h2>
+        <h2>{uiText("Integrations")}</h2>
         <div className="console-integration-list">
           <IntegrationFold
             kind="linear"
@@ -234,7 +236,7 @@ export function AgentDetail() {
       {/* System prompt */}
       {agent.system && (
         <section className="console-detail-section">
-          <h2>System Prompt</h2>
+          <h2>{uiText("System Prompt")}</h2>
           <pre className="console-detail-code-block">
             {agent.system}
           </pre>
@@ -244,14 +246,14 @@ export function AgentDetail() {
       {/* Version history */}
       {versions.length > 0 && (
         <section className="console-detail-section">
-          <h2>Version History</h2>
+          <h2>{uiText("Version History")}</h2>
           <div className="console-detail-table-wrap">
             <Table className="console-detail-table">
               <TableHeader variant="wireless">
                 <TableRow variant="wireless">
-                  <TableHead>Version</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>System Prompt</TableHead>
+                  <TableHead>{uiText("Version")}</TableHead>
+                  <TableHead>{uiText("Model")}</TableHead>
+                  <TableHead>{uiText("System Prompt")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -312,7 +314,7 @@ function IntegrationFold({
         <span className="text-fg-muted shrink-0">{icon}</span>
         <span className="font-medium text-fg">{label}</span>
         <span className="ml-auto text-xs text-fg-subtle">
-          {pubs.length === 0 ? "Not published" : `${pubs.length} live`}
+          {pubs.length === 0 ? uiText("Not published") : `${pubs.length} live`}
         </span>
       </summary>
       <div className="console-integration-content">
@@ -321,7 +323,7 @@ function IntegrationFold({
             to={`/integrations/${kind}/publish?agent_id=${agentId}`}
             className="console-detail-link"
           >
-            Publish to {label} →
+             {uiText("Publish to")} {label} →
           </Link>
         ) : (
           <>
@@ -332,13 +334,12 @@ function IntegrationFold({
                 className="console-detail-link text-fg-muted hover:text-fg"
               >
                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-success-subtle text-success">
-                  Live
-                </span>
+                   {uiText("Live")} </span>
                 <span>
                   as <strong>{p.persona.name}</strong> in {p.workspace_name ?? `${label} workspace`}
                 </span>
                 {p.mode === "full" && (
-                  <span className="text-xs text-fg-subtle">(full identity)</span>
+                  <span className="text-xs text-fg-subtle">{uiText("(full identity)")}</span>
                 )}
               </Link>
             ))}
@@ -346,8 +347,7 @@ function IntegrationFold({
               to={`/integrations/${kind}/publish?agent_id=${agentId}`}
               className="console-detail-link text-brand hover:underline"
             >
-              + Publish to another workspace
-            </Link>
+               {uiText("+ Publish to another workspace")} </Link>
           </>
         )}
       </div>

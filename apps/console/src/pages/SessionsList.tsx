@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { RowActionsMenu } from "../components/TableRowActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,7 +152,7 @@ function LinearBadge({ metadata }: { metadata?: Record<string, string> }) {
   return (
     <span
       className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-info-subtle text-info"
-      title={`Linear issue ${linear.issueIdentifier ?? linear.issueId}`}
+      title={uiText(`Linear issue ${linear.issueIdentifier ?? linear.issueId}`)}
     >
       🔗 {linear.issueIdentifier ?? "Linear"}
     </span>
@@ -191,7 +193,7 @@ function EvalBadge({ metadata }: { metadata?: Record<string, string> }) {
       className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-info-subtle text-info hover:opacity-80 transition-opacity"
       title={`Eval run ${ev.run_id}${ev.task_id ? ` · task ${ev.task_id}` : ""}`}
     >
-      🧪 {ev.task_id ?? "Eval"}
+      🧪 {ev.task_id ?? uiText("Eval")}
     </a>
   );
 }
@@ -656,7 +658,7 @@ export function SessionsList() {
     const label = session.title?.trim() || session.id;
     return [
       {
-        label: archived ? "Unarchive" : "Archive",
+        label: archived ? uiText("Unarchive") : uiText("Archive"),
         icon: <ArchiveIcon className="size-4" />,
         disabled: archived,
         onSelect: async () => {
@@ -667,7 +669,7 @@ export function SessionsList() {
         },
       },
       {
-        label: "Delete",
+        label: uiText("Delete"),
         icon: <TrashIcon className="size-4" />,
         destructive: true,
         onSelect: async () => {
@@ -786,27 +788,26 @@ export function SessionsList() {
       <Modal
         open={showCreate}
         onClose={closeModal}
-        title="New Session"
-        subtitle="Start a conversation with an agent."
+        title={uiText("New Session")}
+        subtitle={uiText("Start a conversation with an agent.")}
         maxWidth="max-w-2xl"
         footer={
           <>
-            <Button variant="ghost" onClick={closeModal}>Cancel</Button>
+            <Button variant="ghost" onClick={closeModal}>{uiText("Cancel")}</Button>
             <Button
               onClick={handleSubmit(onSubmit)}
               disabled={!formState.isValid || formState.isSubmitting}
               loading={formState.isSubmitting}
             >
-              Create
-            </Button>
+               {uiText("Create")} </Button>
           </>
         }
       >
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <Label className="text-sm text-fg-muted">Agent</Label>
-              <a href="/agents" className="text-xs text-brand hover:underline">Manage agents →</a>
+              <Label className="text-sm text-fg-muted">{uiText("Agent")}</Label>
+              <a href="/agents" className="text-xs text-brand hover:underline">{uiText("Manage agents →")}</a>
             </div>
             <Controller
               control={control}
@@ -826,7 +827,7 @@ export function SessionsList() {
                       </span>
                     )}
                     getTextLabel={(a) => `${a.name} (${a.id})`}
-                    placeholder="Select agent..."
+                    placeholder={uiText("Select agent...")}
                   />
                   {showError(fieldState.isTouched, fieldState.error?.message) && (
                     <p className="text-xs text-danger mt-1">{fieldState.error?.message}</p>
@@ -837,8 +838,8 @@ export function SessionsList() {
           </div>
           <div>
               <div className="flex items-center justify-between mb-1">
-                <Label className="text-sm text-fg-muted">Environment</Label>
-                <a href="/environments" className="text-xs text-brand hover:underline">Manage environments →</a>
+                <Label className="text-sm text-fg-muted">{uiText("Environment")}</Label>
+                <a href="/environments" className="text-xs text-brand hover:underline">{uiText("Manage environments →")}</a>
               </div>
               <Controller
                 control={control}
@@ -856,7 +857,7 @@ export function SessionsList() {
                         </span>
                       )}
                       getTextLabel={(e) => `${e.name} (${e.id})`}
-                      placeholder="Select environment..."
+                      placeholder={uiText("Select environment...")}
                     />
                     {showError(fieldState.isTouched, fieldState.error?.message) && (
                       <p className="text-xs text-danger mt-1">{fieldState.error?.message}</p>
@@ -866,7 +867,7 @@ export function SessionsList() {
               />
           </div>
           <div>
-            <Label htmlFor="session-title" className="text-sm text-fg-muted block mb-1">Title <span className="text-fg-subtle">(optional)</span></Label>
+            <Label htmlFor="session-title" className="text-sm text-fg-muted block mb-1">{uiText("Title")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
             {/* autoComplete=off + an unrecognised name to defeat Chrome /
                 Safari email autofill — first text input in the dialog
                 got pre-filled with the user's saved email otherwise.
@@ -878,7 +879,7 @@ export function SessionsList() {
               {...register("title")}
               name="oma-session-title"
               className={inputCls}
-              placeholder="My conversation"
+              placeholder={uiText("My conversation")}
               autoComplete="off"
             />
           </div>
@@ -886,8 +887,8 @@ export function SessionsList() {
           {vaults.length > 0 && (
             <div>
             <div className="flex items-center justify-between mb-1">
-              <Label className="text-sm text-fg-muted">Credential Vaults <span className="text-fg-subtle">(optional)</span></Label>
-              <a href="/vaults" className="text-xs text-brand hover:underline">Manage vaults →</a>
+              <Label className="text-sm text-fg-muted">{uiText("Credential Vaults")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
+              <a href="/vaults" className="text-xs text-brand hover:underline">{uiText("Manage vaults →")}</a>
             </div>
               <div className="space-y-1">
                 {vaults.map((v) => (
@@ -905,7 +906,7 @@ export function SessionsList() {
                 <div className="mt-2 px-3 py-2 rounded-md border border-warning/40 bg-warning/5 text-xs text-warning">
                   <div className="font-medium mb-1">
                     {unauthedMcpServers.length === 1
-                      ? "1 MCP server has no matching credential in selected vaults:"
+                      ? uiText("1 MCP server has no matching credential in selected vaults:")
                       : `${unauthedMcpServers.length} MCP servers have no matching credentials in selected vaults:`}
                   </div>
                   <ul className="space-y-0.5 font-mono">
@@ -914,8 +915,7 @@ export function SessionsList() {
                     ))}
                   </ul>
                   <div className="mt-1 text-fg-muted font-sans">
-                    Agent will dial these endpoints unauthenticated. Add a vault credential for each, or expect the agent to see 401s mid-conversation.
-                  </div>
+                     {uiText("Agent will dial these endpoints unauthenticated. Add a vault credential for each, or expect the agent to see 401s mid-conversation.")} </div>
                 </div>
               )}
             </div>
@@ -923,15 +923,13 @@ export function SessionsList() {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <Label className="text-sm text-fg-muted">Resources <span className="text-fg-subtle">(optional)</span></Label>
+              <Label className="text-sm text-fg-muted">{uiText("Resources")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
             </div>
             <p className="text-xs text-fg-subtle mb-2">
-              Mount files, GitHub repositories, memory stores, or pass environment variables into the session.
-            </p>
+               {uiText("Mount files, GitHub repositories, memory stores, or pass environment variables into the session.")} </p>
             {resourceFields.length === 0 ? (
               <div className="text-xs text-fg-subtle border border-dashed border-border rounded-lg px-3 py-3 text-center">
-                No resources added.
-              </div>
+                 {uiText("No resources added.")} </div>
             ) : (
               <div className="space-y-2">
                 {resourceFields.map((field, i) => {
@@ -949,7 +947,7 @@ export function SessionsList() {
                           {showPrimaryHint && live.kind === "github" && i === firstGithubIdx && (
                             <span
                               className="text-xs font-medium px-1.5 py-0.5 rounded bg-brand/10 border border-brand/30 text-brand"
-                              title="This repo's token is used for GitHub API calls that don't target a specific repo (GraphQL, Search, /user, …)"
+                              title={uiText("This repo's token is used for GitHub API calls that don't target a specific repo (GraphQL, Search, /user, …)")}
                             >
                               primary
                             </span>
@@ -959,15 +957,14 @@ export function SessionsList() {
                           type="button"
                           onClick={() => removeResource(i)}
                           className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 text-fg-subtle hover:text-danger text-xs"
-                          aria-label="Remove resource"
+                          aria-label={uiText("Remove resource")}
                         >
-                          Remove
-                        </Button>
+                           {uiText("Remove")} </Button>
                       </div>
                       {live.kind === "github" && (
                         <div className="space-y-2">
                           <div>
-                            <Label htmlFor={`session-resource-${i}-url`} className="text-xs text-fg-muted block mb-0.5">Repository URL <span className="text-danger">*</span></Label>
+                            <Label htmlFor={`session-resource-${i}-url`} className="text-xs text-fg-muted block mb-0.5">{uiText("Repository URL")} <span className="text-danger">*</span></Label>
                             <Input
                               id={`session-resource-${i}-url`}
                               {...register(`resources.${i}.url`)}
@@ -985,7 +982,7 @@ export function SessionsList() {
                           </div>
                           <div>
                             <Label htmlFor={`session-resource-${i}-token`} className="text-xs text-fg-muted block mb-0.5">
-                              Authorization Token <span className="text-danger">*</span>
+                               {uiText("Authorization Token")} <span className="text-danger">*</span>
                             </Label>
                             <div className="relative">
                               <Input
@@ -1000,7 +997,7 @@ export function SessionsList() {
                                   type="button"
                                   onClick={() => toggleReveal(`${i}:token`)}
                                   className="absolute inset-y-0 right-2 my-auto inline-flex h-fit items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-1 text-xs text-fg-subtle hover:text-fg"
-                                  aria-label="Toggle token visibility"
+                                  aria-label={uiText("Toggle token visibility")}
                                 >
                                   {revealedSecrets.has(`${i}:token`) ? "hide" : "show"}
                                 </Button>
@@ -1017,7 +1014,7 @@ export function SessionsList() {
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <Label htmlFor={`session-resource-${i}-checkout-type`} className="text-xs text-fg-muted block mb-0.5">Checkout</Label>
+                              <Label htmlFor={`session-resource-${i}-checkout-type`} className="text-xs text-fg-muted block mb-0.5">{uiText("Checkout")}</Label>
                               <Select
                                 id={`session-resource-${i}-checkout-type`}
                                 name={`resources.${i}.checkout_type`}
@@ -1035,14 +1032,14 @@ export function SessionsList() {
                                 }}
                                 className={inputCls}
                               >
-                                <SelectOption value="none">None</SelectOption>
-                                <SelectOption value="branch">Branch</SelectOption>
-                                <SelectOption value="commit">Commit</SelectOption>
+                                <SelectOption value="none">{uiText("None")}</SelectOption>
+                                <SelectOption value="branch">{uiText("Branch")}</SelectOption>
+                                <SelectOption value="commit">{uiText("Commit")}</SelectOption>
                               </Select>
                             </div>
                             <div>
                               <Label htmlFor={`session-resource-${i}-checkout-name`} className="text-xs text-fg-muted block mb-0.5">
-                                {live.checkout_type === "commit" ? "Commit SHA" : "Name"}
+                                {live.checkout_type === "commit" ? uiText("Commit SHA") : uiText("Name")}
                               </Label>
                               <Input
                                 id={`session-resource-${i}-checkout-name`}
@@ -1054,7 +1051,7 @@ export function SessionsList() {
                             </div>
                           </div>
                           <div>
-                            <Label htmlFor={`session-resource-${i}-mount`} className="text-xs text-fg-muted block mb-0.5">Mount Path <span className="text-fg-subtle">(optional)</span></Label>
+                            <Label htmlFor={`session-resource-${i}-mount`} className="text-xs text-fg-muted block mb-0.5">{uiText("Mount Path")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
                             <Input
                               id={`session-resource-${i}-mount`}
                               {...register(`resources.${i}.mount_path`)}
@@ -1068,8 +1065,8 @@ export function SessionsList() {
                         <div className="space-y-2">
                           <div>
                             <div className="flex items-center justify-between mb-0.5">
-                              <Label htmlFor={`session-resource-${i}-file`} className="text-xs text-fg-muted">File <span className="text-danger">*</span></Label>
-                              <a href="/files" className="inline-flex items-center min-h-11 sm:min-h-0 text-xs text-brand hover:underline">Manage files →</a>
+                              <Label htmlFor={`session-resource-${i}-file`} className="text-xs text-fg-muted">{uiText("File")} <span className="text-danger">*</span></Label>
+                              <a href="/files" className="inline-flex items-center min-h-11 sm:min-h-0 text-xs text-brand hover:underline">{uiText("Manage files →")}</a>
                             </div>
                             <Select
                               id={`session-resource-${i}-file`}
@@ -1082,7 +1079,7 @@ export function SessionsList() {
                                   shouldValidate: true,
                                 })
                               }
-                              placeholder="Select file..."
+                              placeholder={uiText("Select file...")}
                               className={inputCls}
                             >
                               {files.map((f) => (
@@ -1092,11 +1089,11 @@ export function SessionsList() {
                               ))}
                             </Select>
                             {files.length === 0 && (
-                              <p className="text-xs text-fg-subtle mt-1">No files yet — upload via the AMA SDK or POST /v1/files.</p>
+                              <p className="text-xs text-fg-subtle mt-1">{uiText("No files yet — upload via the AMA SDK or POST /v1/files.")}</p>
                             )}
                           </div>
                           <div>
-                            <Label htmlFor={`session-resource-${i}-file-mount`} className="text-xs text-fg-muted block mb-0.5">Mount Path <span className="text-fg-subtle">(optional)</span></Label>
+                            <Label htmlFor={`session-resource-${i}-file-mount`} className="text-xs text-fg-muted block mb-0.5">{uiText("Mount Path")} <span className="text-fg-subtle">{uiText("(optional)")}</span></Label>
                             <Input
                               id={`session-resource-${i}-file-mount`}
                               {...register(`resources.${i}.mount_path`)}
@@ -1110,8 +1107,8 @@ export function SessionsList() {
                         <div className="space-y-2">
                           <div>
                             <div className="flex items-center justify-between mb-0.5">
-                              <Label htmlFor={`session-resource-${i}-store`} className="text-xs text-fg-muted">Store <span className="text-danger">*</span></Label>
-                              <a href="/memory" className="inline-flex items-center min-h-11 sm:min-h-0 text-xs text-brand hover:underline">Manage stores →</a>
+                              <Label htmlFor={`session-resource-${i}-store`} className="text-xs text-fg-muted">{uiText("Store")} <span className="text-danger">*</span></Label>
+                              <a href="/memory" className="inline-flex items-center min-h-11 sm:min-h-0 text-xs text-brand hover:underline">{uiText("Manage stores →")}</a>
                             </div>
                             <Select
                               id={`session-resource-${i}-store`}
@@ -1124,7 +1121,7 @@ export function SessionsList() {
                                   shouldValidate: true,
                                 })
                               }
-                              placeholder="Select store..."
+                              placeholder={uiText("Select store...")}
                               className={inputCls}
                             >
                               {memoryStores.map((m) => (
@@ -1135,7 +1132,7 @@ export function SessionsList() {
                             </Select>
                           </div>
                           <div>
-                            <Label htmlFor={`session-resource-${i}-access`} className="text-xs text-fg-muted block mb-0.5">Access</Label>
+                            <Label htmlFor={`session-resource-${i}-access`} className="text-xs text-fg-muted block mb-0.5">{uiText("Access")}</Label>
                             <Select
                               id={`session-resource-${i}-access`}
                               name={`resources.${i}.access`}
@@ -1149,8 +1146,8 @@ export function SessionsList() {
                               }
                               className={inputCls}
                             >
-                              <SelectOption value="read_write">Read / Write</SelectOption>
-                              <SelectOption value="read_only">Read only</SelectOption>
+                              <SelectOption value="read_write">{uiText("Read / Write")}</SelectOption>
+                              <SelectOption value="read_only">{uiText("Read only")}</SelectOption>
                             </Select>
                           </div>
                         </div>
@@ -1161,9 +1158,9 @@ export function SessionsList() {
               </div>
             )}
             <div className="flex flex-wrap gap-2 mt-2">
-              <Button variant="ghost" type="button" onClick={() => addResource("github")} className="inline-flex items-center justify-center min-h-11 sm:min-h-0 text-xs px-2.5 py-1.5 border border-border rounded-md hover:bg-bg-surface text-fg-muted hover:text-fg">+ GitHub repo</Button>
-              <Button variant="ghost" type="button" onClick={() => addResource("file")} className="inline-flex items-center justify-center min-h-11 sm:min-h-0 text-xs px-2.5 py-1.5 border border-border rounded-md hover:bg-bg-surface text-fg-muted hover:text-fg">+ File</Button>
-              <Button variant="ghost" type="button" onClick={() => addResource("memory_store")} className="inline-flex items-center justify-center min-h-11 sm:min-h-0 text-xs px-2.5 py-1.5 border border-border rounded-md hover:bg-bg-surface text-fg-muted hover:text-fg">+ Memory store</Button>
+              <Button variant="ghost" type="button" onClick={() => addResource("github")} className="inline-flex items-center justify-center min-h-11 sm:min-h-0 text-xs px-2.5 py-1.5 border border-border rounded-md hover:bg-bg-surface text-fg-muted hover:text-fg">{uiText("+ GitHub repo")}</Button>
+              <Button variant="ghost" type="button" onClick={() => addResource("file")} className="inline-flex items-center justify-center min-h-11 sm:min-h-0 text-xs px-2.5 py-1.5 border border-border rounded-md hover:bg-bg-surface text-fg-muted hover:text-fg">{uiText("+ File")}</Button>
+              <Button variant="ghost" type="button" onClick={() => addResource("memory_store")} className="inline-flex items-center justify-center min-h-11 sm:min-h-0 text-xs px-2.5 py-1.5 border border-border rounded-md hover:bg-bg-surface text-fg-muted hover:text-fg">{uiText("+ Memory store")}</Button>
             </div>
           </div>
         </div>

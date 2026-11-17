@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Locale, Messages } from "./types";
 import { en } from "./en";
@@ -8,16 +9,16 @@ const dictionaries: Record<Locale, Messages> = {
   "zh-CN": zhCN,
 };
 
-const STORAGE_KEY = "oma-locale";
+const STORAGE_KEY = "maishu-locale";
 
 function getInitialLocale(): Locale {
-  if (typeof window === "undefined") return "en";
-  const stored = localStorage.getItem(STORAGE_KEY);
+  if (typeof window === "undefined") return "zh-CN";
+  const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("oma-locale");
   if (stored && stored in dictionaries) return stored as Locale;
   // Browser language detection
   const lang = navigator.language;
   if (lang.startsWith("zh")) return "zh-CN";
-  return "en";
+  return "zh-CN";
 }
 
 interface I18nContextValue {

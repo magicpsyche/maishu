@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -118,7 +119,7 @@ describe("VaultDetail MCP OAuth", () => {
     fireEvent.change(within(dialog).getByLabelText("OAuth client secret"), { target: { value: "private-secret" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Connect" }));
     expect(open).toHaveBeenCalledWith("about:blank", "oauth", "width=600,height=700,popup=yes");
-    expect(legacyApi).toHaveBeenCalledWith("/v1/oma/oauth/authorize", {
+    expect(legacyApi).toHaveBeenCalledWith("/v1/maishu/oauth/authorize", {
       method: "POST",
       body: JSON.stringify({ mcp_server_url: "https://mcp.example.test/mcp", vault_id: "vault-1", redirect_uri: window.location.href, client_id: "pinned-client", client_secret: "private-secret" }),
     });

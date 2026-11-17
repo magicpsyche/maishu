@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -63,23 +65,19 @@ export function IntegrationsGitHubList() {
         <header className="flex items-start justify-between gap-6 mb-8">
           <div className="min-w-0">
             <h1 className="font-display text-xl leading-tight font-semibold tracking-tight text-fg">
-              GitHub integrations
-            </h1>
+               {uiText("GitHub integrations")} </h1>
             <p className="mt-1.5 text-base text-fg-muted max-w-xl">
-              Make your agents teammates in GitHub — assign them issues, request reviews,
-              mention them in comments. Each agent gets its own bot identity.
-            </p>
+               {uiText("Make your agents teammates in GitHub — assign them issues, request reviews, mention them in comments. Each agent gets its own bot identity.")} </p>
           </div>
           <Link
             to="/integrations/github/bind"
             className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] whitespace-nowrap"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-            Bind agent
-          </Link>
+             {uiText("Bind agent")} </Link>
         </header>
 
-        {loading && <p className="text-sm text-fg-muted">Loading…</p>}
+        {loading && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
         {error && (
           <div className="rounded-md border border-danger/30 bg-danger-subtle px-3 py-2 text-sm text-danger">
             {error}
@@ -89,8 +87,7 @@ export function IntegrationsGitHubList() {
         {pending.length > 0 && (
           <section className="mb-6">
             <h2 className="text-sm font-medium text-fg-muted uppercase tracking-wider mb-2">
-              In-progress installs
-            </h2>
+               {uiText("In-progress installs")} </h2>
             <ul className="space-y-2">
               {pending.map((p) => (
                 <PendingRow key={p.id} pub={p} onDiscard={() => discardPending(p.id)} />
@@ -101,14 +98,13 @@ export function IntegrationsGitHubList() {
 
         {!loading && items.length === 0 && pending.length === 0 && (
           <EmptyState
-            title="No GitHub orgs connected yet."
+            title={uiText("No GitHub orgs connected yet.")}
             action={
               <Link
                 to="/integrations/github/bind"
                 className="text-brand hover:underline text-sm"
               >
-                Bind your first agent →
-              </Link>
+                 {uiText("Bind your first agent →")} </Link>
             }
           />
         )}
@@ -157,27 +153,25 @@ function PendingRow({
             {pub.persona.name}
           </span>
           <span className="text-xs text-warning">
-            ● Step {stepNum} of 3 ({statusLabel})
+             {uiText("● Step")} {stepNum}  {uiText("of 3 (")}{statusLabel})
           </span>
         </div>
         <p className="text-sm text-fg-muted">
-          Started {formatRelative(Date.now() - pub.created_at)} ago
+           {uiText("Started")} {formatRelative(Date.now() - pub.created_at)} ago
         </p>
       </div>
       <Link
         to={`/integrations/github/bind?pub=${encodeURIComponent(pub.id)}`}
         className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-md bg-brand text-brand-fg hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
       >
-        Resume install ↗
-      </Link>
+         {uiText("Resume install ↗")} </Link>
       <Button variant="ghost"
         type="button"
         onClick={onDiscard}
         className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium text-fg-muted hover:text-danger transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
-        title="Discard this in-progress install"
+        title={uiText("Discard this in-progress install")}
       >
-        Discard ✕
-      </Button>
+         {uiText("Discard ✕")} </Button>
     </li>
   );
 }
@@ -198,11 +192,11 @@ function WorkspaceCard({
               {installation.workspace_name}
             </h2>
             <span className="text-xs text-fg-subtle font-mono uppercase tracking-wider">
-              org · @{installation.bot_login}
+               {uiText("org · @")}{installation.bot_login}
             </span>
           </div>
           <p className="mt-0.5 text-sm text-fg-muted">
-            GitHub App · full identity ·{" "}
+             {uiText("GitHub App · full identity ·")}{" "}
             <span className="text-fg">
               {publications.length} agent{publications.length === 1 ? "" : "s"}
             </span>
@@ -212,8 +206,7 @@ function WorkspaceCard({
           to={`/integrations/github/installations/${installation.id}`}
           className="shrink-0 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          Manage →
-        </Link>
+           {uiText("Manage →")} </Link>
       </div>
 
       {publications.length > 0 && (

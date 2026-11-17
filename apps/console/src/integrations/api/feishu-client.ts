@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // Feishu sub-client. Extracted from client.ts so its coverage threshold
 // doesn't get diluted by Slack/GitHub/Linear code that lives alongside it.
 //
@@ -21,7 +22,7 @@ export class FeishuClient {
   async listInstallations(): Promise<FeishuInstallation[]> {
     const r = await request<{ data: FeishuInstallation[] }>(
       this.basePath,
-      "/v1/oma/integrations/feishu/installations",
+      "/v1/maishu/integrations/feishu/installations",
     );
     return r.data;
   }
@@ -29,7 +30,7 @@ export class FeishuClient {
   async listPublications(installationId: string): Promise<FeishuPublication[]> {
     const r = await request<{ data: FeishuPublication[] }>(
       this.basePath,
-      `/v1/oma/integrations/feishu/installations/${encodeURIComponent(installationId)}/publications`,
+      `/v1/maishu/integrations/feishu/installations/${encodeURIComponent(installationId)}/publications`,
     );
     return r.data;
   }
@@ -37,7 +38,7 @@ export class FeishuClient {
   async listAgentPublications(agentId: string): Promise<FeishuPublication[]> {
     const r = await request<{ data: FeishuPublication[] }>(
       this.basePath,
-      `/v1/oma/integrations/feishu/agents/${encodeURIComponent(agentId)}/publications`,
+      `/v1/maishu/integrations/feishu/agents/${encodeURIComponent(agentId)}/publications`,
     );
     return r.data;
   }
@@ -45,7 +46,7 @@ export class FeishuClient {
   async listPendingPublications(): Promise<FeishuPublication[]> {
     const r = await request<{ data: FeishuPublication[] }>(
       this.basePath,
-      "/v1/oma/integrations/feishu/publications?status=pending",
+      "/v1/maishu/integrations/feishu/publications?status=pending",
     );
     return r.data;
   }
@@ -53,7 +54,7 @@ export class FeishuClient {
   async reissueFormToken(publicationId: string): Promise<A1FormStep> {
     return request<A1FormStep>(
       this.basePath,
-      `/v1/oma/integrations/feishu/publications/${encodeURIComponent(publicationId)}/form-token`,
+      `/v1/maishu/integrations/feishu/publications/${encodeURIComponent(publicationId)}/form-token`,
       { method: "POST", body: JSON.stringify({}) },
     );
   }
@@ -61,7 +62,7 @@ export class FeishuClient {
   async getPublication(id: string): Promise<FeishuPublication> {
     return request<FeishuPublication>(
       this.basePath,
-      `/v1/oma/integrations/feishu/publications/${encodeURIComponent(id)}`,
+      `/v1/maishu/integrations/feishu/publications/${encodeURIComponent(id)}`,
     );
   }
 
@@ -75,7 +76,7 @@ export class FeishuClient {
   ): Promise<FeishuPublication> {
     return request<FeishuPublication>(
       this.basePath,
-      `/v1/oma/integrations/feishu/publications/${encodeURIComponent(id)}`,
+      `/v1/maishu/integrations/feishu/publications/${encodeURIComponent(id)}`,
       { method: "PATCH", body: JSON.stringify(patch) },
     );
   }
@@ -83,20 +84,20 @@ export class FeishuClient {
   async unpublish(id: string): Promise<void> {
     await request(
       this.basePath,
-      `/v1/oma/integrations/feishu/publications/${encodeURIComponent(id)}`,
+      `/v1/maishu/integrations/feishu/publications/${encodeURIComponent(id)}`,
       { method: "DELETE" },
     );
   }
 
   async startA1(input: PublishWizardInput): Promise<A1FormStep> {
-    return request<A1FormStep>(this.basePath, "/v1/oma/integrations/feishu/start-a1", {
+    return request<A1FormStep>(this.basePath, "/v1/maishu/integrations/feishu/start-a1", {
       method: "POST",
       body: JSON.stringify(input),
     });
   }
 
   async submitCredentials(input: FeishuSubmitCredentialsInput): Promise<A1InstallLink> {
-    return request<A1InstallLink>(this.basePath, "/v1/oma/integrations/feishu/credentials", {
+    return request<A1InstallLink>(this.basePath, "/v1/maishu/integrations/feishu/credentials", {
       method: "POST",
       body: JSON.stringify(input),
     });

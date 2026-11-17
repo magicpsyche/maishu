@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
@@ -76,7 +78,7 @@ function DialogContent({
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{uiText("Close")}</span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -115,7 +117,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">{uiText("Close")}</Button>
         </DialogPrimitive.Close>
       )}
     </div>

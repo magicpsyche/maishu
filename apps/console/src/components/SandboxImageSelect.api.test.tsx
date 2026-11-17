@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
@@ -29,7 +30,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("useSandboxImages against the real API client", () => {
   it("treats a missing endpoint (404) as an empty catalog without a toast or retry", async () => {
     let calls = 0;
-    server.use(http.get("/v1/oma/sandbox_images", () => {
+    server.use(http.get("/v1/maishu/sandbox_images", () => {
       calls += 1;
       return HttpResponse.json({ type: "error", error: { type: "not_found_error", message: "Not Found" } }, { status: 404 });
     }));
@@ -48,7 +49,7 @@ describe("useSandboxImages against the real API client", () => {
   });
 
   it("still surfaces a server failure on the same endpoint", async () => {
-    server.use(http.get("/v1/oma/sandbox_images", () => HttpResponse.json({}, { status: 500 })));
+    server.use(http.get("/v1/maishu/sandbox_images", () => HttpResponse.json({}, { status: 500 })));
     const toastError = vi.spyOn(toast, "error");
     vi.spyOn(console, "error").mockImplementation(() => undefined);
 
@@ -61,7 +62,7 @@ describe("useSandboxImages against the real API client", () => {
   });
 
   it("shows the selector once the catalog has entries", async () => {
-    server.use(http.get("/v1/oma/sandbox_images", () => HttpResponse.json({
+    server.use(http.get("/v1/maishu/sandbox_images", () => HttpResponse.json({
       data: [{ type: "sandbox_image", alias: "analytics", label: "Analytics", description: null }],
     })));
     renderProbe();

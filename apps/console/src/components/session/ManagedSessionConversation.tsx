@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { useMemo, type ReactNode } from "react";
 import { AgentChatView } from "@openma/common/chat-ui";
 import type { CanonicalChatTurn } from "@openma/common/session-events/managed";
@@ -59,7 +61,7 @@ export function ManagedSessionConversation({
         beforeComposer,
         conversationContentAfter: afterTurns,
         empty: empty ?? (
-          <p className="text-sm text-fg-muted">Send a message to start this session.</p>
+          <p className="text-sm text-fg-muted">{uiText("Send a message to start this session.")}</p>
         ),
       }}
       surface="console"

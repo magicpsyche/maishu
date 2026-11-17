@@ -1,4 +1,5 @@
-// DTO shapes returned by apps/main /v1/oma/integrations/* endpoints. Keep
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+// DTO shapes returned by apps/main /v1/maishu/integrations/* endpoints. Keep
 // snake_case to match the wire format — JS clients can still read them
 // without ceremony.
 

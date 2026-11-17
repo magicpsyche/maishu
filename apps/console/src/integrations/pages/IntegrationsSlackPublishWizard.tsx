@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -30,9 +32,9 @@ interface PublishWizardProps {
 type Step = "pick" | "a1-credentials" | "a1-install";
 
 const STEPS: Array<{ id: Step; label: string }> = [
-  { id: "pick", label: "Configure" },
-  { id: "a1-credentials", label: "Credentials" },
-  { id: "a1-install", label: "Install" },
+  { id: "pick", label: uiText("Configure") },
+  { id: "a1-credentials", label: uiText("Credentials") },
+  { id: "a1-install", label: uiText("Install") },
 ];
 
 export function IntegrationsSlackPublishWizard({
@@ -158,7 +160,7 @@ export function IntegrationsSlackPublishWizard({
 
   async function startPublish() {
     if (!agentId || !envId || !personaName) {
-      setError("Pick agent, environment, and persona name first");
+      setError(uiText("Pick agent, environment, and persona name first"));
       return;
     }
     setError(null);
@@ -209,16 +211,13 @@ export function IntegrationsSlackPublishWizard({
           to="/integrations/slack"
           className="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          ← Slack integrations
-        </Link>
+           {uiText("← Slack integrations")} </Link>
 
         <header className="mt-3 mb-6">
           <h1 className="font-display text-xl leading-tight font-semibold tracking-tight text-fg">
-            Publish agent to Slack
-          </h1>
+             {uiText("Publish agent to Slack")} </h1>
           <p className="mt-1.5 text-base text-fg-muted">
-            Make this agent a teammate in your Slack workspace.
-          </p>
+             {uiText("Make this agent a teammate in your Slack workspace.")} </p>
         </header>
 
         <StepIndicator current={step} />
@@ -230,14 +229,14 @@ export function IntegrationsSlackPublishWizard({
         {search.get("install") === "ok" && (
           <div className="mb-4 space-y-2">
             <div className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-sm text-success font-medium">
-              ✓ Installed in Slack. Publication: <code>{search.get("publication_id")}</code>
+               {uiText("✓ Installed in Slack. Publication:")} <code>{search.get("publication_id")}</code>
             </div>
             {search.get("probe_kind") === "slack_mcp" && search.get("probe_ok") === "0" && (
               <div className="rounded-md border border-warning/30 bg-warning-subtle px-3.5 py-3 text-sm">
-                <div className="font-medium text-fg mb-1">⚠ Slack MCP server access is OFF</div>
+                <div className="font-medium text-fg mb-1">{uiText("⚠ Slack MCP server access is OFF")}</div>
                 <p className="text-fg-muted text-sm leading-relaxed mb-2">
                   {search.get("probe_message") ??
-                    "The agent is installed but Slack's MCP server is rejecting our token. Flip the toggle to enable typed mcp__slack__* tools."}
+                    uiText("The agent is installed but Slack's MCP server is rejecting our token. Flip the toggle to enable typed mcp__slack__* tools.")}
                 </p>
                 {search.get("probe_fix_url") && (
                   <a
@@ -246,15 +245,13 @@ export function IntegrationsSlackPublishWizard({
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-warning/40 text-fg hover:bg-warning-subtle/70 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
                   >
-                    Open Agents &amp; AI Apps page ↗
-                  </a>
+                     {uiText("Open Agents &amp; AI Apps page ↗")} </a>
                 )}
               </div>
             )}
             {search.get("probe_kind") === "slack_mcp" && search.get("probe_ok") === "1" && (
               <div className="rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-sm text-success">
-                ✓ Slack MCP server access verified — agent can use typed slack tools.
-              </div>
+                 {uiText("✓ Slack MCP server access verified — agent can use typed slack tools.")} </div>
             )}
           </div>
         )}
@@ -267,8 +264,7 @@ export function IntegrationsSlackPublishWizard({
 
         {hydrating && (
           <div className="rounded-md border border-border bg-bg-surface/30 px-3.5 py-3 text-sm text-fg-muted">
-            Resuming in-progress install…
-          </div>
+             {uiText("Resuming in-progress install…")} </div>
         )}
 
         {!hydrating && step === "pick" && (
@@ -317,7 +313,7 @@ export function IntegrationsSlackPublishWizard({
 function StepIndicator({ current }: { current: Step }) {
   const currentIdx = STEPS.findIndex((s) => s.id === current);
   return (
-    <ol className="flex items-center gap-2 mb-7" aria-label="Wizard progress">
+    <ol className="flex items-center gap-2 mb-7" aria-label={uiText("Wizard progress")}>
       {STEPS.map((s, i) => {
         const state =
           i < currentIdx ? "done" : i === currentIdx ? "current" : "todo";
@@ -382,7 +378,7 @@ function PickStep(props: {
   return (
     <div className="space-y-5">
       <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Agent">
+        <Field label={uiText("Agent")}>
           <Combobox<{ id: string; name: string; created_at?: string }>
             value={props.agentId}
             onValueChange={(v) => props.setAgentId(v)}
@@ -399,11 +395,11 @@ function PickStep(props: {
               </span>
             )}
             getTextLabel={(a) => a.name}
-            placeholder="Pick an agent…"
+            placeholder={uiText("Pick an agent…")}
           />
         </Field>
 
-        <Field label="Environment">
+        <Field label={uiText("Environment")}>
           <Combobox<{ id: string; name: string; created_at?: string }>
             value={props.envId}
             onValueChange={(v) => props.setEnvId(v)}
@@ -420,22 +416,22 @@ function PickStep(props: {
               </span>
             )}
             getTextLabel={(e) => e.name}
-            placeholder="Pick an environment…"
+            placeholder={uiText("Pick an environment…")}
           />
         </Field>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Persona name (shown in Slack)">
+        <Field label={uiText("Persona name (shown in Slack)")}>
           <TextInput
             value={props.personaName}
             onChange={(e) => props.setPersonaName(e.target.value)}
-            placeholder="e.g. Coder, Designer, Triage"
+            placeholder={uiText("e.g. Coder, Designer, Triage")}
             className={inputCls}
           />
         </Field>
 
-        <Field label="Avatar URL (optional)">
+        <Field label={uiText("Avatar URL (optional)")}>
           <TextInput
             value={props.personaAvatar}
             onChange={(e) => props.setPersonaAvatar(e.target.value)}
@@ -446,9 +442,7 @@ function PickStep(props: {
       </div>
 
       <div className="rounded-md border border-border bg-bg-surface/30 px-3.5 py-3 text-sm text-fg-muted">
-        Your agent becomes a real Slack teammate — @-mentionable, replies in threads,
-        joins DMs. Setup ~3 min, requires Slack admin.
-      </div>
+         {uiText("Your agent becomes a real Slack teammate — @-mentionable, replies in threads, joins DMs. Setup ~3 min, requires Slack admin.")} </div>
 
       <div className="pt-1">
         <Button variant="ghost"
@@ -456,7 +450,7 @@ function PickStep(props: {
           disabled={props.working}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          {props.working ? "Working…" : "Continue"}
+          {props.working ? uiText("Working…") : uiText("Continue")}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </Button>
       </div>
@@ -485,7 +479,7 @@ function A1CredentialsStep(props: {
       {/* Breadcrumb — current agent / env / persona, with Change link back to pick step. */}
       <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg-surface/30 px-3.5 py-2 text-sm">
         <div className="text-fg-muted truncate">
-          Publishing{" "}
+           {uiText("Publishing")}{" "}
           <span className="text-fg font-medium">{props.personaName || props.agentName}</span>
           {" "}({props.agentName}) →{" "}
           <span className="text-fg font-medium">{props.envName}</span>
@@ -496,77 +490,59 @@ function A1CredentialsStep(props: {
           disabled={props.working}
           className="text-brand hover:underline disabled:opacity-50 shrink-0"
         >
-          Change ←
-        </Button>
+           {uiText("Change ←")} </Button>
       </div>
       {manifestUrl && (
         <section className="rounded-md border border-brand/30 bg-brand-subtle/30 p-4">
           <h2 className="text-base font-medium text-fg mb-1">
-            One-click setup
-          </h2>
+             {uiText("One-click setup")} </h2>
           <p className="text-sm text-fg-muted mb-3">
-            Let Slack pre-configure the App for you — name, scopes, events, and
-            redirect URLs come from a manifest we ship. You'll just confirm in
-            Slack, then come back here to paste 3 secrets.
-          </p>
+             {uiText("Let Slack pre-configure the App for you — name, scopes, events, and redirect URLs come from a manifest we ship. You'll just confirm in Slack, then come back here to paste 3 secrets.")} </p>
           <a
             href={manifestUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            Create Slack App
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
+             {uiText("Create Slack App")} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
           </a>
           <p className="text-sm text-fg-subtle mt-2">
-            Opens api.slack.com in a new tab. After Slack creates the App, copy
-            <strong> Client ID</strong>, <strong>Client Secret</strong>, and
-            <strong> Signing Secret</strong> from the App's <em>Basic Information</em>
-            page and paste them below.
-          </p>
+             {uiText("Opens api.slack.com in a new tab. After Slack creates the App, copy")} <strong>  {uiText("Client ID")}</strong>, <strong>{uiText("Client Secret")}</strong>{uiText(", and")} <strong>  {uiText("Signing Secret")}</strong>  {uiText("from the App's")} <em>{uiText("Basic Information")}</em>
+             {uiText("page and paste them below.")} </p>
         </section>
       )}
 
       <details className="rounded-md border border-border bg-bg-surface/30 px-3.5 py-2" open={!manifestUrl}>
         <summary className="text-sm font-medium text-fg cursor-pointer py-1.5">
-          {manifestUrl ? "Or set up the App manually" : "Create a Slack App manually"}
+          {manifestUrl ? uiText("Or set up the App manually") : uiText("Create a Slack App manually")}
         </summary>
         <div className="pt-3 pb-1.5">
           <p className="text-sm text-fg-muted mb-3">
-            Open{" "}
+             {uiText("Open")}{" "}
             <a
               href="https://api.slack.com/apps"
               target="_blank"
               rel="noreferrer"
               className="text-brand hover:underline"
             >
-              api.slack.com → Your Apps
-            </a>{" "}
-            → Create New App → From scratch. Name it and pick your workspace.
-            Then plug these URLs into the App settings:
-          </p>
+               {uiText("api.slack.com → Your Apps")} </a>{" "}
+             {uiText("→ Create New App → From scratch. Name it and pick your workspace. Then plug these URLs into the App settings:")} </p>
           <div className="rounded-md border border-border bg-bg-surface/30 divide-y divide-border">
-            <CopyRow label="App name" value={props.form.suggestedAppName} />
-            <CopyRow label="Redirect URL" value={props.form.callbackUrl} />
-            <CopyRow label="Events Request URL" value={props.form.webhookUrl} />
+            <CopyRow label={uiText("App name")} value={props.form.suggestedAppName} />
+            <CopyRow label={uiText("Redirect URL")} value={props.form.callbackUrl} />
+            <CopyRow label={uiText("Events Request URL")} value={props.form.webhookUrl} />
           </div>
           <p className="text-sm text-fg-subtle mt-2">
-            Paste the Redirect URL under <strong>OAuth &amp; Permissions</strong>; the
-            Events Request URL above ends in <code>/__pending__</code> as a placeholder —
-            after install completes, the success screen surfaces the real URL keyed on
-            your Slack app id; paste that into <strong>Event Subscriptions</strong>{" "}
-            and wait for the green "Verified" check.
-            Subscribe to bot events: <code>app_mention</code>,{" "}
+             {uiText("Paste the Redirect URL under")} <strong>{uiText("OAuth &amp; Permissions")}</strong>{uiText("; the Events Request URL above ends in")} <code>/__pending__</code>  {uiText("as a placeholder — after install completes, the success screen surfaces the real URL keyed on your Slack app id; paste that into")} <strong>{uiText("Event Subscriptions")}</strong>{" "}
+             {uiText("and wait for the green \"Verified\" check. Subscribe to bot events:")} <code>app_mention</code>,{" "}
             <code>message.channels</code>, <code>message.im</code>,{" "}
             <code>message.groups</code>, <code>message.mpim</code>,{" "}
             <code>tokens_revoked</code>, <code>app_uninstalled</code>.
           </p>
           <p className="text-sm text-fg-subtle mt-2">
-            <strong>Required for MCP tools:</strong> open the App's{" "}
-            <strong>Agents &amp; AI Apps</strong> (or <em>app-assistant</em>) page and
-            enable <strong>Slack MCP server access</strong>. Without this, the
-            agent falls back to bash + curl on every Slack action because{" "}
-            <code>mcp.slack.com</code> rejects the token with{" "}
+            <strong>{uiText("Required for MCP tools:")}</strong>  {uiText("open the App's")}{" "}
+            <strong>{uiText("Agents &amp; AI Apps")}</strong>  {uiText("(or")} <em>app-assistant</em>{uiText(") page and enable")} <strong>{uiText("Slack MCP server access")}</strong>{uiText(". Without this, the agent falls back to bash + curl on every Slack action because")}{" "}
+            <code>mcp.slack.com</code>  {uiText("rejects the token with")}{" "}
             <code>"App is not enabled for Slack MCP server access"</code>.
           </p>
         </div>
@@ -574,12 +550,9 @@ function A1CredentialsStep(props: {
 
       <section>
         <h2 className="text-base font-medium text-fg mb-1.5">
-          Paste credentials Slack gave you
-        </h2>
+           {uiText("Paste credentials Slack gave you")} </h2>
         <p className="text-sm text-fg-muted mb-3">
-          From your Slack App's <strong>Basic Information</strong> page. The Signing
-          Secret signs all incoming webhooks; we verify every event with it.
-        </p>
+           {uiText("From your Slack App's")} <strong>{uiText("Basic Information")}</strong>  {uiText("page. The Signing Secret signs all incoming webhooks; we verify every event with it.")} </p>
         <div className="mb-3">
           <a
             href="https://api.slack.com/apps"
@@ -587,32 +560,28 @@ function A1CredentialsStep(props: {
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border border-border text-fg-muted hover:text-fg hover:bg-bg-surface transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            Open Slack App settings ↗
-          </a>
+             {uiText("Open Slack App settings ↗")} </a>
           <p className="text-sm text-fg-subtle mt-1.5">
-            Click <strong>Show</strong> next to <strong>Client Secret</strong> /
-            <strong> Signing Secret</strong> on Slack's page to reveal them.
-            Both are 32-char hex strings (look like <code>c83b3cf17e1dee5cdc5f55fdcb6a2f23</code>) —
-            <strong> not</strong> the Client ID (<code>5720…</code>) or the
-            Verification Token. Copy each value precisely.
-          </p>
+             {uiText("Click")} <strong>{uiText("Show")}</strong>  {uiText("next to")} <strong>{uiText("Client Secret")}</strong> /
+            <strong>  {uiText("Signing Secret")}</strong>  {uiText("on Slack's page to reveal them. Both are 32-char hex strings (look like")} <code>c83b3cf17e1dee5cdc5f55fdcb6a2f23</code>) —
+            <strong> not</strong>  {uiText("the Client ID (")}<code>5720…</code>{uiText(") or the Verification Token. Copy each value precisely.")} </p>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
-          <Field label="Client ID">
+          <Field label={uiText("Client ID")}>
             <TextInput
               value={props.clientId}
               onChange={(e) => props.setClientId(e.target.value)}
               className={inputCls}
             />
           </Field>
-          <Field label="Client Secret">
+          <Field label={uiText("Client Secret")}>
             <SecretInput
               value={props.clientSecret}
               onChange={(e) => props.setClientSecret(e.target.value)}
               className={inputCls}
             />
           </Field>
-          <Field label="Signing Secret">
+          <Field label={uiText("Signing Secret")}>
             <SecretInput
               value={props.signingSecret}
               onChange={(e) => props.setSigningSecret(e.target.value)}
@@ -627,14 +596,13 @@ function A1CredentialsStep(props: {
             disabled={props.working}
             className="text-sm text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] disabled:opacity-50"
           >
-            ← Back
-          </Button>
+             {uiText("← Back")} </Button>
           <Button variant="ghost"
             onClick={props.onSubmit}
             disabled={props.working || !props.clientId || !props.clientSecret || !props.signingSecret}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
           >
-            {props.working ? "Validating…" : "Continue"}
+            {props.working ? uiText("Validating…") : uiText("Continue")}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </Button>
         </div>
@@ -648,12 +616,9 @@ function A1InstallStep({ link, onBack }: { link: A1InstallLink; onBack: () => vo
     <div className="space-y-4">
       <div>
         <h2 className="text-base font-medium text-fg mb-1.5">
-          Install the app in your workspace
-        </h2>
+           {uiText("Install the app in your workspace")} </h2>
         <p className="text-sm text-fg-muted">
-          We've validated your credentials. Click below to authorize the install in
-          Slack — you'll be redirected back here automatically.
-        </p>
+           {uiText("We've validated your credentials. Click below to authorize the install in Slack — you'll be redirected back here automatically.")} </p>
       </div>
 
       {/* The pre-install MCP-toggle warning lived here for ~weeks because
@@ -668,24 +633,21 @@ function A1InstallStep({ link, onBack }: { link: A1InstallLink; onBack: () => vo
           onClick={onBack}
           className="text-sm text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          ← Back
-        </Button>
+           {uiText("← Back")} </Button>
         <a
           href={link.url}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm bg-brand text-brand-fg rounded-md font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          Install in Slack
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
+           {uiText("Install in Slack")} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
         </a>
       </div>
 
       <details className="text-sm text-fg-muted mt-3">
         <summary className="cursor-pointer hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]">
-          Verify the URLs Slack should now show
-        </summary>
+           {uiText("Verify the URLs Slack should now show")} </summary>
         <div className="mt-2 rounded-md border border-border bg-bg-surface/30 divide-y divide-border">
-          <CopyRow label="Redirect URL" value={link.callbackUrl} />
-          <CopyRow label="Events Request URL" value={link.webhookUrl} />
+          <CopyRow label={uiText("Redirect URL")} value={link.callbackUrl} />
+          <CopyRow label={uiText("Events Request URL")} value={link.webhookUrl} />
         </div>
       </details>
     </div>
@@ -714,9 +676,9 @@ function CopyRow({ label, value, secret = false }: { label: string; value: strin
           <Button variant="ghost"
             onClick={() => setReveal((r) => !r)}
             className="text-xs text-fg-muted hover:text-fg transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] px-1.5 py-0.5 rounded"
-            title={reveal ? "Hide" : "Reveal"}
+            title={reveal ? uiText("Hide") : uiText("Reveal")}
           >
-            {reveal ? "Hide" : "Show"}
+            {reveal ? uiText("Hide") : uiText("Show")}
           </Button>
         )}
         <Button variant="ghost"
@@ -727,7 +689,7 @@ function CopyRow({ label, value, secret = false }: { label: string; value: strin
               : "text-fg-muted hover:text-fg hover:bg-bg-surface"
           }`}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? uiText("Copied") : uiText("Copy")}
         </Button>
       </div>
     </div>

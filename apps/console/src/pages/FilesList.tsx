@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { DownloadIcon, TrashIcon } from "lucide-react";
@@ -58,7 +60,7 @@ export function FilesList() {
   // the id when the title is blank).
   const scopeOptions = useMemo(
     () => [
-      { value: ALL_SCOPE, label: "All sessions" },
+      { value: ALL_SCOPE, label: uiText("All sessions") },
       ...sessions.map((s) => ({
         value: s.id,
         label: s.title?.trim() ? `${s.title} (${s.id})` : s.id,
@@ -90,7 +92,7 @@ export function FilesList() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      toast.error(`Download failed: ${e instanceof Error ? e.message : "network error"}`);
+      toast.error(uiText(`Download failed: ${e instanceof Error ? e.message : uiText("network error")}`));
     }
   };
 
@@ -121,7 +123,7 @@ export function FilesList() {
       {
         id: "filename",
         accessorKey: "filename",
-        header: "Filename",
+        header: uiText("Filename"),
         cell: ({ row }) => (
           <span title={row.original.filename} className="font-medium text-fg truncate inline-block max-w-[280px] align-bottom">
             {row.original.filename}
@@ -143,7 +145,7 @@ export function FilesList() {
       {
         id: "mime_type",
         accessorKey: "mime_type",
-        header: "Type",
+        header: uiText("Type"),
         cell: ({ row }) => (
           <span className="text-fg-muted text-xs">{row.original.mime_type}</span>
         ),
@@ -151,7 +153,7 @@ export function FilesList() {
       {
         id: "size",
         accessorFn: (f) => f.size_bytes,
-        header: "Size",
+        header: uiText("Size"),
         cell: ({ row }) => (
           <span className="text-fg-muted text-xs tabular-nums">
             {formatBytes(row.original.size_bytes)}
@@ -161,7 +163,7 @@ export function FilesList() {
       {
         id: "scope",
         accessorFn: (f) => f.scope?.id ?? "",
-        header: "Scope",
+        header: uiText("Scope"),
         cell: ({ row }) =>
           row.original.scope?.id ? (
             <Link
@@ -178,7 +180,7 @@ export function FilesList() {
       {
         id: "created",
         accessorFn: (f) => f.created_at,
-        header: "Created",
+        header: uiText("Created"),
         cell: ({ row }) => (
           <span className="text-fg-muted text-xs whitespace-nowrap">
             {new Date(row.original.created_at).toLocaleString()}
@@ -192,7 +194,7 @@ export function FilesList() {
 
   const filters = (
     <FilterChip
-      label="Scope"
+      label={uiText("Scope")}
       active={scopeId !== ALL_SCOPE}
       display={scopeDisplay}
       onClear={() => setScopeId(ALL_SCOPE)}
@@ -207,7 +209,7 @@ export function FilesList() {
           options={scopeOptions}
           value={scopeId}
           onValueChange={(v) => setScopeId(v)}
-          searchPlaceholder="Session id or title..."
+          searchPlaceholder={uiText("Session id or title...")}
         />
       </PopoverContent>
     </FilterChip>
@@ -215,7 +217,7 @@ export function FilesList() {
 
   return (
     <DataTable<FileRecord>
-      searchPlaceholder="Filter loaded files by name…"
+      searchPlaceholder={uiText("Filter loaded files by name…")}
       searchValue={search}
       onSearchChange={setSearch}
       filters={filters}
@@ -226,14 +228,14 @@ export function FilesList() {
         ...(file.downloadable
           ? [
               {
-                label: "Download",
+                label: uiText("Download"),
                 icon: <DownloadIcon className="size-4" />,
                 onSelect: () => void download(file),
               },
             ]
           : []),
         {
-          label: "Delete",
+          label: uiText("Delete"),
           icon: <TrashIcon className="size-4" />,
           destructive: true,
           onSelect: () => void remove(file),
@@ -242,12 +244,12 @@ export function FilesList() {
       hasMore={hasMore && !search}
       loadingMore={isLoadingMore}
       onLoadMore={loadMore}
-      emptyTitle={scopeId ? "No files in this scope" : "No files yet"}
+      emptyTitle={scopeId ? uiText("No files in this scope") : uiText("No files yet")}
       emptyKind="file"
       emptySubtitle={
         scopeId
-          ? "Try clearing the scope filter, or check the session id."
-          : <>Upload via <code className="text-xs">POST /v1/files</code> or the AMA SDK <code className="text-xs">client.beta.files.create()</code>.</>
+          ? uiText("Try clearing the scope filter, or check the session id.")
+          : <>{uiText("Upload via")} <code className="text-xs">POST /v1/files</code>  {uiText("or the AMA SDK")} <code className="text-xs">client.beta.files.create()</code>.</>
       }
       columns={columns}
     />

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import type {
   AgentListParams,
   AgentRetrieveParams,
@@ -222,7 +223,7 @@ export type OpenMaFileListParams = WithoutBetas<FileListParams> & {
   after_id?: string;
 };
 
-/** OpenMA Environment extension: an alias from GET /v1/oma/sandbox_images.
+/** OpenMA Environment extension: an alias from GET /v1/maishu/sandbox_images.
  * `null` on update returns the Environment to the deployment default. */
 export interface OpenMaEnvironmentExtension {
   sandbox_image?: string | null;
@@ -255,7 +256,7 @@ export type OpenMaCredential = Omit<BetaManagedAgentsCredential, "auth"> & {
 export type OpenMaCredentialCreateParams = Omit<CredentialCreateParams, "auth"> & {
   auth: CredentialCreateParams["auth"] | OpenMaCapCliCreateAuth;
 };
-/** OpenMA extension: `POST /v1/oma/vaults/:id/cap_cli_device_flow`. */
+/** OpenMA extension: `POST /v1/maishu/vaults/:id/cap_cli_device_flow`. */
 export interface OpenMaCapCliDeviceFlow {
   type: "cap_cli_device_flow";
   cli_id: string;
@@ -266,7 +267,7 @@ export interface OpenMaCapCliDeviceFlow {
   interval_seconds: number;
   expires_at: string;
 }
-/** OpenMA extension: `POST /v1/oma/vaults/:id/cap_cli_device_flow/poll`. */
+/** OpenMA extension: `POST /v1/maishu/vaults/:id/cap_cli_device_flow/poll`. */
 export type OpenMaCapCliDeviceFlowPoll =
   | { status: "pending" | "expired" | "denied" }
   | { status: "slow_down"; interval_seconds: number; flow_token: string }
@@ -343,7 +344,7 @@ function missingTransport(kind: "raw" | "stream"): never {
 /** Browser-facing Managed Agents resource client. It deliberately accepts the
  * same request DTOs exported by `@anthropic-ai/sdk` (minus its `betas` header
  * convenience field) while reusing the Console's cookie/tenant-aware request
- * transport. Product-only `/v1/oma/*` routes do not exist on this client. */
+ * transport. Product-only `/v1/maishu/*` routes do not exist on this client. */
 export function createManagedApiClient(
   input: ManagedApiRequest | ManagedApiTransport,
 ) {
@@ -680,12 +681,12 @@ export function createManagedApiClient(
         capCliDeviceFlow: {
           start: (vaultId: string, params: { cli_id: string }) =>
             request<OpenMaCapCliDeviceFlow>(
-              `/v1/oma/vaults/${id(vaultId)}/cap_cli_device_flow`,
+              `/v1/maishu/vaults/${id(vaultId)}/cap_cli_device_flow`,
               json(params),
             ),
           poll: (vaultId: string, params: { flow_token: string }) =>
             request<OpenMaCapCliDeviceFlowPoll>(
-              `/v1/oma/vaults/${id(vaultId)}/cap_cli_device_flow/poll`,
+              `/v1/maishu/vaults/${id(vaultId)}/cap_cli_device_flow/poll`,
               json(params),
             ),
         },

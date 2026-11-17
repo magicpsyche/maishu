@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../i18n/ui-text";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMemo, useState } from "react";
@@ -18,9 +20,9 @@ import { useI18n } from "../i18n";
 type StatusValue = "any" | "active" | "archived";
 
 const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
-  { value: "any", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
+  { value: "any", label: uiText("All") },
+  { value: "active", label: uiText("Active") },
+  { value: "archived", label: uiText("Archived") },
 ];
 
 export function MemoryStoresList() {
@@ -99,7 +101,7 @@ export function MemoryStoresList() {
       {
         id: "name",
         accessorKey: "name",
-        header: "Name",
+        header: uiText("Name"),
         cell: ({ row }) => (
           <span className="font-medium text-fg">{row.original.name}</span>
         ),
@@ -118,7 +120,7 @@ export function MemoryStoresList() {
       {
         id: "status",
         accessorFn: (s) => (s.archived_at ? "archived" : "active"),
-        header: "Status",
+        header: uiText("Status"),
         cell: ({ row }) => (
           <span
             className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full ${
@@ -134,7 +136,7 @@ export function MemoryStoresList() {
       {
         id: "created",
         accessorFn: (s) => s.created_at,
-        header: "Created",
+        header: uiText("Created"),
         cell: ({ row }) => (
           <span className="text-fg-muted">
             {new Date(row.original.created_at).toLocaleDateString()}
@@ -153,7 +155,7 @@ export function MemoryStoresList() {
   const filters = (
     <>
       <FilterChip
-        label="Status"
+        label={uiText("Status")}
         active={status !== "any"}
         display={statusDisplay}
         onClear={() => setStatus("any")}
@@ -168,7 +170,7 @@ export function MemoryStoresList() {
             options={STATUS_OPTIONS}
             value={status}
             onValueChange={(v) => setStatus(v as StatusValue)}
-            searchPlaceholder="Status..."
+            searchPlaceholder={uiText("Status...")}
           />
         </PopoverContent>
       </FilterChip>
@@ -197,7 +199,7 @@ export function MemoryStoresList() {
       onRowClick={(s) => nav(`/memory/${s.id}`)}
       rowActions={(store) => [
         {
-          label: "Archive",
+          label: uiText("Archive"),
           icon: <ArchiveIcon className="size-4" />,
           disabled: Boolean(store.archived_at),
           onSelect: async () => {
@@ -208,11 +210,11 @@ export function MemoryStoresList() {
           },
         },
         {
-          label: "Delete",
+          label: uiText("Delete"),
           icon: <TrashIcon className="size-4" />,
           destructive: true,
           onSelect: async () => {
-            if (!confirm(`Delete memory store ${store.name}? This can't be undone.`)) return;
+            if (!confirm(uiText(`Delete memory store ${store.name}? This can't be undone.`))) return;
             try {
               await managedApi.memoryStores.delete(store.id);
               refreshStores();
@@ -235,7 +237,7 @@ export function MemoryStoresList() {
           {t.memory.newMemoryStore}
         </Button>
       }
-      emptySubtitle="Create a memory store to give your agents long-term context across sessions."
+      emptySubtitle={uiText("Create a memory store to give your agents long-term context across sessions.")}
       columns={columns}
     >
       <Modal
@@ -244,7 +246,7 @@ export function MemoryStoresList() {
           setShowCreate(false);
           setFormError(null);
         }}
-        title="New Memory Store"
+        title={uiText("New Memory Store")}
         footer={
           <>
             <Button
@@ -254,11 +256,9 @@ export function MemoryStoresList() {
                 setFormError(null);
               }}
             >
-              Cancel
-            </Button>
+               {uiText("Cancel")} </Button>
             <Button onClick={createStore} disabled={!formName}>
-              Create
-            </Button>
+               {uiText("Create")} </Button>
           </>
         }
       >
@@ -273,11 +273,10 @@ export function MemoryStoresList() {
               htmlFor="memory-store-name"
               className="text-sm text-fg-muted block mb-1"
             >
-              Name
-            </Label>
+               {uiText("Name")} </Label>
             <Input
               id="memory-store-name"
-              placeholder="e.g. User Preferences"
+              placeholder={uiText("e.g. User Preferences")}
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
               className={inputCls}
@@ -288,11 +287,11 @@ export function MemoryStoresList() {
               htmlFor="memory-store-description"
               className="text-sm text-fg-muted block mb-1"
             >
-              Description <span className="text-fg-subtle">(optional)</span>
+               {uiText("Description")} <span className="text-fg-subtle">{uiText("(optional)")}</span>
             </Label>
             <Input
               id="memory-store-description"
-              placeholder="What's stored here?"
+              placeholder={uiText("What's stored here?")}
               value={formDesc}
               onChange={(e) => setFormDesc(e.target.value)}
               className={inputCls}

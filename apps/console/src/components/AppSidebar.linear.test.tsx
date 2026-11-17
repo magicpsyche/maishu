@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -50,12 +51,13 @@ function renderSidebar() {
 }
 
 describe("AppSidebar tracks", () => {
-  it("uses the tenant switcher as the first row without a brand row", async () => {
+  it("shows the deployment brand above the tenant switcher", async () => {
     const { container } = renderSidebar();
     const sidebar = screen.getByRole("complementary", { name: "Workspace navigation" });
 
     await waitFor(() => expect(screen.getByRole("button", { name: /Switch workspace|切换工作区/ })).toBeEnabled());
-    expect(sidebar.firstElementChild).toHaveClass("console-sidebar-tenant");
+    expect(sidebar.firstElementChild).toHaveClass("maishu-sidebar-brand");
+    expect(sidebar.querySelector(".console-sidebar-tenant")).not.toBeNull();
     expect(container.querySelector(".console-sidebar-brand")).toBeNull();
   });
 

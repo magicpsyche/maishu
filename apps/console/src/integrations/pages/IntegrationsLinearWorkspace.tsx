@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { uiText } from "../../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,12 +35,12 @@ const ALL_CAPABILITIES = [
 ] as const;
 
 const CAPABILITY_GROUPS: Array<{ label: string; caps: string[] }> = [
-  { label: "Issues", caps: ["issue.read", "issue.create", "issue.update", "issue.delete"] },
-  { label: "Comments", caps: ["comment.write", "comment.delete"] },
-  { label: "Labels", caps: ["label.add", "label.remove"] },
-  { label: "Assignment", caps: ["assignee.set", "assignee.set_other"] },
-  { label: "Triage", caps: ["status.set", "priority.set"] },
-  { label: "Other", caps: ["subissue.create", "user.mention", "search.read"] },
+  { label: uiText("Issues"), caps: ["issue.read", "issue.create", "issue.update", "issue.delete"] },
+  { label: uiText("Comments"), caps: ["comment.write", "comment.delete"] },
+  { label: uiText("Labels"), caps: ["label.add", "label.remove"] },
+  { label: uiText("Assignment"), caps: ["assignee.set", "assignee.set_other"] },
+  { label: uiText("Triage"), caps: ["status.set", "priority.set"] },
+  { label: uiText("Other"), caps: ["subissue.create", "user.mention", "search.read"] },
 ];
 
 export function IntegrationsLinearWorkspace() {
@@ -78,8 +80,7 @@ export function IntegrationsLinearWorkspace() {
           to="/integrations/linear"
           className="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          ← Linear integrations
-        </Link>
+           {uiText("← Linear integrations")} </Link>
 
         {installation && (
           <header className="mt-3 mb-7 flex items-end justify-between gap-6">
@@ -88,20 +89,18 @@ export function IntegrationsLinearWorkspace() {
                 {installation.workspace_name}
               </h1>
               <p className="mt-1.5 text-base text-fg-muted">
-                Dedicated apps · each agent has full identity in Linear
-              </p>
+                 {uiText("Dedicated apps · each agent has full identity in Linear")} </p>
             </div>
             <Link
               to={`/integrations/linear/publish?workspace=${id}`}
               className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)] whitespace-nowrap"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-              Publish another
-            </Link>
+               {uiText("Publish another")} </Link>
           </header>
         )}
 
-        {loading && <p className="text-sm text-fg-muted">Loading…</p>}
+        {loading && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
         {error && (
           <div className="rounded-md border border-danger/30 bg-danger-subtle px-3 py-2 text-sm text-danger">
             {error}
@@ -117,7 +116,7 @@ export function IntegrationsLinearWorkspace() {
         {!loading && publications.length === 0 && (
           <div className="border border-border rounded-lg px-6 py-12 text-center bg-bg-surface/30">
             <div className="font-mono text-fg-subtle text-sm select-none mb-3">[ &nbsp;&nbsp; ]</div>
-            <p className="text-sm text-fg">No agents published yet.</p>
+            <p className="text-sm text-fg">{uiText("No agents published yet.")}</p>
           </div>
         )}
       </div>
@@ -157,7 +156,7 @@ function PublicationCard({
   }
 
   async function unpublish() {
-    if (!confirm(`Unpublish ${pub.persona.name}? It will stop responding in Linear.`)) return;
+    if (!confirm(uiText(`Unpublish ${pub.persona.name}? It will stop responding in Linear.`))) return;
     setWorking(true);
     try {
       await api.unpublish(pub.id);
@@ -201,7 +200,7 @@ function PublicationCard({
           </div>
         </div>
         <span className="shrink-0 text-sm text-fg-muted">
-          {open ? "Hide" : "Edit"} {open ? "▲" : "▼"}
+          {open ? uiText("Hide") : uiText("Edit")} {open ? "▲" : "▼"}
         </span>
       </Button>
 
@@ -214,14 +213,14 @@ function PublicationCard({
           )}
 
           <div className="grid md:grid-cols-2 gap-4">
-            <Field label="Persona name">
+            <Field label={uiText("Persona name")}>
               <Input
                 value={personaName}
                 onChange={(e) => setPersonaName(e.target.value)}
                 className={inputCls}
               />
             </Field>
-            <Field label="Avatar URL">
+            <Field label={uiText("Avatar URL")}>
               <Input
                 value={personaAvatar}
                 onChange={(e) => setPersonaAvatar(e.target.value)}
@@ -233,14 +232,13 @@ function PublicationCard({
 
           <div>
             <div className="flex items-baseline justify-between mb-2">
-              <Label className="text-sm font-medium text-fg">Capabilities</Label>
+              <Label className="text-sm font-medium text-fg">{uiText("Capabilities")}</Label>
               <span className="text-sm text-fg-muted">
                 {caps.size} of {ALL_CAPABILITIES.length} enabled
               </span>
             </div>
             <p className="text-sm text-fg-muted mb-3">
-              What this agent may do in Linear. Defaults to everything; uncheck to restrict.
-            </p>
+               {uiText("What this agent may do in Linear. Defaults to everything; uncheck to restrict.")} </p>
             <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
               {CAPABILITY_GROUPS.map((g) => (
                 <div key={g.label}>
@@ -272,15 +270,14 @@ function PublicationCard({
               disabled={working}
               className="px-3.5 py-2 bg-brand text-brand-fg rounded-md text-sm font-medium hover:bg-brand-hover disabled:opacity-50 transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
             >
-              {working ? "Saving…" : "Save changes"}
+              {working ? uiText("Saving…") : uiText("Save changes")}
             </Button>
             <Button variant="ghost"
               onClick={unpublish}
               disabled={working}
               className="text-sm text-danger hover:underline disabled:opacity-50"
             >
-              Unpublish agent
-            </Button>
+               {uiText("Unpublish agent")} </Button>
           </div>
         </div>
       )}
@@ -334,16 +331,15 @@ function DispatchRulesSection({ publicationId }: { publicationId: string }) {
     <div className="border-t border-border px-5 py-4 bg-bg-surface/30">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h4 className="text-sm font-medium text-fg">Autopilot rules</h4>
+          <h4 className="text-sm font-medium text-fg">{uiText("Autopilot rules")}</h4>
           <p className="text-sm text-fg-muted">
-            Cron sweep assigns matching unassigned issues to this bot. At least one filter required (matching everything is a footgun).
-          </p>
+             {uiText("Cron sweep assigns matching unassigned issues to this bot. At least one filter required (matching everything is a footgun).")} </p>
         </div>
         <Button variant="ghost"
           onClick={() => setShowCreate((s) => !s)}
           className="px-3 py-1.5 text-sm rounded-md border border-border hover:border-brand transition-colors duration-[var(--dur-quick)] ease-[var(--ease-soft)]"
         >
-          {showCreate ? "Cancel" : "+ Add rule"}
+          {showCreate ? uiText("Cancel") : uiText("+ Add rule")}
         </Button>
       </div>
 
@@ -356,9 +352,9 @@ function DispatchRulesSection({ publicationId }: { publicationId: string }) {
         />
       )}
 
-      {rules === null && <p className="text-sm text-fg-muted">Loading…</p>}
+      {rules === null && <p className="text-sm text-fg-muted">{uiText("Loading…")}</p>}
       {rules?.length === 0 && (
-        <p className="text-sm text-fg-muted">No rules. Add one to enable autopilot.</p>
+        <p className="text-sm text-fg-muted">{uiText("No rules. Add one to enable autopilot.")}</p>
       )}
       {rules && rules.length > 0 && (
         <div className="space-y-2">
@@ -367,23 +363,22 @@ function DispatchRulesSection({ publicationId }: { publicationId: string }) {
               <div className="min-w-0">
                 <div className="font-medium text-fg flex items-center gap-2">
                   {r.name}
-                  {!r.enabled && <span className="text-fg-subtle">(disabled)</span>}
+                  {!r.enabled && <span className="text-fg-subtle">{uiText("(disabled)")}</span>}
                 </div>
                 <div className="text-fg-muted font-mono text-xs mt-0.5">
                   {r.filter_label && <>label=<code>{r.filter_label}</code> </>}
                   {r.filter_states && r.filter_states.length > 0 && <>states=<code>{r.filter_states.join(",")}</code> </>}
                   {r.filter_project_id && <>project=<code>{r.filter_project_id.slice(0, 8)}…</code> </>}
-                  · max={r.max_concurrent} · poll={r.poll_interval_seconds}s
+                   {uiText("· max=")}{r.max_concurrent}  {uiText("· poll=")}{r.poll_interval_seconds}s
                   {r.last_polled_at && ` · last=${new Date(r.last_polled_at).toLocaleTimeString()}`}
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" onClick={() => toggle(r)} className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 py-1 text-xs hover:underline">
-                  {r.enabled ? "Disable" : "Enable"}
+                  {r.enabled ? uiText("Disable") : uiText("Enable")}
                 </Button>
                 <Button variant="ghost" onClick={() => remove(r)} className="inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 px-2 py-1 text-xs text-danger hover:underline">
-                  Delete
-                </Button>
+                   {uiText("Delete")} </Button>
               </div>
             </div>
           ))}
@@ -412,7 +407,7 @@ function CreateRuleForm({
     e.preventDefault();
     setError(null);
     if (!label.trim() && !states.trim()) {
-      setError("Need at least a label or a state");
+      setError(uiText("Need at least a label or a state"));
       return;
     }
     setWorking(true);
@@ -438,28 +433,28 @@ function CreateRuleForm({
       {error && <div className="px-2 py-1.5 rounded bg-danger-subtle border border-danger/40 text-danger">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <Label className="flex flex-col gap-1">
-          <span className="text-fg-muted">Name</span>
+          <span className="text-fg-muted">{uiText("Name")}</span>
           <Input value={name} onChange={(e) => setName(e.target.value)} className="px-2 py-1 border border-border rounded bg-bg" />
         </Label>
         <Label className="flex flex-col gap-1">
-          <span className="text-fg-muted">Filter label</span>
+          <span className="text-fg-muted">{uiText("Filter label")}</span>
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="bot-ready" className="px-2 py-1 border border-border rounded bg-bg font-mono" />
         </Label>
         <Label className="flex flex-col gap-1">
-          <span className="text-fg-muted">States (comma)</span>
-          <Input value={states} onChange={(e) => setStates(e.target.value)} placeholder="Todo" className="px-2 py-1 border border-border rounded bg-bg font-mono" />
+          <span className="text-fg-muted">{uiText("States (comma)")}</span>
+          <Input value={states} onChange={(e) => setStates(e.target.value)} placeholder={uiText("Todo")} className="px-2 py-1 border border-border rounded bg-bg font-mono" />
         </Label>
         <Label className="flex flex-col gap-1">
-          <span className="text-fg-muted">Max concurrent</span>
+          <span className="text-fg-muted">{uiText("Max concurrent")}</span>
           <Input type="number" value={maxC} onChange={(e) => setMaxC(parseInt(e.target.value, 10) || 1)} min="1" max="100" className="px-2 py-1 border border-border rounded bg-bg" />
         </Label>
         <Label className="flex flex-col gap-1">
-          <span className="text-fg-muted">Poll interval (s)</span>
+          <span className="text-fg-muted">{uiText("Poll interval (s)")}</span>
           <Input type="number" value={poll} onChange={(e) => setPoll(parseInt(e.target.value, 10) || 60)} min="60" max="86400" className="px-2 py-1 border border-border rounded bg-bg" />
         </Label>
       </div>
       <Button variant="ghost" type="submit" disabled={working} className="px-3 py-1.5 bg-brand text-brand-fg rounded text-sm disabled:opacity-50">
-        {working ? "Creating…" : "Create rule"}
+        {working ? uiText("Creating…") : uiText("Create rule")}
       </Button>
     </form>
   );
