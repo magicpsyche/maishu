@@ -47,7 +47,7 @@ describe("Work-owned portable workspace checkpoint",()=>{
     expect(await (await f.blobs.get(archiveKey))!.text()).not.toContain("SYNTHETIC_AUTH_MUST_STAY_PRIVATE");
     const fresh=await workspaceSandbox(join(f.root,"fresh"));
     await f.sql.prepare('UPDATE kv_entries SET value=? WHERE "key"=?').bind(JSON.stringify({phase:"running",handle:{...runtime,runtimeId:"sandbox-2"}}),"session_sandbox_state:s").run();
-    await f.sql.exec("UPDATE managed_environment_work SET claim_generation=3,claim_worker_id='worker-next'");
+    await f.sql.exec("UPDATE managed_environment_work SET claim_generation=3,claim_worker_id='worker-next',state='queued'");
     await new NodeWorkWorkspaceCheckpoints({sql:f.sql,blobs:new LocalFsBlobStore({baseDir:join(f.root,"blobs")}),dialect:"sqlite"})
       .restore(physical(fresh,"sandbox-2",{...scope.claim,generation:3,holder:"worker-next"}));
     expect(await nativeState(fresh).beforeStart({...nativeStart,canonicalCompletedTurnId:"input"}))
@@ -70,6 +70,26 @@ describe("Work-owned portable workspace checkpoint",()=>{
     });
     if(fail){await expect(host.prepare(scope)).rejects.toThrow();expect(trace).toEqual(["sync","workspace"]);expect((await f.store.load(scope.claim)).record).toBeNull();}
     else{expect(await host.prepare(scope)).toEqual({type:"prepared"});expect(trace).toEqual(["sync","workspace","native"]);expect((await f.store.load(scope.claim)).record?.turnId).toBe("input");}
+  });
+  it("accepts a fully reserved queued restore while publication still rejects queued Work",async()=>{
+    const f=await fixture();await f.sql.exec("UPDATE managed_environment_work SET state='queued'");
+    await expect(f.service.restore(physical(f.sandbox))).resolves.toBeUndefined();
+    await expect(f.service.prepare(scope,physical(f.sandbox),async()=>{})).rejects.toThrow(/claim unavailable/);
+    expect(await f.store.publish(publication)).toBe(false);
+  });
+  it.each(["unclaimed","owner","holder-hash","expired","stopping","archived","generation","physical","callback"])("rejects queued restore with %s",async how=>{
+    const f=await fixture();await f.sql.exec("UPDATE managed_environment_work SET state='queued'");
+    if(how==="unclaimed")await f.sql.exec("UPDATE managed_environment_work SET claim_at=NULL,claim_worker_id=NULL");
+    if(how==="owner")await f.sql.exec("UPDATE managed_environment_work SET claim_worker_id='Worker'");
+    if(how==="holder-hash")await f.sql.exec("UPDATE managed_environment_work SET sandbox_token_hashes='[]'");
+    if(how==="expired")await f.sql.exec("UPDATE managed_environment_work SET claim_at=0");
+    if(how==="stopping")await f.sql.exec("UPDATE managed_environment_work SET state='stopping'");
+    if(how==="archived")await f.sql.exec("UPDATE managed_sessions SET archived_at=1");
+    if(how==="generation")await f.sql.exec("UPDATE managed_environment_work SET claim_generation=3");
+    const p=physical(f.sandbox,how==="physical"?"wrong-runtime":"sandbox-1");
+    if(how==="callback")p.workAuthority.isCurrent=async()=>false;
+    await expect(f.service.restore(p)).rejects.toThrow(/Work workspace/);
+    expect((await f.store.load(scope.claim)).record).toBeNull();
   });
   it("does not publish twice for the same quiescent Work turn",async()=>{
     const f=await fixture();await f.service.prepare(scope,physical(f.sandbox),async()=>{});

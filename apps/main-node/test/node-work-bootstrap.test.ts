@@ -10,7 +10,7 @@ import {nodeDefaults} from "../src/components";
 import {createNodeControlPlane} from "../src/control-plane";
 import {LocalSubprocessSandbox} from "../../../packages/sandbox/src/adapters/local-subprocess";
 
-it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "cleanup-failed", "cleanup-unconfirmed", "exit-confirmed", "attached-file"] as const)("production Work bootstrap through real HTTP auth: %s",async mode=>{
+it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "cleanup-failed", "cleanup-unconfirmed", "exit-confirmed", "attached-file", "checkpoint-restore"] as const)("production Work bootstrap through real HTTP auth: %s",async mode=>{
  const root=await mkdtemp(join(tmpdir(),"oma-work-"));
  const server=createServer();await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));
  const base="http://127.0.0.1:"+(server.address() as {port:number}).port;
@@ -19,6 +19,16 @@ it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "
  const native=sandbox.startManagedProcess.bind(sandbox);
  let cleanupAttempts=0;let confirmedExit=false;let statusChecks=0;let cleanupFault=true;
  sandbox.startManagedProcess=async spec=>{
+  if(mode==="checkpoint-restore") {
+   // Real dispatcher poll + token issuance happened, but this child has not
+   // started and therefore cannot have sent its HTTP ACK yet.
+   const reservation=await components.database.sql.prepare("SELECT state,claim_worker_id,claim_generation,claim_at,sandbox_token_hashes FROM managed_environment_work WHERE id=?")
+    .bind(spec.env.ANTHROPIC_WORK_ID).first<{state:string;claim_worker_id:string;claim_generation:number;claim_at:number;sandbox_token_hashes:string}>();
+   expect(reservation?.state).toBe("queued");expect(reservation?.claim_worker_id).toBe(config.execution.ownerId);
+   expect(Number(reservation?.claim_generation)).toBeGreaterThan(0);expect(Number(reservation?.claim_at)).toBeGreaterThan(0);
+   expect(JSON.parse(reservation!.sandbox_token_hashes).some((h:{s:string})=>h.s==="all")).toBe(true);
+  }
+
   if (mode === "attached-file") expect(await sandbox.readFile(join(root,"sandbox","input.txt"))).toBe("synthetic-work-input");
   if(launches===1&&mode==="exit-confirmed")expect(confirmedExit,"old worker exit must be observed before replacement spawn").toBe(true);
   launches++;scopeToken=spec.env.OPENMA_SANDBOX_TOKEN;tokens.push(scopeToken);const handle=await native(spec);handles.push(handle);
@@ -35,7 +45,11 @@ it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "
  const child="const d=JSON.parse(Buffer.from(process.env.ANTHROPIC_WORK_SECRET,'base64url'));fetch(d.api_base_url+'/v1/environments/'+process.env.ANTHROPIC_ENVIRONMENT_ID+'/work/'+process.env.ANTHROPIC_WORK_ID+'/ack',{method:'POST',headers:{authorization:'Bearer '+d.sessions_token}}).then(r=>{if(!r.ok)process.exit(2);setInterval(()=>{},1000)})";
  if(mode==="missing-native") Object.defineProperty(sandbox,"startManagedProcess",{value:undefined});
  const config=loadNodeConfig({NODE_ENV:"test",AUTH_DISABLED:"0",API_KEY:"admin",PLATFORM_ROOT_SECRET:"test-root-secret-not-production",PUBLIC_BASE_URL:base,MEMORY_QUEUE:"disabled",LOG_LEVEL:"silent",DATABASE_PATH:join(root,"db.sqlite"),AUTH_DATABASE_PATH:join(root,"auth.sqlite"),SANDBOX_WORKDIR:join(root,"sandboxes"),MEMORY_BLOB_DIR:join(root,"memory"),FILES_BLOB_DIR:join(root,"files"),SESSION_OUTPUTS_DIR:join(root,"outputs"),OPENMA_WORK_RUNNER_COMMAND:process.execPath,OPENMA_WORK_RUNNER_ARGS:JSON.stringify(["-e",child]),OPENMA_ACP_HARNESSES:JSON.stringify([{id:mode==="uninstalled"?"other":"codex-acp",version:"1",command:process.execPath}])});
- const components=await nodeDefaults(config,{sandbox:async()=>{builds++;return sandbox;}});const cp=await createNodeControlPlane(components);server.on("request",getRequestListener(cp.fetch));
+ const components=await nodeDefaults(config,{sandbox:async()=>{builds++;return sandbox;}});
+ // This HTTP admission test supplies the existing local native-process port;
+ // remote provider transport/model certification remains a separate gate.
+ if(mode==="checkpoint-restore") {config.workspace.strategy="checkpoint_restore";config.sandbox.environment.SANDBOX_PROVIDER="opensandbox";}
+ const cp=await createNodeControlPlane(components);server.on("request",getRequestListener(cp.fetch));
  try{
   const api=async(path:string,body:unknown)=>{const r=await cp.fetch(new Request(base+path,{method:"POST",headers:{"x-api-key":"admin","content-type":"application/json"},body:JSON.stringify(body)}));const data:any=await r.json();expect(r.status,JSON.stringify(data)).toBeLessThan(300);return data;};
   await api("/v1/oma/model_cards",{model_id:"test",model:"upstream",provider:"anthropic",base_url:"https://upstream.test",api_key:"fake-model-secret"});
@@ -69,7 +83,7 @@ it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "
   let state="";for(let i=0;i<100;i++){state=(await components.database.sql.prepare("SELECT state FROM managed_environment_work WHERE session_id = ?").bind(session.id).first<{state:string}>())!.state;if(state==="starting")break;await new Promise(resolve=>setTimeout(resolve,20));}
   expect(state).toBe("starting");
   expect(await handles[0].getStatus()).toBe("running");
-  if (mode === "attached-file") return;
+  if (mode === "attached-file" || mode === "checkpoint-restore") return;
   if(mode==="stopped") {
    // Existing stop state is authoritative: an expired stopped Work never reclaims.
    await components.database.sql.prepare("UPDATE managed_environment_work SET state = 'stopped', claim_at = 0 WHERE session_id = ?").bind(session.id).run();

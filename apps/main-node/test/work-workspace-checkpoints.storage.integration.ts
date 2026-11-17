@@ -31,6 +31,20 @@ for (const dialect of ["postgres","mysql"] as const) describe(`${dialect} Work w
     await new NodeWorkWorkspaceCheckpoints({sql:database.sql,blobs:new LocalFsBlobStore({baseDir:join(root,"blobs")}),dialect}).restore(physical(fresh,"new-runtime"));
     expect(await fresh.readFile("/workspace/proof.txt")).toBe(dialect+" persisted");
   });
+  it("restores a queued reservation only with exact owner, live lease and an unarchived Session",async()=>{
+    const source=await workspaceSandbox(join(root,"queued-source"));
+    const service=new NodeWorkWorkspaceCheckpoints({sql:database.sql,blobs:new LocalFsBlobStore({baseDir:join(root,"queued-blobs")}),dialect});
+    await database.sql.exec("UPDATE managed_environment_work SET state='queued'");
+    await expect(service.restore(physical(source))).resolves.toBeUndefined();
+    await database.sql.exec("UPDATE managed_environment_work SET claim_worker_id='Worker'");
+    await expect(service.restore(physical(source))).rejects.toThrow(/claim unavailable/);
+    await database.sql.exec("UPDATE managed_environment_work SET claim_worker_id='worker',claim_at=0");
+    await expect(service.restore(physical(source))).rejects.toThrow(/claim unavailable/);
+    await database.sql.prepare("UPDATE managed_environment_work SET claim_at=?,state='stopping'").bind(Date.now()).run();
+    await expect(service.restore(physical(source))).rejects.toThrow(/claim unavailable/);
+    await database.sql.exec("UPDATE managed_environment_work SET state='queued';UPDATE managed_sessions SET archived_at=1");
+    await expect(service.restore(physical(source))).rejects.toThrow(/claim unavailable/);
+  });
   it("atomically rejects a successor claim at publication and leaves no candidate pointer",async()=>{
     let injected=false;
     const sql:SqlClient={prepare:q=>database.sql.prepare(q),exec:q=>database.sql.exec(q),batch:ss=>database.sql.batch(ss),batchChecked:async(ss,validate)=>{

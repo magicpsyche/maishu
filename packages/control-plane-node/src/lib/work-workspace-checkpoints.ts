@@ -106,15 +106,29 @@ export class NodeWorkWorkspaceCheckpoints {
     const state = row && JSON.parse(row.value);
     if (!state || state.phase !== "running" || !sameRuntime(state.handle,physical.handle)) throw new Error("Work workspace physical runtime changed");
   }
-  private async context(physical: WorkWorkspacePhysical) {
+  private async context(physical: WorkWorkspacePhysical, phase: "restore" | "publish", publicationHolder?: string) {
     const a = physical.workAuthority.attempt;
     if (!physical.workAuthority.holderHash) throw new Error("Work workspace holder required");
     await this.assertPhysical(physical);
-    const row = await this.deps.sql.prepare(`SELECT claim_worker_id,claim_at,heartbeat_ttl_seconds FROM managed_environment_work
-      WHERE workspace_id=? AND environment_id=? AND session_id=? AND id=? AND claim_generation=? AND state IN ('starting','active','stopping')`)
-      .bind(physical.workspaceId,physical.environment.id,physical.session.id,a.executionId,a.generation)
-      .first<{claim_worker_id:string|null;claim_at:number|null;heartbeat_ttl_seconds:number}>();
-    if (!row?.claim_worker_id || row.claim_at === null) throw new Error("Work workspace claim unavailable");
+    const holder = phase === "restore" ? physical.workAuthority.claimHolder : publicationHolder;
+    if (!holder) throw new Error("Work workspace reservation owner required");
+    // Poll reserves queued Work before the management process can ACK it. Only
+    // restore accepts that reservation; publication still requires a consumed turn.
+    const states = phase === "restore" ? "'queued','starting','active'" : "'starting','active','stopping'";
+    const clock = this.deps.dialect === "postgres" ? "floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint"
+      : this.deps.dialect === "mysql" ? "floor(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)"
+      : "(CAST(strftime('%s','now') AS INTEGER)*1000 + CAST(substr(strftime('%f','now'),4,3) AS INTEGER))";
+    const row = await this.deps.sql.prepare(`SELECT w.claim_worker_id,w.claim_at,w.heartbeat_ttl_seconds,w.sandbox_token_hashes FROM managed_environment_work w
+      WHERE w.workspace_id=? AND w.environment_id=? AND w.session_id=? AND w.id=? AND w.claim_generation=? AND w.state IN (${states})
+      AND ${this.deps.dialect === "mysql" ? "BINARY w.claim_worker_id=BINARY ?" : "w.claim_worker_id=?"}
+      AND w.claim_at IS NOT NULL AND w.claim_at+w.heartbeat_ttl_seconds*1000>${clock}
+      AND EXISTS (SELECT 1 FROM managed_sessions s WHERE s.workspace_id=w.workspace_id AND s.id=w.session_id
+        AND s.environment_id=w.environment_id AND s.archived_at IS NULL)`)
+      .bind(physical.workspaceId,physical.environment.id,physical.session.id,a.executionId,a.generation,holder)
+      .first<{claim_worker_id:string;claim_at:number;heartbeat_ttl_seconds:number;sandbox_token_hashes:string|null}>();
+    const hashes: unknown = JSON.parse(row?.sandbox_token_hashes ?? "[]");
+    if (!row || !Array.isArray(hashes) || hashes.filter(h=>h?.s==="all").length !== 1
+      || !hashes.some(h=>h?.s==="all" && h?.h===physical.workAuthority.holderHash)) throw new Error("Work workspace claim unavailable");
     const scope = {workspaceId:physical.workspaceId,environmentId:physical.environment.id,sessionId:physical.session.id,workId:a.executionId};
     const fence: RuntimeResourceFence = {...scope,ownerId:row.claim_worker_id,generation:a.generation,token:physical.workAuthority.holderHash,
       expiresAt:new Date(Number(row.claim_at)+Number(row.heartbeat_ttl_seconds)*1000).toISOString()};
@@ -122,7 +136,7 @@ export class NodeWorkWorkspaceCheckpoints {
   }
   async prepare(scope: WorkFinalizationScope, physical: WorkWorkspacePhysical, assertCurrent: () => Promise<void>): Promise<void> {
     await assertCurrent();
-    const {scope: resource,fence} = await this.context(physical);
+    const {scope: resource,fence} = await this.context(physical,"publish",scope.claim.holder);
     if (scope.claim.workspaceId !== resource.workspaceId || scope.claim.sessionId !== resource.sessionId
       || scope.claim.environmentId !== resource.environmentId || scope.claim.workId !== resource.workId
       || scope.claim.generation !== fence.generation || scope.claim.holder !== fence.ownerId) throw new Error("Work workspace scope mismatch");
@@ -144,7 +158,7 @@ export class NodeWorkWorkspaceCheckpoints {
     } finally { await port.release({scope:resource,fence,binding}); }
   }
   async restore(physical: WorkWorkspacePhysical): Promise<void> {
-    const {scope,fence} = await this.context(physical);
+    const {scope,fence} = await this.context(physical,"restore");
     const previous = await this.persistence.load(scope);
     if (previous.record === null) return;
     const port = createNodeWorkspacePersistencePort(physical.sandbox as SandboxExecutor,this.deps.blobs);

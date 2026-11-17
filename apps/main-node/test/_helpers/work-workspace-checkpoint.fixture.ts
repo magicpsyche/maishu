@@ -49,5 +49,5 @@ export async function workspaceSandbox(root: string): Promise<SandboxExecutor> {
 }
 export const physical = (sandbox: SandboxExecutor, runtimeId="sandbox-1", workClaim=claim): WorkWorkspacePhysical => ({workspaceId:"ws",environment:{id:"env"},session:{id:"s"},
   sandbox,runtimeGeneration:runtimeId,handle:{...runtime,runtimeId},
-  workAuthority:{attempt:environmentWorkSandboxTokenRef(workClaim),holderHash,isCurrent:async()=>true},
+  workAuthority:{attempt:environmentWorkSandboxTokenRef(workClaim),claimHolder:workClaim.holder,holderHash,isCurrent:async()=>true},
 } as WorkWorkspacePhysical);

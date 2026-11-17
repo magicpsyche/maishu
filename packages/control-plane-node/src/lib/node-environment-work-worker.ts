@@ -256,7 +256,7 @@ export function createNodeEnvironmentWorkWorker(input: {
                   // attach, or allocation of the replacement runtime.
                   const claim = { ...delivery, generation };
                   const sandbox = input.sandboxes.build({ workspaceId: scope.workspaceId, session, environment: pinnedEnvironment,
-                    workAuthority: { attempt: environmentWorkSandboxTokenRef(claim), isCurrent: owned, holderHash: () => holderHash, token: physical => input.capabilities.issueWork(claim, session.agent.openma?.harness, physical) },
+                    workAuthority: { attempt: environmentWorkSandboxTokenRef(claim), claimHolder: stored.claim!.workerId ?? undefined, isCurrent: owned, holderHash: () => holderHash, token: physical => input.capabilities.issueWork(claim, session.agent.openma?.harness, physical) },
                   });
                   await observed("sandbox-open", () => sandbox.open());
                   if (!await current()) throw new Error("Work claim lost before bootstrap");

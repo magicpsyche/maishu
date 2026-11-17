@@ -99,6 +99,8 @@ export function sandboxSnapshotIntervalMs(value: string | undefined): number | u
 
 /** Existing Work claim authority; no SessionExecution lease is fabricated. */
 export interface NodeSandboxWorkAuthority {
+  /** Exact dispatcher reservation owner, distinct from the issued token hash. */
+  claimHolder?: string;
   attempt: SessionExecutionAttemptRef;
   isCurrent(): Promise<boolean>;
   token(sandbox: object | string): Promise<string>;
@@ -109,7 +111,7 @@ export interface NodeSandboxWorkAuthority {
 export interface NodeWorkStorageInput extends NodeSessionSandboxContext {
   sandbox: SandboxPort;
   runtimeGeneration: string;
-  workAuthority: Pick<NodeSandboxWorkAuthority, "attempt" | "isCurrent"> & { holderHash?: string };
+  workAuthority: Pick<NodeSandboxWorkAuthority, "attempt" | "isCurrent" | "claimHolder"> & { holderHash?: string };
 }
 
 export interface NodeSessionSandboxContext {
@@ -888,7 +890,8 @@ export class NodeSessionSandbox implements SandboxPort {
       && process.authority === authority && process.runtime === runtime && await process.handle.getStatus() === "running";
     if (!await processCurrent()) throw new Error("Current exact Work management process required");
     return { ...this.context, sandbox: runtime, runtimeGeneration: generation, handle,
-      workAuthority: { attempt: authority.attempt, holderHash, isCurrent: async () =>
+      workAuthority: { attempt: authority.attempt, holderHash,
+        ...(authority.claimHolder === undefined ? {} : {claimHolder: authority.claimHolder}), isCurrent: async () =>
         this.live === runtime && this.physicalGeneration === generation
         && authority.holderHash?.() === holderHash && await this.isCurrentWork(authority) && await processCurrent() },
     };
