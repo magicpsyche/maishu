@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
+import { uiText } from "../i18n/ui-text";
 
 /**
  * Status pill — small colored chip that represents a state (idle / running /
@@ -23,7 +24,7 @@ const TONE_CLASS: Record<StatusTone, string> = {
 
 export function StatusPill({ status, label }: { status: StatusTone | string; label?: string }) {
   const tone: StatusTone = (TONE_CLASS as Record<string, unknown>)[status] ? (status as StatusTone) : "neutral";
-  const text = label ?? (status[0]?.toUpperCase() + status.slice(1));
+  const text = label ?? uiText(status[0]?.toUpperCase() + status.slice(1));
   return (
     <span className={`text-xs px-2 py-0.5 rounded font-medium ${TONE_CLASS[tone]}`}>
       {tone === "running" && (
