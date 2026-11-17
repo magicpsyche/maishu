@@ -5,6 +5,7 @@ import { createPlatformSettingsStore } from "./platform-settings-store.js";
 import type { NodeDatabase } from "@open-managed-agents/node-database";
 import type { PurposeCipher, NodeSecrets } from "../secrets.js";
 import type { HarnessCredentialController, HarnessCredentialInput, HarnessCredentialView } from "../harness-credentials.js";
+import { CODEX_REFRESH_INTERVAL_MS, codexAuth, refreshedCodexAuth, type CodexRefreshInput } from "./codex-auth-refresh.js";
 
 interface Stored extends HarnessCredentialView { content: string }
 const FILES = { codex: "auth.json", claude: ".credentials.json", dsh: ".credentials.yaml" } as const;
@@ -51,9 +52,52 @@ export class EncryptedHarnessCredentials implements HarnessCredentialController 
     } else if (!/^\s*DEEPSEEK_API_KEY\s*:/m.test(content)) throw new Error("DeepSeek 凭证需包含 DEEPSEEK_API_KEY");
     const record: Stored = { id: id ?? `hc_${randomUUID()}`, name: input.name.trim(), kind: input.kind,
       revision: randomUUID(), allowedAgentIds: [...new Set(allowed)], allowWorkspace: input.allowWorkspace === true,
-      updatedAt: new Date().toISOString(), content };
+      updatedAt: new Date().toISOString(), content,
+      ...(previous?.record.content === content && previous.record.codexRefresh ? { codexRefresh: previous.record.codexRefresh } : {}) };
     if (!await this.kv.compareAndSwap(key(workspaceId, record.id), previous?.sealed ?? null, await this.cipher.encrypt(JSON.stringify(record)))) throw new Error("凭证已更新，请刷新后重试");
     return view(record);
+  }
+  /** Operator-only in-process maintenance. No secret export or refresh HTTP route.
+   * Existing Session pins are never changed by this operation. */
+  async refreshCodexDue(refresh: (input: CodexRefreshInput) => Promise<string>, options: { now?: number; force?: boolean } = {}) {
+    const now = options.now ?? Date.now(), at = new Date(now).toISOString();
+    const results: Array<{ workspaceId: string; id: string; status: "refreshed" | "not_due" | "failed" | "superseded" | "skipped" }> = [];
+    for (const item of await listAll(this.kv, "harness-credential:")) {
+      const parts = item.name.split(":");
+      if (parts.length !== 3) continue;
+      const workspaceId = decodeURIComponent(parts[1]!), id = parts[2]!;
+      const original = await this.load(workspaceId, id);
+      const auth = codexAuth(original.record.content);
+      const result = (status: typeof results[number]["status"]) => { results.push({ workspaceId, id, status }); };
+      if (original.record.kind !== "codex" || !auth) { result("skipped"); continue; }
+      // A failed refresh needs operator attention; do not repeatedly spend a
+      // potentially consumed refresh token. A new upload or --force retries it.
+      if (original.record.codexRefresh?.status === "failed" && !options.force) { result("failed"); continue; }
+      const baseline = Date.parse(original.record.codexRefresh?.lastSuccessAt ?? auth.last_refresh ?? original.record.updatedAt);
+      if (!options.force && Number.isFinite(baseline) && baseline <= now && now - baseline < CODEX_REFRESH_INTERVAL_MS) { result("not_due"); continue; }
+      let content: string | undefined;
+      try {
+        content = await refresh({ workspaceId, id, content: original.record.content });
+        if (!refreshedCodexAuth(original.record.content, content)) throw new Error("刷新后的账户认证不匹配");
+      } catch { content = undefined; }
+      let committed = false;
+      // Preserve a concurrent rename/grant change, but never overwrite a new
+      // login, recreate a deleted credential, or alter any Session pin.
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const sealed = await this.kv.get(key(workspaceId, id));
+        if (sealed === null) break;
+        const current = JSON.parse(await this.cipher.decrypt(sealed)) as Stored;
+        if (current.content !== original.record.content || current.kind !== "codex") break;
+        const next: Stored = { ...current, revision: randomUUID(), updatedAt: at,
+          ...(content === undefined ? {} : { content }),
+          codexRefresh: { status: content === undefined ? "failed" : "ok", lastAttemptAt: at,
+            ...(content === undefined ? current.codexRefresh?.lastSuccessAt ? { lastSuccessAt: current.codexRefresh.lastSuccessAt } : {}
+              : { lastSuccessAt: at, nextDueAt: new Date(now + CODEX_REFRESH_INTERVAL_MS).toISOString() }) } };
+        if (await this.kv.compareAndSwap(key(workspaceId, id), sealed, await this.cipher.encrypt(JSON.stringify(next)))) { committed = true; break; }
+      }
+      result(committed ? content === undefined ? "failed" : "refreshed" : "superseded");
+    }
+    return results;
   }
   async remove(workspaceId: string, id: string) {
     const current = await this.load(workspaceId, id);

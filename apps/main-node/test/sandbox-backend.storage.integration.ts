@@ -67,4 +67,22 @@ for (const kind of ["postgres", "mysql"] as const) describe(`${kind} sandbox bac
     await accounts.remove("tenant-a%", saved.id);
     expect(await accounts.list("tenant-a%")).toEqual([]);
   });
+  it("automatically rotates Codex auth through shared CAS while preserving old Session pins", async () => {
+    const kv = createPlatformSettingsStore(database, "codex-auto-refresh");
+    const accounts = new EncryptedHarnessCredentials(kv, cipher);
+    const content = (name: string) => JSON.stringify({auth_mode:"chatgpt",tokens:{access_token:"synthetic-access-"+name,refresh_token:"synthetic-refresh-"+name,account_id:"account-a"},last_refresh:"2026-01-01T00:00:00Z"});
+    const saved = await accounts.save("workspace-a", {name:"refresh",kind:"codex",content:content("old"),allowedAgentIds:["agent-a"]});
+    const received: string[] = [];
+    const scope = {workspaceId:"workspace-a",agentId:"agent-a",sessionId:"old",agentConfig:{harness:"acp-sandbox",acp:{agent:{id:"codex-acp",command:"/usr/local/bin/maishu-harness",args:["codex"],env:{MAISHU_AUTH_MODE:"native",MAISHU_CREDENTIAL_REF:saved.id}}}},sandbox:{exec:async()=>"",writeFileBytes:async (_p:string,b:Uint8Array)=>{received.push(new TextDecoder().decode(b));}} as never};
+    await accounts.materialize(scope);
+    expect((await accounts.refreshCodexDue(async()=>content("new"),{force:true}))[0]?.status).toBe("refreshed");
+    const restarted = new EncryptedHarnessCredentials(kv,cipher);
+    await restarted.materialize(scope);await restarted.materialize({...scope,sessionId:"new"});
+    expect(received).toEqual([content("old"),content("old"),content("new")]);
+    expect((await restarted.list("workspace-a"))[0]?.codexRefresh?.status).toBe("ok");
+    const rows = await database.sql.prepare('SELECT value FROM kv_entries').all<{value:string}>();
+    expect(JSON.stringify(rows)).not.toContain("synthetic-refresh-");
+    await expect(restarted.materialize({...scope,workspaceId:"workspace-b"})).rejects.toThrow();
+  });
+
 });

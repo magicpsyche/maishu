@@ -1,0 +1,22 @@
+[Unit]
+Description=麦枢 Codex 账户认证维护
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=maishu
+Group=maishu
+WorkingDirectory=/opt/maishu/auth-current/apps/main-node
+EnvironmentFile=/etc/maishu/control.env
+Environment=PATH=/opt/maishu/tooling/node24/bin:/usr/local/bin:/usr/bin:/bin
+Environment=MAISHU_CODEX_BINARY=/opt/maishu/tooling/codex/0.166.0/codex
+Environment=MAISHU_AUTH_REFRESH_DIR=/var/lib/maishu/auth-refresh
+ExecStart=/usr/bin/flock -n /var/lib/maishu/auth-refresh/maintenance.lock /opt/maishu/tooling/node24/bin/node --import tsx src/refresh-codex-auth.ts
+TimeoutStartSec=30min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/maishu

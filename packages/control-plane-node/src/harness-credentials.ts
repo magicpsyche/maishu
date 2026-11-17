@@ -8,6 +8,7 @@ export function usesNativeAccountFiles(config: unknown): boolean {
 export interface HarnessCredentialView {
   id: string; name: string; kind: HarnessCredentialKind; revision: string;
   allowedAgentIds: string[]; allowWorkspace: boolean; updatedAt: string;
+  codexRefresh?: { status: "ok" | "failed"; lastAttemptAt: string; lastSuccessAt?: string; nextDueAt?: string };
 }
 export interface HarnessCredentialInput {
   name: string; kind: HarnessCredentialKind; content?: string;

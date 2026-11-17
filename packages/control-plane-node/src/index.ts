@@ -63,3 +63,4 @@ export { ConsoleSandboxBackend, createConsoleSandboxBackend } from "./lib/consol
 export type { SandboxBackendController, SandboxBackendSettings, SandboxBackendView, SandboxBackendUpdate } from "./sandbox-backend.js";
 export { EncryptedHarnessCredentials, createHarnessCredentials } from "./lib/harness-credentials.js";
 export type { HarnessCredentialController, HarnessCredentialInput, HarnessCredentialKind, HarnessCredentialView } from "./harness-credentials.js";
+export { createCodexAuthRefresher } from "./lib/codex-auth-refresh.js";

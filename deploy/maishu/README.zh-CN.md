@@ -84,7 +84,31 @@ node packages/cli/scripts/build-maishu.mjs \
 
 控制台更新账户认证只影响新会话；已绑定会话继续使用其首次执行的加密版本。每次执行仍重新检查当前授权，删除或撤回授权阻止后续注入，但不会收回运行进程已持有的上游 token，需要服务商侧撤销才能完成该动作。
 
-同一个 native home 重启时保留引擎已刷新的认证，不用旧源覆盖它；刷新结果不会自动写回平台。多个会话使用同一轮换型 refresh token 时，目前没有账户级单写刷新协调，不能声称已解决并发刷新。源认证或会话 pin 失效时，应重新授权并创建新会话，不通过共享可写认证文件来回避。
+同一个 native home 重启时保留引擎已刷新的认证，不用旧源覆盖它。控制端可启用下述六天认证维护，更新权威凭证供新会话首次执行使用；现有会话 pin 和现有沙箱均不修改。沙箱自行刷新的结果仍不回传平台，多个副本仍可能独立刷新；本功能不宣称解决旧会话与控制端之间的轮换竞争。源认证或旧会话 pin 失效时，重新授权或创建新会话，不共享可写认证目录。
+
+### 控制端 Codex 六天认证维护
+
+使用 `systemd/maishu-auth-refresh.service` 和 `.timer`，在控制 VPS 上配置固定版本 Codex 0.166.0 二进制、`/opt/maishu/auth-current` 维护发布目录和 `/var/lib/maishu/auth-refresh` 专属私密目录。维护服务使用原平台的 SQLite/PostgreSQL/MySQL 配置与加密根密钥，不另建数据库；不要运行主程序入口或启动模型任务。
+
+定时器每小时唤醒并在重启后补查；程序只在距该账号上次成功刷新满六天时调用 app-server 的 `account/read(refreshToken=true)`。首次没有维护记录时参考上传认证的 `last_refresh`，没有该时间时参考凭证写入时间。只有 `auth_mode=chatgpt` 且具备账号、访问及刷新令牌的 Codex 认证进入维护；API key、Claude Code、DeepSeek 不执行这条刷新链。
+
+维护由单控制节点上的 systemd 和同一 `flock` 锁串行执行。Codex 使用权限 0700 的独立 `CODEX_HOME`，认证缓存文件权限 0600，与项目目录、普通文件和沙箱挂载隔离。缓存保留 Codex 已写入但尚未回库的旋转结果，下次优先回写，不重复使用旧刷新令牌。程序核对账号身份后，经现有加密 CAS 写回；并发改名/授权保留，人工替换登录或删除凭证后不覆盖、不重建。接口不新增认证内容读取入口，日志只记录凭证引用和结果，不记录 token、RPC 错误原文或 stderr。
+
+失败在凭证元数据 `codexRefresh.status` 中记为 `failed`，保留原凭证和旧会话，后续自动检查不重复尝试；管理员检查网络或重新上传认证后再恢复。人工重试可通过同一锁执行 `src/refresh-codex-auth.ts --force`，会实际刷新登录。维护不是续费服务，不能保证服务商撤销的授权可以恢复。
+
+部署示意：
+
+```sh
+install -d -m 0700 -o maishu -g maishu /var/lib/maishu/auth-refresh
+install -m 0644 deploy/maishu/systemd/maishu-auth-refresh.service /etc/systemd/system/
+install -m 0644 deploy/maishu/systemd/maishu-auth-refresh.timer /etc/systemd/system/
+systemd-analyze verify /etc/systemd/system/maishu-auth-refresh.service /etc/systemd/system/maishu-auth-refresh.timer
+systemctl daemon-reload
+systemctl enable --now maishu-auth-refresh.timer
+systemctl start maishu-auth-refresh.service
+```
+
+`auth-current` 可以独立更新，不要求重启已有麦枢控制进程或执行端。目录、账号和 Node 路径须与本机实际安装一致。若 OAuth 请求需要出站代理，仅为维护服务提供可用代理和对应 NO_PROXY，不改变旧 OMA 或宿主机全局代理。
 
 原生认证禁止全容器快照，避免 `/run` 和 `/tmp` 私密认证被存入镜像。仍存活沙箱的热继续与沙箱销毁后的冷恢复是两个验收项目。工作区和引擎原生会话白名单提供的是可用的持久化构件；本轮若没有完成“容器销毁→恢复工作文件→继续原逻辑会话”的真实测试，就必须保留冷恢复未验收状态。禁止把新建空工作区或仅重放聊天摘要标为完整恢复。
 
