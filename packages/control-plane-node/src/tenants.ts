@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // Workspace provisioning for a newly signed-in user: one tenant and an owner
 // membership, created once. Pure SQL against the control plane's database,
 // so any auth component (and the request-time self-heal) can call it.
@@ -26,8 +27,8 @@ export async function ensureTenantSqlite(
   const now = Date.now();
   const trimmedName = (userName ?? "").trim();
   const emailPrefix = (userEmail ?? "").split("@")[0]?.trim() ?? "";
-  const display = trimmedName || emailPrefix || "User";
-  const tenantName = `${display}'s workspace`;
+  const display = trimmedName || emailPrefix || "用户";
+  const tenantName = `${display}的工作区`;
 
   await sql
     .prepare(`INSERT INTO "tenant" (id, name, "createdAt", "updatedAt") VALUES (?, ?, ?, ?)`)

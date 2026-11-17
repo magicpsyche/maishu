@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /** Wire contract for MAIN_MCP.managedAcpExecutionChannels on the existing
  * sandbox-token authority. Typed mode returns expected failures as values;
  * callers throw locally, never downgrade to empty or legacy channels. */
@@ -9,7 +10,9 @@ export interface ManagedAcpExecutionChannelsRequest {
 
 export interface ManagedAcpExecutionChannels {
   mcpProxy: { gatewayBaseUrl: string; sessionsToken: string };
-  hostedInference: {
+  /** Native account execution uses its own inference, with only MCP proxied. */
+  nativeAuthentication?: true;
+  hostedInference?: {
     gatewayBaseUrl: string;
     sessionsToken: string;
     model: {

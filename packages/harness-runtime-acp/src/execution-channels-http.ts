@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import type { ManagedAcpExecutionChannelsRequest, ManagedAcpExecutionChannelsResult } from "@open-managed-agents/shared/acp-execution-channels-rpc";
 
 /** Outbound caller for the existing control-plane authority. Never retries,
@@ -37,6 +38,8 @@ export function createExecutionChannelsHttpResolver(options: {
     if (!response.ok) throw new Error("Execution channels HTTP " + response.status);
     if (result?.type === "ready") {
       const { mcpProxy, hostedInference } = result.channels ?? {};
+      if (result.channels?.nativeAuthentication === true && hostedInference === undefined
+        && mcpProxy?.sessionsToken === input.sessionsToken && typeof mcpProxy.gatewayBaseUrl === "string") return result;
       if (mcpProxy?.sessionsToken === input.sessionsToken && hostedInference?.sessionsToken === input.sessionsToken
         && typeof mcpProxy.gatewayBaseUrl === "string" && typeof hostedInference.gatewayBaseUrl === "string" && hostedInference.model) return result;
     }

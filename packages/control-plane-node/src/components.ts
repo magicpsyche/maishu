@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // The components a Node control plane is assembled from. A distribution
 // builds each one (or reuses a default) and hands the set to
 // createNodeControlPlane(). The OMA default distribution builds them from
@@ -17,6 +18,8 @@ import type { NodeConfig } from "./config.js";
 import type { EventStreamHub } from "./lib/event-stream-hub.js";
 import type { NodeSessionSandboxAdapter, NodeSessionSandboxProvider } from "./lib/node-session-sandbox.js";
 import type { NodeSecrets } from "./secrets.js";
+import type { SandboxBackendController } from "./sandbox-backend.js";
+import type { HarnessCredentialController } from "./harness-credentials.js";
 
 export interface NodeRealtime {
   /** Fanout for legacy /v1/oma event streams. */
@@ -49,6 +52,10 @@ export interface NodeComponents {
    * sandboxes are then found again by handle through it (design §0.0b A.8)
    * instead of through `sandbox` alone. Ignored with sessionSandboxAdapter. */
   sessionSandboxProvider?: NodeSessionSandboxProvider;
+  /** Instance-level versioned operator settings, when the distribution supports them. */
+  sandboxBackend?: SandboxBackendController;
+  /** Encrypted native account files; independent from proxy Vault secrets. */
+  harnessCredentials?: HarnessCredentialController;
   realtime: NodeRealtime;
   blobs: NodeBlobs;
   /** Replace individual managed-platform stores; anything omitted is SQL-backed. */

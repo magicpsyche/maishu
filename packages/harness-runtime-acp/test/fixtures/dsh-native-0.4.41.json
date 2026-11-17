@@ -1,0 +1,219 @@
+{
+  "adapter": {
+    "name": "dsh-acp",
+    "version": "0.4.41"
+  },
+  "runtime": "0.2.1-rc.5",
+  "provenance": "Actual dedicated runtime, --network none, loopback synthetic Messages SSE; no real account",
+  "foreground": [
+    {
+      "sessionUpdate": "tool_call",
+      "toolCallId": "fixture_bash",
+      "title": "bash",
+      "name": "bash",
+      "kind": "execute",
+      "status": "pending",
+      "rawInput": {
+        "arguments": ""
+      },
+      "content": [
+        {
+          "type": "terminal",
+          "terminalId": "fixture_bash"
+        }
+      ],
+      "_meta": {
+        "terminal_info": {
+          "terminal_id": "fixture_bash",
+          "cwd": "/tmp/maishu-dsh-profile-cv8j1yn1"
+        }
+      }
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "title": "sleep 0.3; printf fixture-complete > marker.txt; printf fixture-complete",
+      "name": "bash",
+      "kind": "execute",
+      "status": "pending",
+      "rawInput": {
+        "description": "Write offline fixture completion marker",
+        "command": "sleep 0.3; printf fixture-complete > marker.txt; printf fixture-complete",
+        "timeoutMs": 10000
+      }
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "title": "sleep 0.3; printf fixture-complete > marker.txt; printf fixture-complete",
+      "kind": "execute",
+      "rawInput": {
+        "description": "Write offline fixture completion marker",
+        "command": "sleep 0.3; printf fixture-complete > marker.txt; printf fixture-complete",
+        "timeoutMs": 10000
+      },
+      "locations": []
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "title": "sleep 0.3; printf fixture-complete > marker.txt; printf fixture-complete",
+      "name": "bash",
+      "kind": "execute",
+      "status": "in_progress",
+      "rawInput": {
+        "description": "Write offline fixture completion marker",
+        "command": "sleep 0.3; printf fixture-complete > marker.txt; printf fixture-complete",
+        "timeoutMs": 10000
+      },
+      "locations": []
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "status": "in_progress",
+      "_meta": {
+        "terminal_output": {
+          "terminal_id": "fixture_bash",
+          "data": "fixture-complete"
+        }
+      }
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "status": "completed",
+      "rawOutput": {
+        "output": "fixture-complete",
+        "isError": false
+      },
+      "_meta": {
+        "dsh": {
+          "toolResult": {
+            "value": {
+              "kind": "foreground",
+              "cwd": "/tmp/maishu-dsh-profile-cv8j1yn1",
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "aborted": false,
+              "timeoutMs": 10000,
+              "stdout": {
+                "text": "fixture-complete",
+                "truncated": false
+              },
+              "stderr": {
+                "text": "",
+                "truncated": false
+              },
+              "sandbox": {
+                "mode": "danger-full-access",
+                "denied": false
+              }
+            }
+          }
+        },
+        "terminal_exit": {
+          "terminal_id": "fixture_bash",
+          "exit_code": 0,
+          "signal": null
+        }
+      }
+    }
+  ],
+  "promoted": [
+    {
+      "sessionUpdate": "tool_call",
+      "toolCallId": "fixture_bash",
+      "title": "bash",
+      "name": "bash",
+      "kind": "execute",
+      "status": "pending",
+      "rawInput": {
+        "arguments": ""
+      },
+      "content": [
+        {
+          "type": "terminal",
+          "terminalId": "fixture_bash"
+        }
+      ],
+      "_meta": {
+        "terminal_info": {
+          "terminal_id": "fixture_bash",
+          "cwd": "/tmp/maishu-dsh-profile-_tk3pj_9"
+        }
+      }
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "title": "sleep 1; printf fixture-complete > marker.txt; printf fixture-complete",
+      "name": "bash",
+      "kind": "execute",
+      "status": "pending",
+      "rawInput": {
+        "description": "Write offline fixture completion marker",
+        "command": "sleep 1; printf fixture-complete > marker.txt; printf fixture-complete",
+        "timeoutMs": 1
+      }
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "title": "sleep 1; printf fixture-complete > marker.txt; printf fixture-complete",
+      "kind": "execute",
+      "rawInput": {
+        "description": "Write offline fixture completion marker",
+        "command": "sleep 1; printf fixture-complete > marker.txt; printf fixture-complete",
+        "timeoutMs": 1
+      },
+      "locations": []
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "title": "sleep 1; printf fixture-complete > marker.txt; printf fixture-complete",
+      "name": "bash",
+      "kind": "execute",
+      "status": "in_progress",
+      "rawInput": {
+        "description": "Write offline fixture completion marker",
+        "command": "sleep 1; printf fixture-complete > marker.txt; printf fixture-complete",
+        "timeoutMs": 1
+      },
+      "locations": []
+    },
+    {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "fixture_bash",
+      "status": "completed",
+      "rawOutput": {
+        "output": "[still running after 1ms; moved to background job bash-a3134b4ebb93455d]\nThe command keeps running in the background. You will be notified when it finishes; read newer output with job_output, stop it with job_kill.",
+        "isError": false
+      },
+      "_meta": {
+        "dsh": {
+          "toolResult": {
+            "value": {
+              "kind": "promoted",
+              "cwd": "/tmp/maishu-dsh-profile-_tk3pj_9",
+              "jobId": "bash-a3134b4ebb93455d",
+              "timeoutMs": 1,
+              "output": ""
+            }
+          }
+        },
+        "terminal_output": {
+          "terminal_id": "fixture_bash",
+          "data": "[still running after 1ms; moved to background job bash-a3134b4ebb93455d]\nThe command keeps running in the background. You will be notified when it finishes; read newer output with job_output, stop it with job_kill."
+        },
+        "terminal_exit": {
+          "terminal_id": "fixture_bash",
+          "exit_code": 0,
+          "signal": null
+        }
+      }
+    }
+  ]
+}

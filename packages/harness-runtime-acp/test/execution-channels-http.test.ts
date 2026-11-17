@@ -1,6 +1,16 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { createServer } from "node:http";
 import { expect, it } from "vitest";
 import { createExecutionChannelsHttpResolver } from "../src/execution-channels-http";
+
+it("accepts explicit native account authority without a fabricated hosted model", async () => {
+  const resolve = createExecutionChannelsHttpResolver({ apiBaseUrl: "https://control.test", fetch: async () => Response.json({ type: "ready", channels: {
+    mcpProxy: { gatewayBaseUrl: "https://control.test", sessionsToken: "oma_sbx_native-holder" }, nativeAuthentication: true,
+  } }) });
+  const result = await resolve({ tenantId: "t", sessionId: "s", sessionsToken: "oma_sbx_native-holder" });
+  expect(result).toMatchObject({ type: "ready", channels: { nativeAuthentication: true } });
+  expect(result.type === "ready" && result.channels.hostedInference).toBeUndefined();
+});
 
 it("uses the existing sandbox bearer only on the existing Session channels endpoint", async () => {
   const resolve = createExecutionChannelsHttpResolver({apiBaseUrl:"https://control.test/base",fetch:async(input,init)=>{

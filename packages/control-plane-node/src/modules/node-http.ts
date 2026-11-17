@@ -1,4 +1,8 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { nodeCoreCustomToolsHttp } from "../lib/node-core-custom-tools-http.js";
+import { registerMaishuApiAliases } from "../lib/maishu-api-aliases.js";
+import { sandboxBackendRoutes } from "../lib/sandbox-backend-http.js";
+import { harnessCredentialRoutes } from "../lib/harness-credentials-http.js";
 import { nodeWorkBootstrapRoutes } from "./node-work-bootstrap.js";
 import { SqlWorkFinalization } from "@open-managed-agents/managed-agents-adapters-sql";
 import { WorkFinalizationApplication, type WorkFinalizationHostPort } from "@open-managed-agents/managed-agents-application";
@@ -361,6 +365,16 @@ export async function mountNodeHttp(runtime: NodeRuntime, disposables: Disposabl
   }>();
   // The Matter service acts in a workspace with the shared proxy secret.
   v1.use("*", config.http.matter ? matterTrustedAuth(config.http.matter.proxySecret, authMw) : authMw);
+  v1.route("/oma/admin/sandbox-backend", sandboxBackendRoutes({
+    controller: runtime.sandboxBackend,
+    administratorIds: (config.sandbox.environment.PLATFORM_ADMIN_USER_IDS ?? "").split(",").map(id => id.trim()).filter(Boolean),
+    deploymentKey: config.http.apiKey,
+  }));
+  v1.route("/oma/admin/harness-credentials", harnessCredentialRoutes({
+    controller: runtime.harnessCredentials,
+    administratorIds: (config.sandbox.environment.PLATFORM_ADMIN_USER_IDS ?? "").split(",").map(id => id.trim()).filter(Boolean),
+    deploymentKey: config.http.apiKey,
+  }));
 
   v1.post("/oma/sessions/:sessionId/runtime-events", async (c) => {
     const credential = c.get("auth_credential");
@@ -713,6 +727,8 @@ export async function mountNodeHttp(runtime: NodeRuntime, disposables: Disposabl
   // Operator SANDBOX_IMAGES catalog for `_oma.sandbox_image`; aliases only.
   v1.route("/oma/sandbox_images", buildSandboxImageRoutes(config.sandbox.images ?? EMPTY_SANDBOX_IMAGE_CATALOG));
   v1.get("/oma/runtimes", (c) => c.json({ data: [] }));
+  v1.get("/oma/capabilities", (c) => c.json({ runtime_bridge: false, remote_sandbox: true,
+    sandbox_backend_settings: runtime.sandboxBackend !== undefined, harness_credentials: runtime.harnessCredentials !== undefined }));
   v1.get("/oma/stats", async (c) => {
     const tenantId = c.get("tenant_id");
     const managedApp = managedPlatform.app({ workspaceId: tenantId });
@@ -1074,6 +1090,7 @@ export async function mountNodeHttp(runtime: NodeRuntime, disposables: Disposabl
     return c.json({ data: r.results ?? [] });
   });
 
+  registerMaishuApiAliases(v1);
   app.route("/v1", v1);
   mountKimiKhaCompat(app, config.http.kimiKhaCompat, (request, options) =>
     app.fetch(request, { khaRequireRunningInterrupt: options?.requireRunningInterrupt }));

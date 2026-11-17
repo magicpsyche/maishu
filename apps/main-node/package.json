@@ -32,14 +32,16 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1096.0",
     "@fly/sprites": "^0.2.2",
+    "@open-managed-agents/agent-store-sql": "workspace:*",
     "@open-managed-agents/auth-config": "workspace:*",
     "@open-managed-agents/blob-store": "workspace:*",
     "@open-managed-agents/control-plane-node": "workspace:*",
     "@open-managed-agents/email": "workspace:*",
     "@open-managed-agents/event-log": "workspace:*",
     "@open-managed-agents/managed-agents-adapters-http": "workspace:*",
-    "@open-managed-agents/managed-runtime-sprites": "workspace:*",
+    "@open-managed-agents/managed-agents-adapters-sql": "workspace:*",
     "@open-managed-agents/managed-runtime-cloudflare-bridge": "workspace:*",
+    "@open-managed-agents/managed-runtime-sprites": "workspace:*",
     "@open-managed-agents/memory-store": "workspace:*",
     "@open-managed-agents/node-database": "workspace:*",
     "@open-managed-agents/node-database-mysql": "workspace:*",
@@ -54,6 +56,7 @@
     "@open-managed-agents/sandbox-adapter-litebox": "workspace:*",
     "@open-managed-agents/sandbox-adapter-opensandbox": "workspace:*",
     "@open-managed-agents/schema": "workspace:*",
+    "@open-managed-agents/session-runtime": "workspace:*",
     "@open-managed-agents/shared": "workspace:*",
     "@open-managed-agents/sql-client": "workspace:*",
     "croner": "^9.0.0",
@@ -77,7 +80,6 @@
     "@open-managed-agents/agent": "workspace:*",
     "@open-managed-agents/agent-harness": "workspace:*",
     "@open-managed-agents/agent-store-memory": "workspace:*",
-    "@open-managed-agents/agent-store-sql": "workspace:*",
     "@open-managed-agents/auth": "workspace:*",
     "@open-managed-agents/credentials-store": "workspace:*",
     "@open-managed-agents/db-schema": "workspace:*",
@@ -86,7 +88,6 @@
     "@open-managed-agents/http-routes": "workspace:*",
     "@open-managed-agents/integrations-core": "workspace:*",
     "@open-managed-agents/managed-agents-adapters-runtime": "workspace:*",
-    "@open-managed-agents/managed-agents-adapters-sql": "workspace:*",
     "@open-managed-agents/managed-agents-application": "workspace:*",
     "@open-managed-agents/mcp-access-loss": "workspace:*",
     "@open-managed-agents/model-cards-store": "workspace:*",
@@ -96,7 +97,6 @@
     "@open-managed-agents/queue": "workspace:*",
     "@open-managed-agents/session-realtime": "workspace:*",
     "@open-managed-agents/session-realtime-memory": "workspace:*",
-    "@open-managed-agents/session-runtime": "workspace:*",
     "@open-managed-agents/session-runtime-contract": "workspace:*",
     "@open-managed-agents/session-runtime-sql": "workspace:*",
     "@open-managed-agents/session-thread-store-sql": "workspace:*",
@@ -115,5 +115,6 @@
     "pg": "^8.20.0",
     "tsx": "^4.19.0",
     "vitest": "^5.0.5"
-  }
+  },
+  "x-maishu-modified": true
 }

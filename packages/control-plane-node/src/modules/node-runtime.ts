@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { describeWorkDispatchError } from "../lib/work-dispatch-error.js";
 import { createNodeWorkFinalizationHost } from "../lib/work-finalization-host/index.js";
 import { createNodeWorkArtifactPublisher } from "../openai-artifact-publication.js";
@@ -119,6 +120,8 @@ export async function createNodeRuntime(
   });
 
   const managedEnvironmentWorkWorker = createNodeEnvironmentWorkWorker({
+    harnessCredentials: components.harnessCredentials,
+    prepareSessionInputs: managed.prepareWorkSessionInputs,
     tracer,
     sql, config, work: managedEnvironmentWorkStore, sandboxes: sessionSandboxes, capabilities: managedAcpCapabilities,
     application: workspaceId => managedPlatform.app({ workspaceId }).port(managedAgentsPortTokens.environmentWork),
@@ -284,6 +287,8 @@ export async function createNodeRuntime(
 
   return {
     workFinalizationHost,
+    sandboxBackend: components.sandboxBackend,
+    harnessCredentials: components.harnessCredentials,
     sessionSandboxes,
     config,
     processMode,

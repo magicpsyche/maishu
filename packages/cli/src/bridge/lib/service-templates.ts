@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /**
  * Pure-template builders for the macOS launchd plist, Linux systemd
  * unit, and Windows Task Scheduler .cmd shim. Split out from the
@@ -105,7 +106,7 @@ export function buildUnit(opts: BuilderOpts): string {
   const profile = currentProfile();
   const profileLine = profile ? `\nEnvironment=OMA_PROFILE=${profile}` : "";
   return `[Unit]
-Description=OMA Bridge Daemon
+Description=${process.env.MAISHU_CLI === "1" ? "Maishu Bridge" : "OMA Bridge Daemon"}
 Documentation=https://github.com/openma-ai/open-managed-agents
 After=network-online.target
 Wants=network-online.target

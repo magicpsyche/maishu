@@ -16,9 +16,9 @@ packages:
 # for the adapter it selects.
 autoInstallPeers: false
 
-# pnpm v11 reads ALL pnpm config from this file — `pnpm` block in
-# package.json is no longer honored. Keep peerDependencyRules + the
-# build allowlist here.
+# pnpm v11 reads workspace configuration here. Keep peerDependencyRules
+# and the build allowlist here. Its patch resolver still requires the exact
+# patchedDependencies map mirrored in package.json.pnpm (verified on 11.0.8).
 peerDependencyRules:
   allowAny:
     - zod
@@ -54,3 +54,7 @@ overrides:
   mysql2: 3.24.6
   # Keep third-party Matter consumers on the same published common contract.
   "@openma/common": 0.14.0
+
+# Version-scoped DSH permission profile; see deploy/maishu/runtime/DSH-COMPATIBILITY.md.
+patchedDependencies:
+  '@openma/common@0.14.0': patches/@openma__common@0.14.0.patch

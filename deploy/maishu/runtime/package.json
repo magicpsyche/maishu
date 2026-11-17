@@ -1,0 +1,17 @@
+{
+  "name": "maishu-runtime-tools",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@openai/codex": "0.166.0",
+    "@agentclientprotocol/codex-acp": "1.8.0",
+    "@anthropic-ai/claude-code": "2.1.326",
+    "@agentclientprotocol/claude-agent-acp": "0.94.0",
+    "@openma/deepseek-harness-acp": "0.4.41",
+    "pnpm": "11.28.12"
+  },
+  "overrides": {
+    "@openai/codex": "0.166.0",
+    "zod": "4.6.7"
+  }
+}

@@ -184,3 +184,33 @@ pnpm --filter @open-managed-agents/sandbox-adapter-opensandbox test:certificatio
 
 The live checks create temporary remote sandboxes and one snapshot, and delete
 them in cleanup. The snapshot check needs a server runtime with snapshot support.
+
+### Trusted native management processes (Docker)
+
+Node Environment Work execution requires a prestarted management plane in addition
+ to ACP duplex stdio. Opt in with `OPENSANDBOX_MANAGED_BOOTSTRAP=1` and
+`OPENSANDBOX_RUNTIME=docker`. The image must provide the trusted entrypoint
+`/usr/local/bin/maishu-managed-init`, which starts the existing root-owned native
+launcher before tasks run. The adapter does not install or start that launcher
+through the command API. Deployments that do not opt in retain the original
+entrypoint and ordinary sandbox behavior.
+
+The management file protocol lives in `sandbox-port-kit/managed-bootstrap` and is
+shared with the E2B adapter without importing a vendor SDK. It replaces the child
+environment before executable startup, keeps one flock-protected worker slot,
+and binds recovery to process UUID, launcher epoch, claim identity, sandbox ID,
+and token holder hash. OpenSandbox publishes trigger files by uploading an
+ignored pending file and atomically moving it to the watched filename, so the
+launcher cannot consume a partially finalized upload. Ambiguous launch outcomes
+are not retried or replaced by shell spawning.
+
+`connectWorkReadonly` only attaches to an existing running sandbox through
+provider/endpoint/health GET requests. It does not resume, renew, execute `pwd`,
+create directories, hydrate inputs or issue a new token. The Node control plane
+still checks the current claim, generation and exact process holder before
+using it for Work finalization. Paused/unknown/read-failed states are errors;
+only definitive provider 404 is reported as gone.
+
+These controls prevent accidental environment inheritance and incorrect process
+recovery; they do not hide the management plane from a malicious root process
+inside the same container. The outer container remains the isolation boundary.

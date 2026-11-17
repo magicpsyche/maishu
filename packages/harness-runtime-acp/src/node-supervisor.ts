@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import {nodeWorkOutputJournal} from './node-work-output-journal.js';
 import {preparePiCoreMcp} from './core-custom-mcp-plan.js';
 import { log as logInfo } from "@open-managed-agents/shared/log";
@@ -352,6 +353,10 @@ export function createNodeManagedAcpSupervisorApp(
           cwd: resolved.cwd ?? resourceFacts.workspaceRoot,
           env: {
             ...reconcileSessionResourceEnvironment(resourceFacts, resolved.env ?? {}, Object.keys(process.env)),
+            ...(resolved.command === "/usr/local/bin/maishu-harness" && environment.MAISHU_AUTH_MODE ? {
+              MAISHU_AUTH_MODE: environment.MAISHU_AUTH_MODE,
+              MAISHU_CREDENTIAL_REF: environment.MAISHU_CREDENTIAL_REF,
+            } : {}),
             ...scrubbedEnvironment,
             ...(active.outputPath === null
               ? { OUTPUT_PATH: undefined }
@@ -368,7 +373,11 @@ export function createNodeManagedAcpSupervisorApp(
         let agent: AcpStatefulAgentSpec = baseAgent;
         const inference = session.agent.inference;
         if ((inference?.provider_id || session.agent.mcp_servers.some(server => server.type === "url")) && active.channels === null) throw new Error("ACP execution channels authority is required; Work credentials cannot authorize model/MCP");
-        if (active.channels !== null) {
+        const nativeAccount = baseAgent.command === "/usr/local/bin/maishu-harness" && baseAgent.env?.MAISHU_AUTH_MODE === "native";
+        if (active.channels?.nativeAuthentication === true && !nativeAccount) throw new Error("Native account capability does not match the selected harness");
+        if (nativeAccount && active.channels?.nativeAuthentication !== true) throw new Error("Native account execution capability is required");
+        if (active.channels !== null && !nativeAccount) {
+          if (!active.channels.hostedInference) throw new Error("Hosted inference execution capability is required");
           const boundAgentId = binding.agent.id;
           if (boundAgentId !== undefined && ["claude-acp", "claude-agent-acp", "claude-code-acp"].includes(boundAgentId)) {
             const endpoints = active.channels.hostedInference.model.protocolEndpoints;
@@ -382,16 +391,16 @@ export function createNodeManagedAcpSupervisorApp(
           }
           const hosted = (() => { try { return wireHostedInferenceForAcpLaunch({
             sessionId: session.id,
-            gatewayBaseUrl: active.channels!.hostedInference.gatewayBaseUrl,
-            sessionsToken: active.channels!.hostedInference.sessionsToken,
+            gatewayBaseUrl: active.channels!.hostedInference!.gatewayBaseUrl,
+            sessionsToken: active.channels!.hostedInference!.sessionsToken,
             env: baseAgent.env ?? {},
             agent: binding.agent,
             nativePath: binding.nativePath,
             model: {
-              wireModel: active.channels!.hostedInference.model.wireModel ?? modelHandle,
-              providerId: active.channels!.hostedInference.model.providerId,
-              baseUrl: active.channels!.hostedInference.model.baseUrl,
-              protocolEndpoints: active.channels!.hostedInference.model.protocolEndpoints,
+              wireModel: active.channels!.hostedInference!.model.wireModel ?? modelHandle,
+              providerId: active.channels!.hostedInference!.model.providerId,
+              baseUrl: active.channels!.hostedInference!.model.baseUrl,
+              protocolEndpoints: active.channels!.hostedInference!.model.protocolEndpoints,
             },
           });
           } catch (error) {
@@ -435,7 +444,8 @@ export function createNodeManagedAcpSupervisorApp(
               session_id: session.id,
               agent_id: session.agent.id,
               agent_version: session.agent.version,
-              model: session.agent.model,
+              // "native" is platform metadata, not an upstream model id.
+              ...(nativeAccount ? {} : { model: session.agent.model }),
               skills: session.agent.skills,
               tools: session.agent.tools,
             },
@@ -751,13 +761,16 @@ function validateExecutionChannels(result: ManagedAcpExecutionChannelsResult, wo
   if (result?.type !== "ready") return invalid();
   const {mcpProxy,hostedInference} = result.channels ?? {};
   const token = mcpProxy?.sessionsToken;
-  if (typeof token !== "string" || token === workToken || sandboxTokenRandomPart(token) === null
-    || hostedInference?.sessionsToken !== token) return invalid();
-  for (const raw of [mcpProxy.gatewayBaseUrl,hostedInference.gatewayBaseUrl]) {
+  if (typeof token !== "string" || token === workToken || sandboxTokenRandomPart(token) === null) return invalid();
+  const native = result.channels.nativeAuthentication === true;
+  if (native ? hostedInference !== undefined : hostedInference?.sessionsToken !== token) return invalid();
+  for (const raw of [mcpProxy.gatewayBaseUrl, ...(hostedInference ? [hostedInference.gatewayBaseUrl] : [])]) {
     if (typeof raw !== "string" || !raw.trim()) return invalid();
     let url: URL; try { url = new URL(raw); } catch { return invalid(); }
     if (!["http:","https:"].includes(url.protocol) || url.username || url.password) return invalid();
   }
+  if (native) return;
+  if (!hostedInference) return invalid();
   const model = hostedInference.model;
   if (!model || typeof model.providerId !== "string" || !model.providerId.trim()
     || !(model.baseUrl === null || typeof model.baseUrl === "string" && model.baseUrl.trim())) return invalid();

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // OpenMA ports backed by the official OpenSandbox SDK. Provider credentials
 // stay in the control-plane connection config, never in the sandbox environment.
 import { randomInt } from "node:crypto";
@@ -7,9 +8,13 @@ import type {
   SandboxCheckpointHandle, SandboxCheckpointKind, SandboxDuplexProcessPort, SandboxDuplexProcessSpec,
   SandboxFactory, SandboxFactoryEnv, SandboxPort, SandboxProviderPort,
   SandboxRuntimeHandle, SandboxRuntimePort, SandboxRuntimeStatus,
+  SandboxManagedProcessSpec, SandboxManagedProcessHandle,
 } from "@open-managed-agents/sandbox";
 import { DEFAULT_WORKSPACE_ROOT, PLATFORM_ROOT, workspaceRootFromProbe } from "@open-managed-agents/sandbox";
 import { spawnBridge } from "./stdio-bridge";
+import { startE2BManagedProcess, inspectE2BManagedSlot, restoreE2BManagedProcess,
+  type ManagedBootstrapHost, type E2BManagedIdentity, type E2BManagedLocator,
+} from "@open-managed-agents/sandbox-port-kit/managed-bootstrap";
 
 export interface OpenSandboxOptions {
   domain: string;
@@ -27,6 +32,8 @@ export interface OpenSandboxOptions {
   /** What a pause retains on the declared backend; memory only when the operator declares it. */
   suspendKind: "filesystem" | "memory";
   volumes: Volume[];
+  /** Trusted image entrypoint prestarts the root-only native management launcher. */
+  managedBootstrap?: boolean;
 }
 
 /** Backends whose pause retains memory and processes (Docker freeze; Fast Sandbox vmstate per docs). */
@@ -134,6 +141,8 @@ export function optionsFromEnvironment(env: SandboxFactoryEnv): OpenSandboxOptio
     throw new Error("OPENSANDBOX_TEMPLATE_ID requires OPENSANDBOX_RUNTIME=fast");
   }
   const volumes = volumesFromEnvironment(env);
+  if (env.OPENSANDBOX_MANAGED_BOOTSTRAP !== undefined && !["0", "1"].includes(env.OPENSANDBOX_MANAGED_BOOTSTRAP)) throw new Error("OPENSANDBOX_MANAGED_BOOTSTRAP must be 0 or 1");
+  if (env.OPENSANDBOX_MANAGED_BOOTSTRAP === "1" && env.OPENSANDBOX_RUNTIME !== "docker") throw new Error("OpenSandbox native management currently requires the Docker backend");
   if (env.OPENSANDBOX_RUNTIME === "fast" && volumes.length) {
     throw new Error("Fast Sandbox does not support OPENSANDBOX_VOLUMES");
   }
@@ -151,6 +160,7 @@ export function optionsFromEnvironment(env: SandboxFactoryEnv): OpenSandboxOptio
     snapshotPollMs: positive(env.OPENSANDBOX_SNAPSHOT_POLL_MS, 1_000, "OPENSANDBOX_SNAPSHOT_POLL_MS"),
     suspendKind,
     volumes,
+    ...(env.OPENSANDBOX_MANAGED_BOOTSTRAP === "1" ? { managedBootstrap: true } : {}),
   };
 }
 
@@ -185,6 +195,9 @@ export class OpenSandbox implements SandboxPort, SandboxRuntimePort, SandboxDupl
   private env: Record<string, string> = {};
   private secrets: Array<{ prefix: string; values: Record<string, string> }> = [];
   private destroyed = false;
+  private managedClosed = false;
+  private managedDestroying = false;
+  private readonly managedOperations = new Set<Promise<unknown>>();
   readonly id: string;
 
   constructor(
@@ -360,8 +373,81 @@ export class OpenSandbox implements SandboxPort, SandboxRuntimePort, SandboxDupl
   async spawnDuplexProcess(spec: SandboxDuplexProcessSpec) {
     return spawnBridge(this, spec, randomInt(45000, 65000));
   }
+  /** File mailbox only. Never installs a launcher or dispatches shell commands. */
+  private managementTransport(): ManagedBootstrapHost {
+    if (!this.options.managedBootstrap || this.destroyed || this.managedDestroying) throw new Error("Trusted OpenSandbox management image is required");
+    return {
+      sandboxId: this.id,
+      files: {
+        read: async path => {
+          try { return Buffer.from(await this.client.files.readBytes(path)).toString("utf8"); }
+          catch (error) {
+            if (statusCode(error) === 404) throw Object.assign(new Error("Management response not found"), { code: "ENOENT" });
+            throw providerError("management read", error);
+          }
+        },
+        write: async (path, data) => {
+          try {
+            if (path.endsWith(".go")) {
+              // Execd upload finalizes metadata after writing. Publishing the
+              // watched filename during upload races launcher unlink/chmod;
+              // upload an ignored marker, then atomically rename it instead.
+              const pending = path + ".pending";
+              await this.client.files.writeFiles([{ path: pending, data: Buffer.from("trigger"), mode: 600 }]);
+              await this.client.files.moveFiles([{ src: pending, dest: path }]);
+            } else await this.client.files.writeFiles([{ path, data: typeof data === "string" ? Buffer.from(data) : data, mode: 600 }]);
+          }
+          catch (error) { throw providerError("management write", error); }
+        },
+      },
+      getInfo: async () => {
+        try { return await this.client.getInfo(); }
+        catch (error) {
+          if (statusCode(error) === 404) throw Object.assign(new Error("Exact sandbox is absent"), { name: "SandboxNotFoundError" });
+          throw providerError("management lookup", error);
+        }
+      },
+    };
+  }
+  private async managementOperation<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.destroyed || this.managedDestroying) throw new Error("OpenSandbox management is closed");
+    const pending = operation(); this.managedOperations.add(pending);
+    try { const value = await pending; if (this.destroyed || this.managedDestroying) throw new Error("OpenSandbox management is closed"); return value; }
+    finally { this.managedOperations.delete(pending); }
+  }
+  async startManagedProcess(spec: SandboxManagedProcessSpec, identity?: E2BManagedIdentity): Promise<SandboxManagedProcessHandle> {
+    if (this.managedClosed) throw new Error("OpenSandbox management launch outcome is unresolved");
+    return this.managementOperation(async () => {
+      try { return await startE2BManagedProcess(this.managementTransport(), {}, spec, identity); }
+      catch (error) { if ((error as { outcome?: string }).outcome === "unknown") this.managedClosed = true; throw error; }
+    });
+  }
+  managementBootstrapEnabled(): boolean { return this.options.managedBootstrap === true; }
+  async inspectManagedProcessSlot(): Promise<E2BManagedLocator> {
+    return this.managementOperation(() => inspectE2BManagedSlot(this.managementTransport(), {}));
+  }
+  async restoreManagedProcess(locator: E2BManagedLocator): Promise<SandboxManagedProcessHandle> {
+    return this.managementOperation(() => restoreE2BManagedProcess(this.managementTransport(), {}, locator));
+  }
+  async waitForManagementReady(): Promise<void> {
+    if (!this.options.managedBootstrap) return;
+    const transport = this.managementTransport();
+    const deadline = Date.now() + Math.min(this.options.readyTimeoutMs, 30000);
+    while (true) {
+      try {
+        if (await transport.files.read("/run/oma-managed/ready", { user: "root" }) !== "oma-managed-v2") throw new Error("Trusted OpenSandbox management image is not ready");
+        return;
+      } catch (error) {
+        if ((error as { code?: string }).code !== "ENOENT" || Date.now() >= deadline) throw error;
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+  }
   async destroy(): Promise<void> {
     if (this.destroyed) return;
+    this.managedClosed = true;
+    this.managedDestroying = true;
+    await Promise.allSettled([...this.managedOperations]);
     try { await this.client.kill(); }
     catch (error) { if (statusCode(error) !== 404) throw providerError("request", error); }
     await this.client.close();
@@ -431,12 +517,13 @@ async function allocate(
         // overriding the fixed Fast Sandbox pool profile during restore.
         resource: options.runtime === "fast" ? {} : { cpu: options.cpu, memory: options.memory },
         ...(options.volumes.length ? { volumes: options.volumes } : {}),
-        entrypoint: ["tail", "-f", "/dev/null"],
+        entrypoint: options.managedBootstrap ? ["/usr/local/bin/maishu-managed-init"] : ["tail", "-f", "/dev/null"],
       });
   } catch (error) { throw providerError(operation, error); }
   let sandbox = new OpenSandbox(client, options);
   try {
     sandbox = new OpenSandbox(client, options, await prepareWorkspace(client));
+    await sandbox.waitForManagementReady();
     return sandbox;
   } catch (error) {
     await sandbox.destroy().catch(() => undefined);
@@ -483,6 +570,28 @@ export const sandboxProvider: SandboxProviderPort<OpenSandbox> = {
     return allocate(ctx, env, checkpoint.checkpointId);
   },
 };
+
+/** Exact read-only attachment for a live management holder. Never allocates,
+ * resumes, renews, executes commands or hydrates workspace/input files. */
+export async function connectWorkReadonly(handle: SandboxRuntimeHandle, _ctx: Parameters<SandboxProviderPort["create"]>[0], env: SandboxFactoryEnv): Promise<OpenSandbox | "gone"> {
+  if (handle.provider !== "opensandbox" || !handle.runtimeId) throw new Error("Incompatible OpenSandbox runtime handle");
+  const options = optionsFromEnvironment(env);
+  if (!options.managedBootstrap) throw new Error("Trusted OpenSandbox management image is required for readonly attachment");
+  const sdk = await loadSdk();
+  const manager = sdk.SandboxManager.create({ connectionConfig: configuration(sdk, options) });
+  try {
+    const state = (await manager.getSandboxInfo(handle.runtimeId)).status.state.toLowerCase();
+    if (state !== "running") throw new Error("Readonly Work attachment requires a running sandbox");
+  } catch (error) {
+    if (statusCode(error) === 404) return "gone";
+    throw error instanceof Error && error.message.startsWith("Readonly") ? error : providerError("readonly attach", error);
+  } finally { await manager.close(); }
+  try {
+    const client = await sdk.Sandbox.connect({ sandboxId: handle.runtimeId, connectionConfig: configuration(sdk, options),
+      readyTimeoutSeconds: options.readyTimeoutMs / 1000, signal: AbortSignal.timeout(options.readyTimeoutMs) });
+    return new OpenSandbox(client, options);
+  } catch (error) { throw providerError("readonly attach", error); }
+}
 // Every create owns a fresh provider ID; resume and destroy use captured IDs.
 export const sandboxFactory: SandboxFactory = Object.assign((
   ctx: Parameters<SandboxFactory>[0], env: Parameters<SandboxFactory>[1],

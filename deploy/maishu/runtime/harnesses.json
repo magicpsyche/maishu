@@ -1,0 +1,26 @@
+[
+  {
+    "id": "codex-acp",
+    "version": "1.8.0",
+    "command": "/usr/local/bin/maishu-harness",
+    "args": [
+      "codex"
+    ]
+  },
+  {
+    "id": "claude-acp",
+    "version": "0.94.0",
+    "command": "/usr/local/bin/maishu-harness",
+    "args": [
+      "claude"
+    ]
+  },
+  {
+    "id": "dsh-acp",
+    "version": "0.4.41",
+    "command": "/usr/local/bin/maishu-harness",
+    "args": [
+      "dsh"
+    ]
+  }
+]

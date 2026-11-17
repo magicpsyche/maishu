@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { DEFAULT_SESSION_EXECUTION_LEASE_TTL_MS } from "@open-managed-agents/session-runtime";
 // The only place the Node control plane reads environment variables.
 //
@@ -202,6 +203,7 @@ export function loadNodeConfig(env: NodeEnvironment): NodeConfig {
     execution: {
       ownerId: env.OMA_SESSION_EXECUTION_OWNER_ID ?? `node:${process.pid}:${nanoid()}`,
       concurrency: integer("OMA_SESSION_EXECUTION_CONCURRENCY", 8, { min: 1 }),
+      managementRpcWaitMs: integer("MAISHU_MANAGEMENT_RPC_WAIT_MS", 1_000, { min: 1, max: 89_999 }),
       leaseTtlMs: integer("OMA_SESSION_EXECUTION_LEASE_TTL_MS", DEFAULT_SESSION_EXECUTION_LEASE_TTL_MS, { min: 3 }),
     },
     workspace: {

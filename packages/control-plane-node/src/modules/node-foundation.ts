@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /**
  * apps/main-node — Node control-plane assembly for the Open Managed Agents API.
  *
@@ -241,7 +242,10 @@ export async function createNodeFoundation(
 
   const filesBlob: BlobStore = components.blobs.files.store;
   const filesBlobDescription = components.blobs.files.description;
-  const sharedSessionOutputs = config.blobs.files.kind === "s3"
+  // Remote OpenSandbox has no host-filesystem mount. Reuse fenced output
+  // collection with the configured BlobStore, including a single-node LocalFs
+  // store on the control VPS; a remote execution host does not require S3.
+  const sharedSessionOutputs = config.blobs.files.kind === "s3" || config.processMode === "standalone" && config.sandbox.environment.SANDBOX_PROVIDER === "opensandbox"
     ? new NodeSharedSessionOutputs({ sql, blobs: filesBlob })
     : undefined;
   await sharedSessionOutputs?.ensureSchema(dialect);

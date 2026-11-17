@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { humanText } from "./human-text.js";
 import { createServer } from "node:http";
 import { execSync, execFileSync } from "node:child_process";
 import { connectMcpOAuth } from "./mcp-connect.js";
@@ -92,7 +94,7 @@ function credentialsPath(): string {
   // silently route to a junk path.
   const profile = currentProfile();
   const file = profile ? `credentials.${profile}.json` : "credentials.json";
-  return join(base, "oma", file);
+  return join(base, process.env.MAISHU_CLI === "1" ? "maishu" : "oma", file);
 }
 
 function migrateV1ToV2(v1: StoredCredentialsV1): StoredCredentialsV2 {
@@ -182,9 +184,9 @@ function loadConfig(): Config {
       source: "stored",
     };
   }
-  console.error("Error: not authenticated.");
-  console.error("  Run: oma auth login");
-  console.error("  Or:  export OMA_API_KEY=<your-key>  (mint at /api-keys page)");
+  console.error(humanText("Error: not authenticated."));
+  console.error(humanText("  Run: oma auth login"));
+  console.error(humanText("  Or:  export OMA_API_KEY=<your-key>  (mint at /api-keys page)"));
   process.exit(1);
 }
 
@@ -238,6 +240,7 @@ async function fetchWithRetry(
 }
 
 async function apiFetch<T = unknown>(config: Config, path: string, init?: RequestInit): Promise<T> {
+  if (process.env.MAISHU_CLI === "1") path = path.replace(/^\/v1\/oma(?=\/|$)/, "/v1/maishu");
   const url = `${config.baseUrl}${path}`;
   const res = await fetchWithRetry(url, {
     ...init,
@@ -249,7 +252,7 @@ async function apiFetch<T = unknown>(config: Config, path: string, init?: Reques
       // gets rejected by Cloudflare's bot fight rules on the hosted API with
       // a 1010 ban; a Mozilla-style UA passes the integrity check while
       // still naming the actual client and product page for log readers.
-      "user-agent": "Mozilla/5.0 (compatible; OpenManagedAgents-CLI/0.1; +https://openma.ai)",
+      "user-agent": process.env.MAISHU_CLI === "1" ? "Mozilla/5.0 (compatible; Maishu-CLI)" : "Mozilla/5.0 (compatible; OpenManagedAgents-CLI/0.1; +https://openma.ai)",
       ...init?.headers,
     },
   });
@@ -481,7 +484,7 @@ function readContentArg(args: string[]): string | undefined {
   const inline = flag(args, "--content");
   const fromFile = flag(args, "--from-file");
   if (inline !== undefined && fromFile !== undefined) {
-    console.error("Pass either --content or --from-file, not both.");
+    console.error(humanText("Pass either --content or --from-file, not both."));
     process.exit(1);
   }
   if (inline !== undefined) return inline;
@@ -499,6 +502,7 @@ function readContentArg(args: string[]): string | undefined {
 
 function table(rows: string[][]) {
   if (!rows.length) return;
+  rows = [rows[0].map(humanText), ...rows.slice(1)];
   const widths = rows[0].map((_, i) => Math.max(...rows.map(r => (r[i] || "").length)));
   for (const row of rows) {
     console.log(row.map((c, i) => (c || "").padEnd(widths[i])).join("  "));
@@ -629,9 +633,9 @@ async function authLogin(baseUrl: string, requestedTenant?: string): Promise<voi
     });
     server.listen(port, "127.0.0.1");
 
-    console.log(`Opening browser to authorize CLI…`);
+    console.log(humanText(`Opening browser to authorize CLI…`));
     console.log(`  ${loginUrl}\n`);
-    console.log(`(If the browser doesn't open, copy the URL above into one manually.)`);
+    console.log(humanText(`(If the browser doesn't open, copy the URL above into one manually.)`));
     openBrowser(loginUrl);
   });
 
@@ -685,9 +689,9 @@ async function authLogin(baseUrl: string, requestedTenant?: string): Promise<voi
   writeCredentials(updated);
 
   const activeProfile = updated.tenants[updated.active_tenant_id];
-  console.log(`✓ Signed in as ${me.user?.email ?? me.user?.id}`);
-  console.log(`  Active tenant : ${activeProfile.name || updated.active_tenant_id} (${updated.active_tenant_id})`);
-  console.log(`  Stored        : ${credentialsPath()}`);
+  console.log(humanText(`✓ Signed in as ${me.user?.email ?? me.user?.id}`));
+  console.log(humanText(`  Active tenant : ${activeProfile.name || updated.active_tenant_id} (${updated.active_tenant_id})`));
+  console.log(humanText(`  Stored        : ${credentialsPath()}`));
   const totalStored = Object.keys(tenantsMap).length;
   if (totalStored > 1) {
     console.log(`  Authorized for ${totalStored} workspaces — switch with: oma auth tenant use <id>`);
@@ -720,7 +724,9 @@ function openBrowser(url: string): void {
 }
 
 function approvalPage(title: string, body: string): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>oma — ${title}</title><style>
+  const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  title = escape(humanText(title)); body = escape(humanText(body));
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${process.env.MAISHU_CLI === "1" ? "麦枢" : "oma"} — ${title}</title><style>
 body{font-family:-apple-system,system-ui,sans-serif;max-width:480px;margin:80px auto;padding:0 24px;color:#222}
 h1{font-size:20px;margin-bottom:12px} p{color:#555;line-height:1.5}
 .card{border:1px solid #e5e5e5;border-radius:12px;padding:32px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
@@ -772,22 +778,22 @@ const commands: Cmd[] = [
           tenants: Array<{ id: string; name: string; role: string }>;
         }>(config, "/v1/oma/me");
         if (config.json) { console.log(JSON.stringify({ ...me, base_url: config.baseUrl, source: config.source }, null, 2)); return; }
-        console.log(`Base URL : ${config.baseUrl}`);
-        console.log(`Source   : ${config.source === "env" ? "OMA_API_KEY env var" : "stored credentials"}`);
-        console.log(`User     : ${me.user?.email ?? me.user?.id ?? "(unknown — legacy key without user_id)"}`);
+        console.log(humanText(`Base URL : ${config.baseUrl}`));
+        console.log(humanText(`Source   : ${config.source === "env" ? "OMA_API_KEY env var" : "stored credentials"}`));
+        console.log(humanText(`User     : ${me.user?.email ?? me.user?.id ?? "(unknown — legacy key without user_id)"}`));
         // Show tenant only when the user has more than one — single-tenant
         // users don't need to think about which workspace they're in.
         if (me.tenants.length > 1) {
-          console.log(`Tenant   : ${displayTenantName(me.tenant)} (${me.tenant.id})`);
+          console.log(humanText(`Tenant   : ${displayTenantName(me.tenant)} (${me.tenant.id})`));
           const others = me.tenants.filter((t) => t.id !== me.tenant.id);
           if (others.length) {
             console.log(`Available: ${others.map((t) => t.id).join(", ")} — switch with: oma auth tenant use <id>`);
           }
         }
       } catch (err: any) {
-        console.error(`whoami failed: ${err.message}`);
+        console.error(humanText(`whoami failed: ${err.message}`));
         if (config.source === "stored") {
-          console.error("Stored token may have been revoked. Try: oma auth login");
+          console.error(humanText("Stored token may have been revoked. Try: oma auth login"));
         }
         process.exit(1);
       }
@@ -799,7 +805,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/oma/me/tenants",
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; name: string; role: string }> }>(config, "/v1/oma/me/tenants");
-      if (!data.length) { console.log("No tenants on this account."); return; }
+      if (!data.length) { console.log(humanText("No tenants on this account.")); return; }
       const stored = readCredentials();
       const active = stored?.active_tenant_id;
       table([
@@ -812,8 +818,8 @@ const commands: Cmd[] = [
           stored?.tenants[t.id] ? "stored" : "—",
         ]),
       ]);
-      console.log(`\n* = active. "stored" = local token cached. To switch active: oma auth tenant use <id>`);
-      console.log(`To add a tenant the CLI hasn't seen yet: oma auth login --tenant <id>`);
+      console.log(humanText(`\n* = active. "stored" = local token cached. To switch active: oma auth tenant use <id>`));
+      console.log(humanText(`To add a tenant the CLI hasn't seen yet: oma auth login --tenant <id>`));
     },
   },
   {
@@ -822,10 +828,10 @@ const commands: Cmd[] = [
     http: "(local file update — or POST /v1/oma/me/cli-tokens via browser if no cached token)",
     async run(_config, args) {
       const tenantId = args[0];
-      if (!tenantId) { console.error("Usage: oma auth tenant use <tenant-id>"); process.exit(1); }
+      if (!tenantId) { console.error(humanText("Usage: oma auth tenant use <tenant-id>")); process.exit(1); }
       const stored = readCredentials();
       if (!stored) {
-        console.error("No stored credentials. Run: oma auth login");
+        console.error(humanText("No stored credentials. Run: oma auth login"));
         process.exit(1);
       }
       if (stored.tenants[tenantId]) {
@@ -855,7 +861,7 @@ const commands: Cmd[] = [
       }>(config, "/v1/agents?limit=100");
       const { data } = page;
       if (config.json) { console.log(JSON.stringify(page, null, 2)); return; }
-      if (!data.length) { console.log("No agents. Create one with: oma agents create"); return; }
+      if (!data.length) { console.log(humanText("No agents. Create one with: oma agents create")); return; }
       table([["NAME", "ID", "MODEL", "CREATED"], ...data.map(a => [a.name, a.id, typeof a.model === "string" ? a.model : a.model?.id || "", new Date(a.created_at).toLocaleDateString()])]);
     },
   },
@@ -914,8 +920,8 @@ const commands: Cmd[] = [
       }> }>(config, "/v1/oma/runtimes");
       if (config.json) { console.log(JSON.stringify(runtimes, null, 2)); return; }
       if (!runtimes.length) {
-        console.log("No runtimes. Register one with `oma bridge setup` on the target machine");
-        console.log("(headless machine: `oma runtime pair` prints a one-time setup command).");
+        console.log(humanText("No runtimes. Register one with `oma bridge setup` on the target machine"));
+        console.log(humanText("(headless machine: `oma runtime pair` prints a one-time setup command)."));
         return;
       }
       table([
@@ -946,7 +952,7 @@ const commands: Cmd[] = [
       console.log("Run this on the machine to connect (single use, expires " +
         `${new Date(minted.expires_at * 1000).toISOString()}):\n`);
       console.log(`  ${minted.install_command}\n`);
-      console.log("It will appear in `oma runtime list` once the daemon attaches.");
+      console.log(humanText("It will appear in `oma runtime list` once the daemon attaches."));
     },
   },
   {
@@ -956,7 +962,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       await apiFetch(config, `/v1/oma/runtimes/${args[0]}`, { method: "DELETE" });
       console.log(`Runtime revoked: ${args[0]}`);
-      console.log("The daemon will stop reconnecting after a few backoff cycles.");
+      console.log(humanText("The daemon will stop reconnecting after a few backoff cycles."));
     },
   },
 
@@ -973,7 +979,7 @@ const commands: Cmd[] = [
         status: string;
         created_at: string;
       }> }>(config, "/v1/sessions?limit=20");
-      if (!data.length) { console.log("No sessions."); return; }
+      if (!data.length) { console.log(humanText("No sessions.")); return; }
       table([["TITLE", "ID", "STATUS", "AGENT", "CREATED"], ...data.map(s => [s.title || "Untitled", s.id, s.status || "idle", s.agent.id, new Date(s.created_at).toLocaleDateString()])]);
     },
   },
@@ -983,7 +989,7 @@ const commands: Cmd[] = [
     http: "POST   /v1/sessions {agent, environment_id, title?, vault_ids?, resources?}",
     async run(config, args) {
       const agentId = flag(args, "--agent"); const envId = flag(args, "--env"); const title = flag(args, "--title") || "";
-      if (!agentId || !envId) { console.error("Usage: oma sessions create --agent <id> --env <id> [--title <text>]"); process.exit(1); }
+      if (!agentId || !envId) { console.error(humanText("Usage: oma sessions create --agent <id> --env <id> [--title <text>]")); process.exit(1); }
       const agent = await apiFetch<{ id: string; version: number }>(config, `/v1/agents/${agentId}`);
       const session = await apiFetch<{ id: string }>(config, "/v1/sessions", {
         method: "POST",
@@ -1003,7 +1009,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       const text = args.slice(1).join(" ");
       await apiFetch(config, `/v1/sessions/${args[0]}/events`, { method: "POST", body: JSON.stringify({ events: [{ type: "user.message", content: [{ type: "text", text }] }] }) });
-      console.log("Message sent.");
+      console.log(humanText("Message sent."));
     },
   },
   {
@@ -1012,7 +1018,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/sessions/:id/events/stream + POST /v1/sessions/:id/events",
     async run(config, args) {
       const text = args.slice(1).join(" ");
-      if (!text) { console.error("Usage: oma sessions chat <id> <text>"); process.exit(1); }
+      if (!text) { console.error(humanText("Usage: oma sessions chat <id> <text>")); process.exit(1); }
       await streamChat(config, args[0], text);
     },
   },
@@ -1044,7 +1050,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/environments",
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; name: string; status: string }> }>(config, "/v1/environments");
-      if (!data.length) { console.log("No environments. Create one with: oma envs create <name>"); return; }
+      if (!data.length) { console.log(humanText("No environments. Create one with: oma envs create <name>")); return; }
       table([["NAME", "ID", "STATUS"], ...data.map(e => [e.name, e.id, e.status || "ready"])]);
     },
   },
@@ -1065,7 +1071,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/oma/model_cards",
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; model_id: string; model: string; provider: string; api_key_preview: string; is_default: boolean }> }>(config, "/v1/oma/model_cards");
-      if (!data.length) { console.log("No model cards. Create one with: oma models create"); return; }
+      if (!data.length) { console.log(humanText("No model cards. Create one with: oma models create")); return; }
       table([["MODEL_ID", "PROVIDER", "WIRE MODEL", "KEY", "DEFAULT"], ...data.map(c => [c.model_id, c.provider, c.model === c.model_id ? "(same)" : c.model, `****${c.api_key_preview || ""}`, c.is_default ? "yes" : ""])]);
     },
   },
@@ -1075,7 +1081,7 @@ const commands: Cmd[] = [
     http: "POST   /v1/oma/model_cards {model_id, provider, model?, api_key, base_url?, is_default?}",
     async run(config, args) {
       const modelId = flag(args, "--model-id"); const provider = flag(args, "--provider") || "ant"; const model = flag(args, "--model"); const apiKey = flag(args, "--api-key"); const baseUrl = flag(args, "--base-url");
-      if (!modelId || !apiKey) { console.error("Usage: oma models create --model-id <id> --api-key <key> [--model <wire>] [--provider <pi-provider-id>] [--base-url <url>]"); process.exit(1); }
+      if (!modelId || !apiKey) { console.error(humanText("Usage: oma models create --model-id <id> --api-key <key> [--model <wire>] [--provider <pi-provider-id>] [--base-url <url>]")); process.exit(1); }
       const card = await apiFetch<{ id: string; model_id: string }>(config, "/v1/oma/model_cards", { method: "POST", body: JSON.stringify({ model_id: modelId, provider, model, api_key: apiKey, base_url: baseUrl }) });
       console.log(`Model card created: ${card.model_id} (${card.id})`);
     },
@@ -1088,7 +1094,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/oma/api_keys",
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; name: string; prefix: string; created_at: string }> }>(config, "/v1/oma/api_keys");
-      if (!data.length) { console.log("No API keys. Create one with: oma keys create"); return; }
+      if (!data.length) { console.log(humanText("No API keys. Create one with: oma keys create")); return; }
       table([["NAME", "ID", "PREFIX", "CREATED"], ...data.map(k => [k.name, k.id, k.prefix + "...", new Date(k.created_at).toLocaleDateString()])]);
     },
   },
@@ -1115,7 +1121,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/vaults",
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; name: string; created_at: string }> }>(config, "/v1/vaults");
-      if (!data.length) { console.log("No vaults. Create one with: oma vaults create <name>"); return; }
+      if (!data.length) { console.log(humanText("No vaults. Create one with: oma vaults create <name>")); return; }
       table([["NAME", "ID", "CREATED"], ...data.map(v => [v.name, v.id, new Date(v.created_at).toLocaleDateString()])]);
     },
   },
@@ -1134,7 +1140,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/vaults/:id/credentials",
     async run(config, args) {
       const { data } = await apiFetch<{ data: Array<{ id: string; display_name: string; auth: { type: string; mcp_server_url?: string; cli_id?: string } }> }>(config, `/v1/vaults/${args[0]}/credentials`);
-      if (!data.length) { console.log("No credentials in this vault."); return; }
+      if (!data.length) { console.log(humanText("No credentials in this vault.")); return; }
       table([["NAME", "TYPE", "DETAIL"], ...data.map(c => [c.display_name, c.auth.type, c.auth.mcp_server_url || c.auth.cli_id || ""])]);
     },
   },
@@ -1144,7 +1150,7 @@ const commands: Cmd[] = [
     http: "POST   /v1/vaults/:id/credentials {display_name, auth:{type:cap_cli, cli_id, token}}",
     async run(config, args) {
       const vaultId = flag(args, "--vault"); const name = flag(args, "--name"); const cliId = flag(args, "--cli-id"); const token = flag(args, "--token");
-      if (!vaultId || !name || !cliId || !token) { console.error("Usage: oma cli add --vault <id> --name <name> --cli-id <gh|aws|kubectl|...> --token <token>"); process.exit(1); }
+      if (!vaultId || !name || !cliId || !token) { console.error(humanText("Usage: oma cli add --vault <id> --name <name> --cli-id <gh|aws|kubectl|...> --token <token>")); process.exit(1); }
       const cred = await apiFetch<{ id: string }>(config, `/v1/vaults/${vaultId}/credentials`, { method: "POST", body: JSON.stringify({ display_name: name, auth: { type: "cap_cli", cli_id: cliId, token } }) });
       console.log(`CLI credential added: ${name} (${cred.id})`);
     },
@@ -1157,7 +1163,7 @@ const commands: Cmd[] = [
     http: "GET    /v1/skills?source=custom|builtin",
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; display_name: string; source: { type: string } }> }>(config, "/v1/skills");
-      if (!data.length) { console.log("No skills."); return; }
+      if (!data.length) { console.log(humanText("No skills.")); return; }
       table([["NAME", "ID", "SOURCE"], ...data.map(s => [s.display_name || s.id, s.id, s.source?.type])]);
     },
   },
@@ -1179,7 +1185,7 @@ const commands: Cmd[] = [
     http: "POST   /v1/oma/oauth/cli/authorize {mcp_server_url,vault_id}; POST /v1/oma/oauth/cli/result {flow_id,claim_token}",
     async run(config, args) {
       const vaultId = flag(args, "--vault");
-      if (!vaultId) { console.error("Usage: oma connect <server> --vault <vault-id>"); process.exit(1); }
+      if (!vaultId) { console.error(humanText("Usage: oma connect <server> --vault <vault-id>")); process.exit(1); }
       await connectMcp(config, resolveServerUrl(args[0]), vaultId);
     },
   },
@@ -1192,7 +1198,7 @@ const commands: Cmd[] = [
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; workspace_name: string; install_kind: string; created_at: number }> }>(config, "/v1/oma/integrations/linear/installations");
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
-      if (!data.length) { console.log("No Linear workspaces connected. Publish an agent with: oma linear publish <agent-id> --env <env-id>"); return; }
+      if (!data.length) { console.log(humanText("No Linear workspaces connected. Publish an agent with: oma linear publish <agent-id> --env <env-id>")); return; }
       table([["WORKSPACE", "INSTALLATION ID", "KIND", "CREATED"], ...data.map(i => [i.workspace_name, i.id, i.install_kind, new Date(i.created_at).toLocaleDateString()])]);
     },
   },
@@ -1203,7 +1209,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       const { data } = await apiFetch<{ data: Array<{ id: string; agent_id: string; persona: { name: string }; status: string; capabilities: string[] }> }>(config, `/v1/oma/integrations/linear/installations/${args[0]}/publications`);
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
-      if (!data.length) { console.log("No publications. Publish with: oma linear publish <agent-id> --env <env-id>"); return; }
+      if (!data.length) { console.log(humanText("No publications. Publish with: oma linear publish <agent-id> --env <env-id>")); return; }
       table([["PERSONA", "PUBLICATION ID", "AGENT", "STATUS", "CAPS"], ...data.map(p => [p.persona.name, p.id, p.agent_id, p.status, capsPreview(p.capabilities)])]);
     },
   },
@@ -1226,7 +1232,7 @@ const commands: Cmd[] = [
       const envId = flag(args, "--env");
       const persona = flag(args, "--persona") || "";
       const avatar = flag(args, "--avatar") || null;
-      if (!envId) { console.error("Usage: oma linear publish <agent-id> --env <env-id> [--persona <name>] [--avatar <url>]"); process.exit(1); }
+      if (!envId) { console.error(humanText("Usage: oma linear publish <agent-id> --env <env-id> [--persona <name>] [--avatar <url>]")); process.exit(1); }
       // Persona name defaults to the agent's name when omitted.
       let personaName = persona;
       if (!personaName) {
@@ -1239,31 +1245,31 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ agentId, environmentId: envId, personaName, personaAvatarUrl: avatar, returnUrl: `${config.baseUrl}/integrations/linear` }) },
       );
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
-      console.log(`\nStep 1 complete. Now register a Linear OAuth App (Linear → Settings → API → New OAuth app):\n`);
+      console.log(humanText(`\nStep 1 complete. Now register a Linear OAuth App (Linear → Settings → API → New OAuth app):\n`));
       console.log(`  App name:        ${r.suggestedAppName}`);
       console.log(`  Callback URL:    ${r.callbackUrl}`);
       console.log(`  Webhook URL:     ${r.webhookUrl}`);
-      console.log(`  Webhook secret:  (generated by Linear — see step 2)`);
+      console.log(humanText(`  Webhook secret:  (generated by Linear — see step 2)`));
       // The callback/webhook URLs come from server config (PUBLIC_BASE_URL on
       // the integrations gateway), NOT from OMA_BASE_URL. They must be
       // publicly reachable HTTPS for Linear to call them — Linear's "New
       // OAuth application" form rejects http:// outright at submit time, so
       // local-dev URLs can't even be saved on Linear's side.
       if (!isPubliclyReachable(r.callbackUrl) || !r.callbackUrl.startsWith("https://")) {
-        console.log(`\n⚠  Linear requires HTTPS on a publicly-reachable host for callback/webhook URLs.`);
-        console.log(`The URLs above point at a local / non-HTTPS origin — Linear's form will reject them.`);
-        console.log(`Fix: deploy the integrations worker (or run a tunnel like cloudflared/ngrok) and set`);
-        console.log(`GATEWAY_ORIGIN to that public HTTPS host before publishing.`);
+        console.log(humanText(`\n⚠  Linear requires HTTPS on a publicly-reachable host for callback/webhook URLs.`));
+        console.log(humanText(`The URLs above point at a local / non-HTTPS origin — Linear's form will reject them.`));
+        console.log(humanText(`Fix: deploy the integrations worker (or run a tunnel like cloudflared/ngrok) and set`));
+        console.log(humanText(`GATEWAY_ORIGIN to that public HTTPS host before publishing.`));
       }
-      console.log(`\nStep 2 — submit the credentials Linear gives you:\n`);
-      console.log(`  oma linear submit <FORM_TOKEN> \\\n    --client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> --webhook-secret <lin_wh_…>\n`);
-      console.log(`The webhook secret is on the same Linear App page, under "Webhooks → Signing secret"`);
-      console.log(`(starts with \`lin_wh_\`). Linear auto-generates it and ignores any value you paste in,`);
-      console.log(`so OMA can't predict it — you have to copy it back here.\n`);
+      console.log(humanText(`\nStep 2 — submit the credentials Linear gives you:\n`));
+      console.log(humanText(`  oma linear submit <FORM_TOKEN> \\\n    --client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> --webhook-secret <lin_wh_…>\n`));
+      console.log(humanText(`The webhook secret is on the same Linear App page, under "Webhooks → Signing secret"`));
+      console.log(humanText(`(starts with \`lin_wh_\`). Linear auto-generates it and ignores any value you paste in,`));
+      console.log(humanText(`so OMA can't predict it — you have to copy it back here.\n`));
       console.log(`Form token (expires ~30 min):\n  ${r.formToken}\n`);
-      console.log(`Or, to send the Linear App registration to a workspace admin instead:`);
+      console.log(humanText(`Or, to send the Linear App registration to a workspace admin instead:`));
       console.log(`  oma linear handoff ${r.formToken}`);
-      console.log(`\nFor scripts, re-run with --json to get the raw response.`);
+      console.log(humanText(`\nFor scripts, re-run with --json to get the raw response.`));
     },
   },
   {
@@ -1291,16 +1297,16 @@ const commands: Cmd[] = [
         // for JWT failures; older deploys still return the raw "JwtSigner.verify"
         // detail under credentials_failed. Handle both.
         if (/form_token_invalid|JwtSigner\.verify/i.test(err.message)) {
-          console.error(`Form token rejected. Re-run \`oma linear publish <agent-id> --env <env-id>\` to mint a fresh token.`);
+          console.error(humanText(`Form token rejected. Re-run \`oma linear publish <agent-id> --env <env-id>\` to mint a fresh token.`));
           process.exit(1);
         }
         throw err;
       });
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
-      console.log(`\nStep 2 complete. Open this URL in a browser to authorize the install in Linear:\n`);
+      console.log(humanText(`\nStep 2 complete. Open this URL in a browser to authorize the install in Linear:\n`));
       console.log(`  ${r.url}\n`);
-      console.log(`After approval Linear redirects to the callback; the publication then transitions to 'live'.`);
-      console.log(`Verify with: oma linear list && oma linear pubs <installation-id>`);
+      console.log(humanText(`After approval Linear redirects to the callback; the publication then transitions to 'live'.`));
+      console.log(humanText(`Verify with: oma linear list && oma linear pubs <installation-id>`));
     },
   },
   {
@@ -1314,7 +1320,7 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ formToken: args[0] }) },
       ).catch((err: Error) => {
         if (/form_token_invalid|JwtSigner\.verify/i.test(err.message)) {
-          console.error(`Form token rejected. Re-run \`oma linear publish <agent-id> --env <env-id>\` to mint a fresh token.`);
+          console.error(humanText(`Form token rejected. Re-run \`oma linear publish <agent-id> --env <env-id>\` to mint a fresh token.`));
           process.exit(1);
         }
         throw err;
@@ -1344,7 +1350,7 @@ const commands: Cmd[] = [
         patch.capabilities = capsRaw.split(",").map((s) => s.trim()).filter(Boolean);
       }
       if (!Object.keys(patch).length) {
-        console.error("Nothing to update. Pass at least --persona, --avatar, or --caps.");
+        console.error(humanText("Nothing to update. Pass at least --persona, --avatar, or --caps."));
         process.exit(1);
       }
       const updated = await apiFetch<any>(config, `/v1/oma/integrations/linear/publications/${id}`, {
@@ -1365,7 +1371,7 @@ const commands: Cmd[] = [
       } catch (err: any) {
         if (/^404 /.test(err.message)) {
           console.error(`No publication with id ${args[0]}.`);
-          console.error(`Find valid publication ids with: oma linear list && oma linear pubs <installation-id>`);
+          console.error(humanText(`Find valid publication ids with: oma linear list && oma linear pubs <installation-id>`));
           process.exit(1);
         }
         throw err;
@@ -1384,8 +1390,8 @@ const commands: Cmd[] = [
       const envId = flag(args, "--env") ?? "";
       const persona = flag(args, "--persona") || "Linear bot (PAT)";
       if (!pat || !agentId || !envId) {
-        console.error("Usage: oma linear install-pat --pat <token> --agent <id> --env <id> [--persona <name>]");
-        console.error("  --pat may also be supplied via LINEAR_API_KEY env var.");
+        console.error(humanText("Usage: oma linear install-pat --pat <token> --agent <id> --env <id> [--persona <name>]"));
+        console.error(humanText("  --pat may also be supplied via LINEAR_API_KEY env var."));
         process.exit(1);
       }
       const result = await apiFetch<{ publicationId: string }>(
@@ -1404,7 +1410,7 @@ const commands: Cmd[] = [
       );
       if (config.json) { console.log(JSON.stringify(result, null, 2)); return; }
       console.log(`Installed via PAT. Publication: ${result.publicationId}`);
-      console.log(`Next: configure autopilot rules with`);
+      console.log(humanText(`Next: configure autopilot rules with`));
       console.log(`  oma linear rules create ${result.publicationId} --label bot-ready`);
     },
   },
@@ -1418,7 +1424,7 @@ const commands: Cmd[] = [
         `/v1/oma/integrations/linear/publications/${args[0]}/dispatch-rules`,
       );
       if (config.json) { console.log(JSON.stringify(rules, null, 2)); return; }
-      if (!rules.length) { console.log("No rules. Create with: oma linear rules create <pub-id> --label <name>"); return; }
+      if (!rules.length) { console.log(humanText("No rules. Create with: oma linear rules create <pub-id> --label <name>")); return; }
       table([
         ["RULE ID", "NAME", "EN", "LABEL", "STATES", "MAX", "POLL", "LAST"],
         ...rules.map((r: any) => [
@@ -1447,7 +1453,7 @@ const commands: Cmd[] = [
       const maxC = parseInt(flag(args, "--max") || "5", 10);
       const poll = parseInt(flag(args, "--poll") || "600", 10);
       if (!label && !states && !project) {
-        console.error("At least one of --label, --states, --project is required (matching everything is a footgun).");
+        console.error(humanText("At least one of --label, --states, --project is required (matching everything is a footgun)."));
         process.exit(1);
       }
       const r = await apiFetch<any>(
@@ -1462,7 +1468,7 @@ const commands: Cmd[] = [
         },
       );
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
-      console.log(`Created rule ${r.id} (${r.name}). Cron picks up issues matching this rule next tick (~1 min).`);
+      console.log(humanText(`Created rule ${r.id} (${r.name}). Cron picks up issues matching this rule next tick (~1 min).`));
     },
   },
   {
@@ -1473,7 +1479,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       const pubId = args[0];
       const ruleId = args[1];
-      if (!pubId || !ruleId) { console.error("Usage: oma linear rules patch <publication-id> <rule-id> [...flags]"); process.exit(1); }
+      if (!pubId || !ruleId) { console.error(humanText("Usage: oma linear rules patch <publication-id> <rule-id> [...flags]")); process.exit(1); }
       const patch: any = {};
       const name = flag(args, "--name"); if (name !== undefined) patch.name = name;
       const enabled = flag(args, "--enabled"); if (enabled !== undefined) patch.enabled = enabled === "true";
@@ -1500,13 +1506,13 @@ const commands: Cmd[] = [
     async run(config, args) {
       const pubId = args[0];
       const ruleId = args[1];
-      if (!pubId || !ruleId) { console.error("Usage: oma linear rules delete <publication-id> <rule-id>"); process.exit(1); }
+      if (!pubId || !ruleId) { console.error(humanText("Usage: oma linear rules delete <publication-id> <rule-id>")); process.exit(1); }
       await apiFetch(
         config,
         `/v1/oma/integrations/linear/publications/${pubId}/dispatch-rules/${ruleId}`,
         { method: "DELETE" },
       );
-      console.log(`Deleted rule ${ruleId}.`);
+      console.log(humanText(`Deleted rule ${ruleId}.`));
     },
   },
 
@@ -1518,7 +1524,7 @@ const commands: Cmd[] = [
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; workspace_name: string; bot_login: string; created_at: number }> }>(config, "/v1/oma/integrations/github/installations");
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
-      if (!data.length) { console.log("No GitHub installations. Publish an agent with: oma github publish <agent-id> --env <env-id>"); return; }
+      if (!data.length) { console.log(humanText("No GitHub installations. Publish an agent with: oma github publish <agent-id> --env <env-id>")); return; }
       table([["ORG/USER", "INSTALLATION ID", "BOT LOGIN", "CREATED"], ...data.map(i => [i.workspace_name, i.id, i.bot_login, new Date(i.created_at).toLocaleDateString()])]);
     },
   },
@@ -1529,7 +1535,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       const { data } = await apiFetch<{ data: Array<{ id: string; agent_id: string; persona: { name: string }; status: string; capabilities: string[] }> }>(config, `/v1/oma/integrations/github/installations/${args[0]}/publications`);
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
-      if (!data.length) { console.log("No publications. Publish with: oma github publish <agent-id> --env <env-id>"); return; }
+      if (!data.length) { console.log(humanText("No publications. Publish with: oma github publish <agent-id> --env <env-id>")); return; }
       table([["PERSONA", "PUBLICATION ID", "AGENT", "STATUS", "CAPS"], ...data.map(p => [p.persona.name, p.id, p.agent_id, p.status, capsPreview(p.capabilities)])]);
     },
   },
@@ -1552,7 +1558,7 @@ const commands: Cmd[] = [
       const envId = flag(args, "--env");
       const persona = flag(args, "--persona") || "";
       const avatar = flag(args, "--avatar") || null;
-      if (!envId) { console.error("Usage: oma github bind <agent-id> --env <env-id> [--persona <name>] [--avatar <url>]"); process.exit(1); }
+      if (!envId) { console.error(humanText("Usage: oma github bind <agent-id> --env <env-id> [--persona <name>] [--avatar <url>]")); process.exit(1); }
       let personaName = persona;
       if (!personaName) {
         const agent = await apiFetch<{ name: string }>(config, `/v1/agents/${agentId}`).catch(() => null);
@@ -1575,16 +1581,16 @@ const commands: Cmd[] = [
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
       console.log(`\nBinding "${r.suggestedAppName}" to GitHub.`);
       if (!isPubliclyReachable(r.setupUrl) || !r.setupUrl.startsWith("https://")) {
-        console.log(`\n⚠  GitHub requires HTTPS on a publicly-reachable host for Setup / Webhook URLs.`);
-        console.log(`The gateway URL above is local / non-HTTPS — GitHub will reject it.`);
-        console.log(`Fix: deploy the integrations worker (or run a tunnel like cloudflared/ngrok)`);
-        console.log(`and set GATEWAY_ORIGIN to that public HTTPS host before retrying.`);
+        console.log(humanText(`\n⚠  GitHub requires HTTPS on a publicly-reachable host for Setup / Webhook URLs.`));
+        console.log(humanText(`The gateway URL above is local / non-HTTPS — GitHub will reject it.`));
+        console.log(humanText(`Fix: deploy the integrations worker (or run a tunnel like cloudflared/ngrok)`));
+        console.log(humanText(`and set GATEWAY_ORIGIN to that public HTTPS host before retrying.`));
       }
-      console.log(`\n→ Open this URL to register the GitHub App in one click:\n`);
+      console.log(humanText(`\n→ Open this URL to register the GitHub App in one click:\n`));
       console.log(`   ${r.manifestStartUrl}\n`);
-      console.log(`After confirming on GitHub you'll bounce through to "Install on org" automatically.`);
-      console.log(`Verify with:  oma github list && oma github pubs <installation-id>\n`);
-      console.log(`Manual fallback (if you want to register the App by hand instead):`);
+      console.log(humanText(`After confirming on GitHub you'll bounce through to "Install on org" automatically.`));
+      console.log(humanText(`Verify with:  oma github list && oma github pubs <installation-id>\n`));
+      console.log(humanText(`Manual fallback (if you want to register the App by hand instead):`));
       console.log(`  oma github submit ${r.formToken} --app-id <ID> --private-key-file <PEM> --webhook-secret <SECRET>`);
     },
   },
@@ -1620,21 +1626,21 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ formToken, appId, privateKey, webhookSecret, clientId, clientSecret }) },
       ).catch((err: Error) => {
         if (/form_token_invalid|JwtSigner\.verify/i.test(err.message)) {
-          console.error(`Form token rejected. Re-run \`oma github publish <agent-id> --env <env-id>\` to mint a fresh token.`);
+          console.error(humanText(`Form token rejected. Re-run \`oma github publish <agent-id> --env <env-id>\` to mint a fresh token.`));
           process.exit(1);
         }
         if (/credentials_mismatch|appId mismatch/i.test(err.message)) {
-          console.error(`appId / private key mismatch. Both must come from the same GitHub App's settings page.`);
+          console.error(humanText(`appId / private key mismatch. Both must come from the same GitHub App's settings page.`));
           process.exit(1);
         }
         throw err;
       });
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
       console.log(`\nStep 2 complete. Bot will appear as @${r.botLogin}.`);
-      console.log(`\nOpen this URL in a browser and pick which org / repos to install on:\n`);
+      console.log(humanText(`\nOpen this URL in a browser and pick which org / repos to install on:\n`));
       console.log(`  ${r.url}\n`);
-      console.log(`After approval GitHub redirects to the setup URL; the publication transitions to 'live'.`);
-      console.log(`Verify with: oma github list && oma github pubs <installation-id>`);
+      console.log(humanText(`After approval GitHub redirects to the setup URL; the publication transitions to 'live'.`));
+      console.log(humanText(`Verify with: oma github list && oma github pubs <installation-id>`));
     },
   },
   {
@@ -1648,7 +1654,7 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ formToken: args[0] }) },
       ).catch((err: Error) => {
         if (/form_token_invalid|JwtSigner\.verify/i.test(err.message)) {
-          console.error(`Form token rejected. Re-run \`oma github publish <agent-id> --env <env-id>\` to mint a fresh token.`);
+          console.error(humanText(`Form token rejected. Re-run \`oma github publish <agent-id> --env <env-id>\` to mint a fresh token.`));
           process.exit(1);
         }
         throw err;
@@ -1677,7 +1683,7 @@ const commands: Cmd[] = [
         patch.capabilities = capsRaw.split(",").map((s) => s.trim()).filter(Boolean);
       }
       if (!Object.keys(patch).length) {
-        console.error("Nothing to update. Pass at least --persona, --avatar, or --caps.");
+        console.error(humanText("Nothing to update. Pass at least --persona, --avatar, or --caps."));
         process.exit(1);
       }
       const updated = await apiFetch<any>(config, `/v1/oma/integrations/github/publications/${id}`, {
@@ -1698,7 +1704,7 @@ const commands: Cmd[] = [
       } catch (err: any) {
         if (/^404 /.test(err.message)) {
           console.error(`No publication with id ${args[0]}.`);
-          console.error(`Find valid publication ids with: oma github list && oma github pubs <installation-id>`);
+          console.error(humanText(`Find valid publication ids with: oma github list && oma github pubs <installation-id>`));
           process.exit(1);
         }
         throw err;
@@ -1715,7 +1721,7 @@ const commands: Cmd[] = [
     async run(config) {
       const { data } = await apiFetch<{ data: Array<{ id: string; workspace_name: string; install_kind: string; created_at: number }> }>(config, "/v1/oma/integrations/slack/installations");
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
-      if (!data.length) { console.log("No Slack workspaces connected. Publish an agent with: oma slack publish <agent-id> --env <env-id>"); return; }
+      if (!data.length) { console.log(humanText("No Slack workspaces connected. Publish an agent with: oma slack publish <agent-id> --env <env-id>")); return; }
       table([["WORKSPACE", "INSTALLATION ID", "KIND", "CREATED"], ...data.map(i => [i.workspace_name, i.id, i.install_kind, new Date(i.created_at).toLocaleDateString()])]);
     },
   },
@@ -1726,7 +1732,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       const { data } = await apiFetch<{ data: Array<{ id: string; agent_id: string; persona: { name: string }; status: string; capabilities: string[] }> }>(config, `/v1/oma/integrations/slack/installations/${args[0]}/publications`);
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
-      if (!data.length) { console.log("No publications. Publish with: oma slack publish <agent-id> --env <env-id>"); return; }
+      if (!data.length) { console.log(humanText("No publications. Publish with: oma slack publish <agent-id> --env <env-id>")); return; }
       table([["PERSONA", "PUBLICATION ID", "AGENT", "STATUS", "CAPS"], ...data.map(p => [p.persona.name, p.id, p.agent_id, p.status, capsPreview(p.capabilities)])]);
     },
   },
@@ -1749,7 +1755,7 @@ const commands: Cmd[] = [
       const envId = flag(args, "--env");
       const persona = flag(args, "--persona") || "";
       const avatar = flag(args, "--avatar") || null;
-      if (!envId) { console.error("Usage: oma slack publish <agent-id> --env <env-id> [--persona <name>] [--avatar <url>]"); process.exit(1); }
+      if (!envId) { console.error(humanText("Usage: oma slack publish <agent-id> --env <env-id> [--persona <name>] [--avatar <url>]")); process.exit(1); }
       let personaName = persona;
       if (!personaName) {
         const agent = await apiFetch<{ name: string }>(config, `/v1/agents/${agentId}`).catch(() => null);
@@ -1762,37 +1768,37 @@ const commands: Cmd[] = [
       );
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
       if (r.manifestLaunchUrl) {
-        console.log(`\nStep 1 complete. One-click setup — open this URL to have Slack create the App for you:\n`);
+        console.log(humanText(`\nStep 1 complete. One-click setup — open this URL to have Slack create the App for you:\n`));
         console.log(`  ${r.manifestLaunchUrl}\n`);
-        console.log(`Slack will pre-fill name, scopes, events, and redirect URL from a manifest.`);
-        console.log(`Confirm Create on Slack, then come back and paste the secrets it shows you.\n`);
-        console.log(`Or set up manually:`);
+        console.log(humanText(`Slack will pre-fill name, scopes, events, and redirect URL from a manifest.`));
+        console.log(humanText(`Confirm Create on Slack, then come back and paste the secrets it shows you.\n`));
+        console.log(humanText(`Or set up manually:`));
       } else {
-        console.log(`\nStep 1 complete. Now create a Slack App (https://api.slack.com/apps → Create New App → From scratch):\n`);
+        console.log(humanText(`\nStep 1 complete. Now create a Slack App (https://api.slack.com/apps → Create New App → From scratch):\n`));
       }
       console.log(`  App name:             ${r.suggestedAppName}`);
       console.log(`  Redirect URL:         ${r.callbackUrl}`);
       console.log(`  Events Request URL:   ${r.webhookUrl}`);
-      console.log(`\nIn the App settings:`);
-      console.log(`  • OAuth & Permissions → paste Redirect URL`);
-      console.log(`  • Event Subscriptions → paste Events Request URL, wait for green "Verified" check`);
-      console.log(`  • Subscribe to bot events: app_mention, message.channels, message.im,`);
-      console.log(`    message.groups, message.mpim, tokens_revoked, app_uninstalled`);
+      console.log(humanText(`\nIn the App settings:`));
+      console.log(humanText(`  • OAuth & Permissions → paste Redirect URL`));
+      console.log(humanText(`  • Event Subscriptions → paste Events Request URL, wait for green "Verified" check`));
+      console.log(humanText(`  • Subscribe to bot events: app_mention, message.channels, message.im,`));
+      console.log(humanText(`    message.groups, message.mpim, tokens_revoked, app_uninstalled`));
       // Slack will reject any non-HTTPS or non-publicly-reachable URL when verifying.
       if (!isPubliclyReachable(r.callbackUrl) || !r.callbackUrl.startsWith("https://")) {
-        console.log(`\n⚠  Slack requires HTTPS on a publicly-reachable host for Redirect / Events URLs.`);
-        console.log(`The URLs above point at a local / non-HTTPS origin — Slack's Verify button will fail.`);
-        console.log(`Fix: deploy the integrations worker (or run a tunnel like cloudflared/ngrok) and set`);
-        console.log(`GATEWAY_ORIGIN to that public HTTPS host before publishing.`);
+        console.log(humanText(`\n⚠  Slack requires HTTPS on a publicly-reachable host for Redirect / Events URLs.`));
+        console.log(humanText(`The URLs above point at a local / non-HTTPS origin — Slack's Verify button will fail.`));
+        console.log(humanText(`Fix: deploy the integrations worker (or run a tunnel like cloudflared/ngrok) and set`));
+        console.log(humanText(`GATEWAY_ORIGIN to that public HTTPS host before publishing.`));
       }
-      console.log(`\nStep 2 — submit the credentials Slack gives you (Basic Information page):\n`);
-      console.log(`  oma slack submit <FORM_TOKEN> \\\n    --client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> --signing-secret <SIGNING_SECRET>\n`);
-      console.log(`The Signing Secret is on the same Basic Information page; Slack uses it to`);
-      console.log(`sign every webhook event.\n`);
+      console.log(humanText(`\nStep 2 — submit the credentials Slack gives you (Basic Information page):\n`));
+      console.log(humanText(`  oma slack submit <FORM_TOKEN> \\\n    --client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> --signing-secret <SIGNING_SECRET>\n`));
+      console.log(humanText(`The Signing Secret is on the same Basic Information page; Slack uses it to`));
+      console.log(humanText(`sign every webhook event.\n`));
       console.log(`Form token (expires ~60 min):\n  ${r.formToken}\n`);
-      console.log(`Or, to send the Slack App registration to a workspace admin instead:`);
+      console.log(humanText(`Or, to send the Slack App registration to a workspace admin instead:`));
       console.log(`  oma slack handoff ${r.formToken}`);
-      console.log(`\nFor scripts, re-run with --json to get the raw response.`);
+      console.log(humanText(`\nFor scripts, re-run with --json to get the raw response.`));
     },
   },
   {
@@ -1817,16 +1823,16 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ formToken, clientId, clientSecret, signingSecret }) },
       ).catch((err: Error) => {
         if (/form_token_invalid|JwtSigner\.verify/i.test(err.message)) {
-          console.error(`Form token rejected. Re-run \`oma slack publish <agent-id> --env <env-id>\` to mint a fresh token.`);
+          console.error(humanText(`Form token rejected. Re-run \`oma slack publish <agent-id> --env <env-id>\` to mint a fresh token.`));
           process.exit(1);
         }
         throw err;
       });
       if (config.json) { console.log(JSON.stringify(r, null, 2)); return; }
-      console.log(`\nStep 2 complete. Open this URL in a browser to authorize the install in Slack:\n`);
+      console.log(humanText(`\nStep 2 complete. Open this URL in a browser to authorize the install in Slack:\n`));
       console.log(`  ${r.url}\n`);
-      console.log(`After approval Slack redirects to the callback; the publication then transitions to 'live'.`);
-      console.log(`Verify with: oma slack list && oma slack pubs <installation-id>`);
+      console.log(humanText(`After approval Slack redirects to the callback; the publication then transitions to 'live'.`));
+      console.log(humanText(`Verify with: oma slack list && oma slack pubs <installation-id>`));
     },
   },
   {
@@ -1840,7 +1846,7 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ formToken: args[0] }) },
       ).catch((err: Error) => {
         if (/form_token_invalid|JwtSigner\.verify/i.test(err.message)) {
-          console.error(`Form token rejected. Re-run \`oma slack publish <agent-id> --env <env-id>\` to mint a fresh token.`);
+          console.error(humanText(`Form token rejected. Re-run \`oma slack publish <agent-id> --env <env-id>\` to mint a fresh token.`));
           process.exit(1);
         }
         throw err;
@@ -1869,7 +1875,7 @@ const commands: Cmd[] = [
         patch.capabilities = capsRaw.split(",").map((s) => s.trim()).filter(Boolean);
       }
       if (!Object.keys(patch).length) {
-        console.error("Nothing to update. Pass at least --persona, --avatar, or --caps.");
+        console.error(humanText("Nothing to update. Pass at least --persona, --avatar, or --caps."));
         process.exit(1);
       }
       const updated = await apiFetch<any>(config, `/v1/oma/integrations/slack/publications/${id}`, {
@@ -1890,7 +1896,7 @@ const commands: Cmd[] = [
       } catch (err: any) {
         if (/^404 /.test(err.message)) {
           console.error(`No publication with id ${args[0]}.`);
-          console.error(`Find valid publication ids with: oma slack list && oma slack pubs <installation-id>`);
+          console.error(humanText(`Find valid publication ids with: oma slack list && oma slack pubs <installation-id>`));
           process.exit(1);
         }
         throw err;
@@ -1909,7 +1915,7 @@ const commands: Cmd[] = [
       const name = args.find((a) => !a.startsWith("--"));
       const description = flag(args, "--description");
       if (!name) {
-        console.error("Usage: oma memory stores create <name> [--description <d>]");
+        console.error(humanText("Usage: oma memory stores create <name> [--description <d>]"));
         process.exit(1);
       }
       const store = await apiFetch<{ id: string; name: string; description?: string; created_at: string }>(
@@ -1918,7 +1924,7 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify({ name, description }) },
       );
       if (config.json) { console.log(JSON.stringify(store, null, 2)); return; }
-      console.log(`Created memory store: ${store.name} (${store.id})`);
+      console.log(humanText(`Created memory store: ${store.name} (${store.id})`));
     },
   },
   {
@@ -1932,7 +1938,7 @@ const commands: Cmd[] = [
         data: Array<{ id: string; name: string; description?: string; archived_at?: string; created_at: string }>;
       }>(config, `/v1/memory_stores?include_archived=${includeArchived}`);
       if (!data.length) {
-        console.log("No memory stores. Create one with: oma memory stores create <name>");
+        console.log(humanText("No memory stores. Create one with: oma memory stores create <name>"));
         return;
       }
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
@@ -1979,7 +1985,7 @@ const commands: Cmd[] = [
     async run(config, args) {
       const id = args[0];
       await apiFetch(config, `/v1/memory_stores/${id}`, { method: "DELETE" });
-      console.log(`Deleted memory store: ${id}`);
+      console.log(humanText(`Deleted memory store: ${id}`));
     },
   },
 
@@ -1995,7 +2001,7 @@ const commands: Cmd[] = [
       const content = readContentArg(args);
       const sha = flag(args, "--precondition-sha256");
       if (!storeId || !path || content === undefined) {
-        console.error("Usage: oma memory write <store-id> <path> (--content <c> | --from-file <f>) [--precondition-sha256 <h>]");
+        console.error(humanText("Usage: oma memory write <store-id> <path> (--content <c> | --from-file <f>) [--precondition-sha256 <h>]"));
         process.exit(1);
       }
       const body: { path: string; content: string; precondition?: { type: "content_sha256"; content_sha256: string } } = { path, content };
@@ -2017,7 +2023,7 @@ const commands: Cmd[] = [
       const storeId = args[0];
       const memId = args[1];
       if (!storeId || !memId) {
-        console.error("Usage: oma memory read <store-id> <memory-id>");
+        console.error(humanText("Usage: oma memory read <store-id> <memory-id>"));
         process.exit(1);
       }
       const mem = await apiFetch<{ content: string; path: string; content_sha256: string }>(
@@ -2043,7 +2049,7 @@ const commands: Cmd[] = [
       if (depth) qs.set("depth", depth);
       const url = `/v1/memory_stores/${storeId}/memories${qs.toString() ? `?${qs}` : ""}`;
       const { data } = await apiFetch<{ data: Array<{ id: string; path: string; size_bytes: number; updated_at: string }> }>(config, url);
-      if (!data.length) { console.log("(empty)"); return; }
+      if (!data.length) { console.log(humanText("(empty)")); return; }
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
       table([
         ["PATH", "ID", "SIZE", "UPDATED"],
@@ -2063,11 +2069,11 @@ const commands: Cmd[] = [
       const content = readContentArg(args);
       const sha = flag(args, "--precondition-sha256");
       if (!storeId || !memId) {
-        console.error("Usage: oma memory update <store-id> <memory-id> [--path <p>] [--content <c> | --from-file <f>] [--precondition-sha256 <h>]");
+        console.error(humanText("Usage: oma memory update <store-id> <memory-id> [--path <p>] [--content <c> | --from-file <f>] [--precondition-sha256 <h>]"));
         process.exit(1);
       }
       if (path === undefined && content === undefined) {
-        console.error("Pass at least --path or --content/--from-file.");
+        console.error(humanText("Pass at least --path or --content/--from-file."));
         process.exit(1);
       }
       const body: Record<string, unknown> = {};
@@ -2079,7 +2085,7 @@ const commands: Cmd[] = [
         { method: "POST", body: JSON.stringify(body) },
       );
       if (config.json) { console.log(JSON.stringify(mem, null, 2)); return; }
-      console.log(`Updated memory: ${mem.path} (sha256=${mem.content_sha256.slice(0, 16)}…)`);
+      console.log(humanText(`Updated memory: ${mem.path} (sha256=${mem.content_sha256.slice(0, 16)}…)`));
     },
   },
   {
@@ -2092,14 +2098,14 @@ const commands: Cmd[] = [
       const memId = args[1];
       const sha = flag(args, "--expected-sha256");
       if (!storeId || !memId) {
-        console.error("Usage: oma memory rm <store-id> <memory-id> [--expected-sha256 <h>]");
+        console.error(humanText("Usage: oma memory rm <store-id> <memory-id> [--expected-sha256 <h>]"));
         process.exit(1);
       }
       const url = sha
         ? `/v1/memory_stores/${storeId}/memories/${memId}?expected_content_sha256=${encodeURIComponent(sha)}`
         : `/v1/memory_stores/${storeId}/memories/${memId}`;
       await apiFetch(config, url, { method: "DELETE" });
-      console.log(`Deleted memory: ${memId}`);
+      console.log(humanText(`Deleted memory: ${memId}`));
     },
   },
 
@@ -2126,7 +2132,7 @@ const commands: Cmd[] = [
           redacted?: boolean;
         }>;
       }>(config, url);
-      if (!data.length) { console.log("(no versions)"); return; }
+      if (!data.length) { console.log(humanText("(no versions)")); return; }
       if (config.json) { console.log(JSON.stringify(data, null, 2)); return; }
       table([
         ["VERSION", "MEMORY", "OP", "ACTOR", "PATH", "WHEN"],
@@ -2150,7 +2156,7 @@ const commands: Cmd[] = [
       const storeId = args[0];
       const verId = args[1];
       if (!storeId || !verId) {
-        console.error("Usage: oma memory version <store-id> <version-id>");
+        console.error(humanText("Usage: oma memory version <store-id> <version-id>"));
         process.exit(1);
       }
       const v = await apiFetch<unknown>(config, `/v1/memory_stores/${storeId}/memory_versions/${verId}`);
@@ -2166,7 +2172,7 @@ const commands: Cmd[] = [
       const storeId = args[0];
       const verId = args[1];
       if (!storeId || !verId) {
-        console.error("Usage: oma memory redact <store-id> <version-id>");
+        console.error(humanText("Usage: oma memory redact <store-id> <version-id>"));
         process.exit(1);
       }
       const v = await apiFetch<{ id: string; redacted: boolean }>(
@@ -2297,15 +2303,16 @@ async function connectMcp(config: Config, mcpServerUrl: string, vaultId: string)
 // ─── API Reference (derived from commands + extras) ───
 
 function apiRef(resource?: string) {
+  const httpReference = (value: string) => process.env.MAISHU_CLI === "1" ? value.replaceAll("/v1/oma/", "/v1/maishu/") : value;
   const groups = new Map<string, string[]>();
   for (const c of commands) {
     const list = groups.get(c.group) || [];
-    list.push(`  ${c.http}`);
+    list.push(`  ${httpReference(c.http)}`);
     groups.set(c.group, list);
   }
   for (const e of extraEndpoints) {
     const list = groups.get(e.group) || [];
-    list.push(`  ${e.http}`);
+    list.push(`  ${httpReference(e.http)}`);
     groups.set(e.group, list);
   }
 
@@ -2321,12 +2328,12 @@ function apiRef(resource?: string) {
   if (normalized && groupAlias[normalized]) {
     const name = groupAlias[normalized];
     const lines = groups.get(name);
-    if (lines) { console.log(`\n${name}\n${lines.join("\n")}\n`); return; }
+    if (lines) { console.log(`\n${humanText(name)}\n${lines.join("\n")}\n`); return; }
   }
 
-  console.log(`\noma api — HTTP API Quick Reference\nAuth: all /v1/* endpoints require x-api-key header\n`);
+  console.log(humanText(`\noma api — HTTP API Quick Reference\nAuth: all /v1/* endpoints require x-api-key header\n`));
   for (const [name, lines] of groups) {
-    console.log(`${name}\n${lines.join("\n")}\n`);
+    console.log(`${humanText(name)}\n${lines.join("\n")}\n`);
   }
 
   if (normalized && !groupAlias[normalized]) {
@@ -2337,13 +2344,13 @@ function apiRef(resource?: string) {
 // ─── Usage (derived from commands) ───
 
 function usage() {
-  console.log(`\noma — Open Managed Agents CLI\n\nUsage:`);
+  console.log(humanText(`\noma — Open Managed Agents CLI\n\nUsage:`));
   let lastGroup = "";
   for (const c of commands) {
     if (c.group !== lastGroup) { console.log(`\n  ${c.group}:`); lastGroup = c.group; }
     console.log(`    ${c.usage.padEnd(42)} ${c.desc}`);
   }
-  console.log(`
+  console.log(humanText(`
   Bridge (local runtime):
     oma bridge setup [--force] [--no-service]    Pair this machine with OMA + start daemon
     oma bridge setup --token <omrp_…>            Headless pairing (token from \`oma runtime pair\`)
@@ -2364,7 +2371,7 @@ Environment:
 
 Stored credentials live at ~/.config/oma/credentials.json (created by
 'oma auth login', mode 0600). Delete with 'oma auth logout'.
-`);
+`));
 }
 
 // ─── Main ───
@@ -2516,11 +2523,11 @@ async function main() {
   }
 
   if (needsArgMatch) {
-    console.error(`${needsArgMatch.usage}\n  ${needsArgMatch.desc}`);
+    console.error(process.env.MAISHU_CLI === "1" ? `缺少参数。用法：${needsArgMatch.usage.replace(/^oma /, "maishu ")}` : `${needsArgMatch.usage}\n  ${needsArgMatch.desc}`);
     process.exit(1);
   }
-  console.error(`Unknown command: ${args.join(" ")}`);
-  usage();
+  console.error(process.env.MAISHU_CLI === "1" ? `未知命令：${args.join(" ")}` : `Unknown command: ${args.join(" ")}`);
+  if (process.env.MAISHU_CLI === "1") console.error("使用 maishu --help 查看可用命令。"); else usage();
   process.exit(1);
 }
 

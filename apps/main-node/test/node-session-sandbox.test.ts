@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // The Node Session sandbox (packages/control-plane-node/src/lib/node-session-sandbox.ts):
 // the shared core under the Node composition. Memory and outputs go through
 // the storage Port, the idle pause runs on a process timer, and the execution
@@ -149,6 +150,41 @@ it.each(["inspect", "restore"] as const)("separates fixed-handle physical incarn
  }finally{releaseOld();releaseNew();await pending;await next;await second.destroy();}
 });
 
+it.each([false, true])("uses the configured discovery wait budget and retains pending single-flight after timeout=%s", async timesOut => {
+  vi.useFakeTimers();
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const handle = { id: "native", pid: 1234, kill: async () => {}, getStatus: async () => "running" as const };
+  const locator = { sandboxId: "physical", id: "native", epoch: "epoch", pid: 1234,
+    identity: { workspaceId: "ws_1", sessionId: "sess_1", workId: "work", attemptId: "claim:1" }, status: "running" as const };
+  const inspect = vi.fn(async () => {
+    if (timesOut) await gate;
+    else await new Promise(resolve => setTimeout(resolve, 1_500));
+    return locator;
+  });
+  const restore = vi.fn(async () => handle);
+  const t = setup({ managementRpcWaitMs: timesOut ? 2_000 : 5_000 });
+  Object.assign(t.box.sandbox, { startManagedProcess: async () => handle, inspectManagedProcessSlot: inspect, restoreManagedProcess: restore });
+  const authority = { attempt: { workspaceId: "ws_1", sessionId: "sess_1", executionId: "work", attemptId: "claim:1", ownerId: "owner", generation: 1 }, isCurrent: async () => true, token: async () => "token" };
+  const sandbox = t.sandboxes.build({ ...context, workAuthority: authority });
+  try {
+    await sandbox.open();
+    const first = sandbox.recoverManagedProcessSlot();
+    const rejected = timesOut ? expect(first).rejects.toThrow("native outcome remains pending") : undefined;
+    await vi.advanceTimersByTimeAsync(timesOut ? 2_000 : 1_000);
+    if (rejected) await rejected;
+    expect(inspect).toHaveBeenCalledOnce();
+    const joining = sandbox.recoverManagedProcessSlot();
+    await vi.advanceTimersByTimeAsync(0); // Let the caller join the unsettled discovery before releasing it.
+    expect(inspect).toHaveBeenCalledOnce();
+    if (timesOut) release();
+    else await vi.advanceTimersByTimeAsync(500);
+    await expect(joining).resolves.toMatchObject({ handle });
+    if (!timesOut) await expect(first).resolves.toMatchObject({ handle });
+    expect(inspect).toHaveBeenCalledOnce(); expect(restore).toHaveBeenCalledOnce();
+  } finally { release(); await sandbox.destroy(); vi.useRealTimers(); }
+});
+
 const context = {
   workspaceId: "ws_1",
   session: { id: "sess_1", resources: [], vaultIds: [], agent: { id: "agent", version: 1 } },
@@ -220,6 +256,30 @@ function setup(overrides: Partial<NodeSessionSandboxOptions> = {}) {
 describe("Node Session sandbox", () => {
   beforeEach(() => { vi.useFakeTimers(); });
   afterEach(() => { vi.useRealTimers(); });
+
+  it("never invokes provider full-container checkpoints for native account sessions", async () => {
+    const box = fakeSandbox();
+    const adapter = fromV1SandboxFactory<SandboxPort>({ name: "credential-policy", create: async () => box.sandbox, held: new Map() });
+    const providerCheckpoint = vi.fn(async () => ({ kind: "snapshot" as const, provider: "credential-policy", ref: "must-not-be-created" }));
+    const t = setup({ adapter: { adapter: { ...adapter, lifecycle: { ...adapter.lifecycle, checkpoint: providerCheckpoint } }, image: () => "test", keepAliveMs: 30_000 },
+      storage: { attach: async () => {}, synchronize: async () => {} } });
+    const native = { ...context, session: { ...context.session, agent: { ...context.session.agent, openma: { harness: "acp-sandbox", acp: { agent: { command: "/usr/local/bin/maishu-harness", env: { MAISHU_AUTH_MODE: "native" } } } } } } };
+    const sandbox = t.sandboxes.build({ ...native, executionFence: fence("credential") });
+    await sandbox.open();
+    await sandbox.writeFile("/tmp/native-auth-exists", "synthetic");
+    await sandbox.endExecution();
+    expect(providerCheckpoint).not.toHaveBeenCalled();
+    const lifecycle = sandbox.workCheckpointLifecycle()!;
+    const self = await lifecycle.checkpoint({ scope: { workspaceId: "ws_1", environmentId: "env_1", sessionId: "sess_1", workId: "w" },
+      handle: { provider: "credential-policy", runtimeId: "rt" }, runtime: box.sandbox, signal: new AbortController().signal });
+    expect(self.kind).toBe("self");
+    expect(providerCheckpoint).not.toHaveBeenCalled();
+    const assertCurrent = vi.fn(async () => {});
+    await t.sandboxes.checkpointNativeWork({ ...native, sandbox: box.sandbox, handle: { provider: "credential-policy", runtimeId: "rt" } } as never, assertCurrent);
+    expect(assertCurrent).toHaveBeenCalledOnce();
+    expect(providerCheckpoint).not.toHaveBeenCalled();
+    await sandbox.destroy();
+  });
 
   it("attaches Memory and outputs through the storage Port on open and writes them back at execution end under the fence", async () => {
     const t = setup();

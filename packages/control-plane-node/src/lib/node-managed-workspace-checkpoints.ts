@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { createHash, randomUUID } from "node:crypto";
 import { posix } from "node:path";
 import { Parser } from "tar";
@@ -137,6 +138,11 @@ function checkpointRoot(metadata: CandidateMetadata): string {
   if (root === undefined) return DEFAULT_WORKSPACE_ROOT;
   if (typeof root !== "string" || !root.startsWith("/") || root.includes("'") || root.includes("\n")) {
     throw new Error("Workspace checkpoint has an invalid workspace root");
+  }
+  const normalized = posix.normalize(root);
+  const privateRoots = ["/run/maishu-credentials", "/tmp/openma-harness-state"];
+  if (normalized === "/" || privateRoots.some(secret => normalized === secret || secret.startsWith(`${normalized}/`) || normalized.startsWith(`${secret}/`))) {
+    throw new Error("Workspace checkpoint cannot include native authentication directories");
   }
   return root;
 }

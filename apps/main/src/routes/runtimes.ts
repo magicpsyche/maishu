@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /**
  * Local-runtime onboarding + management routes.
  *
@@ -154,7 +155,9 @@ runtimesRoutes.post("/pairing-tokens", async (c) => {
   const response: RuntimePairingTokenResponse = {
     pairing_token: pairingToken,
     expires_at: expiresAt,
-    install_command: `npx -y @openma/cli bridge setup --server-url=${serverUrl} --token=${pairingToken}`,
+    install_command: (c.env as Env & { MAISHU_PRODUCT?: string }).MAISHU_PRODUCT === "1"
+      ? `maishu bridge setup --server-url=${serverUrl} --token=${pairingToken}`
+      : `npx -y @openma/cli bridge setup --server-url=${serverUrl} --token=${pairingToken}`,
   };
   return c.json(response, 201);
 });

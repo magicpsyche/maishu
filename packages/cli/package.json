@@ -4,7 +4,8 @@
   "description": "CLI for the openma managed agents platform",
   "type": "module",
   "bin": {
-    "oma": "./dist/index.js"
+    "oma": "./dist/index.js",
+    "maishu": "./dist/maishu.js"
   },
   "files": [
     "dist",
@@ -18,7 +19,8 @@
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "dev": "tsx src/index.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "build:maishu": "node scripts/build-maishu.mjs"
   },
   "publishConfig": {
     "access": "public"
@@ -70,5 +72,6 @@
     "@boxlite-ai/boxlite": {
       "optional": true
     }
-  }
+  },
+  "x-maishu-modified": true
 }

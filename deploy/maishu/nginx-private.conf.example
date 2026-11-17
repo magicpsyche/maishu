@@ -1,0 +1,40 @@
+# Replace TAILSCALE_IPV4, MAISHU_DOMAIN, MAISHU_CERT_NAME, MAISHU_PORT before use.
+# 麦枢私网入口。仅绑定 Tailscale 地址，不开放公网监听。
+map $http_upgrade $maishu_connection_upgrade {
+    default upgrade;
+    '' close;
+}
+log_format maishu_private '$remote_addr [$time_local] "$request_method $uri $server_protocol" $status $body_bytes_sent';
+server {
+    listen TAILSCALE_IPV4:443 ssl http2;
+    server_name MAISHU_DOMAIN;
+    ssl_certificate /etc/letsencrypt/live/MAISHU_CERT_NAME/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/MAISHU_CERT_NAME/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:MaishuSSL:10m;
+    ssl_session_timeout 1d;
+    allow 100.64.0.0/10;
+    allow 127.0.0.1;
+    deny all;
+    client_max_body_size 256m;
+    access_log /var/log/nginx/maishu.access.log maishu_private;
+    error_log /var/log/nginx/maishu.error.log warn;
+    location / {
+        proxy_pass http://127.0.0.1:MAISHU_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $maishu_connection_upgrade;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_cache off;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        send_timeout 3600s;
+        add_header X-Accel-Buffering no always;
+    }
+}

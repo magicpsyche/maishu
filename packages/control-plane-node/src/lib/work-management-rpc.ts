@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /** Diagnostics never cancel or clear an unresolved native operation. */
 export interface ManagementRpcState {
   pending?: { op: string; result: Promise<unknown>; id: string; startedAt: number };
@@ -10,7 +11,8 @@ export interface ManagementRpcObservation {
   elapsedMs: number;
   result?: boolean | string;
 }
-export async function callManagementRpc<T>(state: ManagementRpcState, op: string, action: () => Promise<T>, emit?: (event: ManagementRpcObservation) => void): Promise<T> {
+export async function callManagementRpc<T>(state: ManagementRpcState, op: string, action: () => Promise<T>, emit?: (event: ManagementRpcObservation) => void, waitMs = 1_000): Promise<T> {
+  if (!Number.isSafeInteger(waitMs) || waitMs < 1 || waitMs >= 90_000) throw new RangeError("Management RPC wait must be an integer between 1 and 89999ms");
   const report = (phase: ManagementRpcObservation["phase"], pending: NonNullable<ManagementRpcState["pending"]>, result?: boolean | string) => {
     try { emit?.({phase, requestedOperation: op, pendingOperation: pending.op, rpcId: pending.id, elapsedMs: Date.now()-pending.startedAt, ...(result === undefined ? {} : {result})}); } catch { /* Observation cannot alter authority or RPC outcomes. */ }
   };
@@ -35,7 +37,7 @@ export async function callManagementRpc<T>(state: ManagementRpcState, op: string
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([result, new Promise<never>((_, reject) => {
-      timeout = setTimeout(() => { report("wait_timeout", pending); reject(new Error("Management RPC wait timed out; native outcome is unknown")); }, 1_000);
+      timeout = setTimeout(() => { report("wait_timeout", pending); reject(new Error("Management RPC wait timed out; native outcome is unknown")); }, waitMs);
     })]);
   } finally { if (timeout !== undefined) clearTimeout(timeout); }
 }

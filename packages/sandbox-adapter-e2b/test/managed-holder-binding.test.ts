@@ -1,8 +1,10 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { E2BSandboxExecutor } from "../src/e2b";
 it("launcher binds actual launch token to immutable process identity without exposing token", () => {
-  expect(execFileSync("python3", [new URL("./managed-holder-binding.py", import.meta.url).pathname], { encoding: "utf8" })).toContain("holder binding PASS");
+  expect(execFileSync("python3", [fileURLToPath(new URL("./managed-holder-binding.py", import.meta.url))], { encoding: "utf8" })).toContain("holder binding PASS");
 });
 function fixture(holderHash: unknown = "a".repeat(64)) {
   const requests: Record<string, unknown>[] = [];

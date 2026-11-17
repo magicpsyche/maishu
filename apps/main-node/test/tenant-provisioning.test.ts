@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { describe, expect, it } from "vitest";
 import { ensureTenantSqlite } from "@open-managed-agents/control-plane-node";
 import { applyTenantSchema } from "@open-managed-agents/schema";
@@ -22,7 +23,7 @@ describe("main-node tenant provisioning", () => {
         .bind(tenantId)
         .first(),
     ).toMatchObject({
-      name: "OpenMA Demo's workspace",
+      name: "OpenMA Demo的工作区",
       createdAt: expect.any(Number),
       updatedAt: expect.any(Number),
     });

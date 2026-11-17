@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // The control plane's settings contract: plain values only (paths, ports,
 // limits, credentials). A distribution builds a NodeConfig however it likes —
 // the OMA default parses the environment once in
@@ -73,7 +74,11 @@ export interface NodeConfig {
   realtime: RealtimeFanoutConfig;
   /** "model" curates with the Dream workspace's own model card; "dedup" is offline. */
   dreamCurator: "model" | "dedup";
-  execution: { ownerId: string; concurrency: number; leaseTtlMs?: number };
+  execution: {
+    ownerId: string; concurrency: number; leaseTtlMs?: number;
+    /** Caller wait only (1..89999ms); unresolved provider RPCs remain pending. */
+    managementRpcWaitMs?: number;
+  };
   workspace: {
     strategy: "ephemeral" | "checkpoint_restore";
     /** Target between safe turn checkpoints; no fixed wall-clock RPO. */

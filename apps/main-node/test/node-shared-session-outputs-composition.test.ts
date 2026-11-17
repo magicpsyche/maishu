@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { afterEach, expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -6,7 +7,7 @@ import { InMemoryBlobStore } from "@open-managed-agents/blob-store";
 import { createBetterSqlite3SqlClient } from "@open-managed-agents/sql-client";
 import { ensureSessionExecutionClaimLockSchema, SqlSessionExecutionCoordinator } from "@open-managed-agents/session-runtime-sql";
 import { loadNodeConfig } from "../src/config.js";
-import { nodeDefaults, createMemoryBlobs } from "../src/components.js";
+import { nodeDefaults, createMemoryBlobs, createFilesBlobs } from "../src/components.js";
 import { createNodeControlPlane } from "../src/control-plane.js";
 import { NodeSharedSessionOutputs } from "../../../packages/control-plane-node/src/lib/node-shared-session-outputs.js";
 
@@ -15,17 +16,19 @@ let root: string | undefined;
 let stop: (() => Promise<void>) | undefined;
 afterEach(async () => { await stop?.(); stop = undefined; if (root) await rm(root, { force: true, recursive: true }); });
 
-it("routes official Session outputs to shared storage rather than node-local outputs when FILES_S3 is configured", async () => {
+it.each(["s3", "opensandbox-localfs"] as const)("routes official Session outputs through fenced collection with %s", async mode => {
   root = await mkdtemp(join(tmpdir(), "oma-output-composition-"));
   const config = loadNodeConfig({
     NODE_ENV: "test", AUTH_DISABLED: "1", OPENMA_TEST_SANDBOX_PROVIDER: "local-subprocess",
     DATABASE_PATH: join(root, "database.sqlite"), MEMORY_BLOB_DIR: join(root, "memory"),
     SESSION_OUTPUTS_DIR: join(root, "local-outputs"), SANDBOX_WORKDIR: join(root, "sandbox"), MEMORY_QUEUE: "disabled",
-    FILES_S3_ENDPOINT: "http://unused.test", FILES_S3_BUCKET: "shared-test", FILES_S3_ACCESS_KEY: "test", FILES_S3_SECRET_KEY: "test",
+    FILES_BLOB_DIR: join(root, "file-blobs"),
+    ...(mode === "s3" ? { FILES_S3_ENDPOINT: "http://unused.test", FILES_S3_BUCKET: "shared-test", FILES_S3_ACCESS_KEY: "test", FILES_S3_SECRET_KEY: "test" } : { SANDBOX_PROVIDER: "opensandbox" }),
   });
-  const blobs = new InMemoryBlobStore();
+  const files = mode === "s3" ? { store: new InMemoryBlobStore(), description: "test-shared-files" } : createFilesBlobs(config.blobs.files);
+  const blobs = files.store;
   const cp = await createNodeControlPlane(await nodeDefaults(config, {
-    blobs: { files: { store: blobs, description: "test-shared-files" }, memory: await createMemoryBlobs(config.blobs.memory) },
+    blobs: { files, memory: await createMemoryBlobs(config.blobs.memory) },
   }));
   stop = () => cp.stop("test");
   const post = async (path: string, body: unknown) => {

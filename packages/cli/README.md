@@ -1,93 +1,16 @@
-# @openma/cli
+# 麦枢命令行
 
-Command-line client for [openma](https://openma.ai) managed agents.
+从终端驱动麦枢平台，沿用上游兼容 API。产品入口为 `maishu`，配置使用 `MAISHU_BASE_URL`、`MAISHU_API_KEY`、`MAISHU_TENANT_ID` 和 `MAISHU_PROFILE`。
 
-> **Beta.** API surface and command names may change before 0.1.0 final.
+在源码仓库构建：
 
-## Install
-
-```bash
-npm i -g @openma/cli
+```sh
+pnpm --filter @openma/cli build:maishu
+MAISHU_BASE_URL=https://your-console.example node packages/cli/dist/maishu.js auth login
 ```
 
-This installs an `oma` binary on your `PATH`. (If a different `oma` is already installed, npm will overwrite or warn — both are safe.)
+CLI 登录凭证独立保存在 `~/.config/maishu/`，接入机器的 Bridge 状态保存在 `~/.maishu/bridge/`。原有 `oma` 入口保留用于上游兼容，不会自动迁移或覆盖旧凭证。产品包尚未发布到 npm，使用构建产物安装。
 
-## Configure
+常用命令包括 `auth login`、`agents list`、`sessions create`、`sessions chat`、`envs list`、`bridge setup`。详见 `--help`。当前内部命令帮助仍有英文，中文化验收应单独记录。
 
-```bash
-export OMA_API_KEY=sk_...
-export OMA_BASE_URL=https://app.openma.ai   # default (Console + API)
-```
-
-Generate an API key from the [openma console](https://app.openma.ai) → API Keys.
-
-## Usage
-
-```bash
-oma agents list
-oma agents create --name my-agent --model claude-sonnet-4-6
-oma sessions list
-oma sessions create --agent <agent-id> --env <env-id>
-oma session <session-id> tail        # follow events live
-oma linear publish <agent-id> --env <env-id>
-oma api                              # HTTP API quick reference
-```
-
-Run `oma --help` for the full command tree.
-
-## Evals
-
-Benchmarks hold cases; an eval run executes a benchmark against an agent on
-managed Sessions. Harbor benchmarks are read-only imports with immutable
-revisions: edit the tasks at the source, then sync.
-
-```bash
-oma evals benchmarks refs https://github.com/laude-institute/terminal-bench-2   # branches and tags
-oma evals benchmarks import --git https://github.com/laude-institute/terminal-bench-2 --ref main --case fix-git
-oma evals benchmarks import --builtin terminal-bench-sample@2.0     # or --registry <name>[@version]
-oma evals benchmarks upload ./my-tasks --name my-tasks              # a directory or .tar/.tar.gz
-oma evals benchmarks sync <benchmark-id> [--ref v2 | --file ./my-tasks]  # new revision only if content changed
-oma evals benchmarks show <benchmark-id> [--revision 1]
-oma evals run --benchmark <benchmark-id> --agent <agent-id> --wait  # --mode oracle runs solution/solve.sh
-oma evals runs show <run-id>
-```
-
-Messages benchmarks (scripted conversations) are created with
-`oma evals benchmarks create --name <n>` and edited with `oma evals cases add|replace|delete`.
-See the [Evals guide](https://github.com/openma-ai/open-managed-agents/blob/main/apps/docs/src/content/docs/build/evals.mdx).
-
-## MCP OAuth connection
-
-Run `oma connect linear --vault <vault-id>` (or pass an MCP server URL). The CLI
-POSTs authorization with your configured API key, opens the returned provider
-URL, then polls with an independent private claim credential. If the browser
-cannot open automatically, use the printed URL. You do not need to sign in to
-the Console in that browser.
-
-The provider continues to use the service's registered `/v1/oma/oauth/callback`;
-there is no random localhost listener or new loopback registration requirement.
-Claims expire after 10 minutes and are single-use, bound to the original API
-key and workspace. Only the new credential ID is returned, never its tokens.
-`oma api mcp` shows the POST endpoints. Do not put API keys, client secrets or
-claim credentials in browser URLs.
-
-## Local daemon power management
-
-`oma bridge daemon` automatically keeps the machine available for local tasks
-while it is running, including while idle and during graceful shutdown. The
-screen can still turn off. No extra switch is required.
-
-The adapter uses macOS `caffeinate`, Linux `systemd-inhibit`, or the Windows
-power-management API through PowerShell. It releases the sleep assertion when
-the daemon exits. If the OS denies the request or the helper is missing, the
-daemon logs a warning and retries every 30 seconds. Linux requires logind and
-permission to acquire an inhibitor; explicit sleep and OS policy may override
-power requests.
-
-Service-mode process recovery continues to use launchd KeepAlive on macOS and
-systemd Restart=always on Linux. Windows currently installs a logon task, not a
-crash-restart policy. Foreground execution has no external process supervisor.
-
-## License
-
-MIT
+基于 Apache-2.0 许可的上游 CLI 修改，适用许可和归属见仓库 LICENSE、NOTICE。

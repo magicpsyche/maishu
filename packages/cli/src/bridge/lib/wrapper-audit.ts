@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { humanText } from "../../human-text.js";
 /**
  * Audit ACP-relevant agents the user has on this machine, then offer to
  * install whatever's missing. Shared between
@@ -126,7 +128,7 @@ export async function auditAndOfferWrappers(
       return agents;
     }
     const selected = await checkbox<string>({
-      message: "Install ACP wrappers? (space to toggle, enter to confirm)",
+      message: humanText("Install ACP wrappers? (space to toggle, enter to confirm)"),
       choices,
       pageSize: Math.min(20, choices.length + 2),
       loop: false,

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // loadNodeConfig is the only place the Node control plane reads environment
 // variables. It turns the flat string bag into typed data once, applies the
 // documented defaults, and reports every problem in one error.
@@ -9,6 +10,14 @@ import { loadNodeConfig, redactNodeConfig, type NodeConfig } from "../src/config
 const minimal = { NODE_ENV: "test", MEMORY_BLOB_DIR: "./data/memory-blobs" };
 
 describe("loadNodeConfig", () => {
+  it("bounds the operator management wait budget below the 90 second lease without changing the default", () => {
+    expect(loadNodeConfig(minimal).execution.managementRpcWaitMs).toBe(1_000);
+    expect(loadNodeConfig({ ...minimal, MAISHU_MANAGEMENT_RPC_WAIT_MS: "5000" }).execution.managementRpcWaitMs).toBe(5_000);
+    for (const value of ["0", "-1", "1.5", "90000", "NaN", "Infinity"]) {
+      expect(() => loadNodeConfig({ ...minimal, MAISHU_MANAGEMENT_RPC_WAIT_MS: value })).toThrow(/MAISHU_MANAGEMENT_RPC_WAIT_MS/);
+    }
+  });
+
   it("configures the shared execution lease TTL with a 90 second default", () => {
     expect(loadNodeConfig(minimal).execution.leaseTtlMs).toBe(90_000);
     expect(loadNodeConfig({ ...minimal, OMA_SESSION_EXECUTION_LEASE_TTL_MS: "12000" }).execution.leaseTtlMs).toBe(12000);
@@ -133,7 +142,7 @@ describe("loadNodeConfig", () => {
     expect(config.feishuWsRunner).toBe(true);
     expect(config.memoryQueue).toBe("disabled");
     expect(config.dreamCurator).toBe("dedup");
-    expect(config.execution).toEqual({ concurrency: 3, ownerId: "replica-a", leaseTtlMs: 90_000 });
+    expect(config.execution).toEqual({ concurrency: 3, ownerId: "replica-a", leaseTtlMs: 90_000, managementRpcWaitMs: 1_000 });
     expect(config.email).toEqual({ host: "smtp", port: 465, secure: true, user: "u", pass: "p", fromAddress: "noreply@x" });
     expect(config.http.gatewayOrigin).toBe("https://gw");
     expect(config.http.publicBaseUrl).toBe("https://pub");

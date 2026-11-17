@@ -1,14 +1,14 @@
 {
-  "name": "open-managed-agents",
+  "name": "maishu",
   "version": "0.1.0",
-  "description": "Self-host AI agents with Claude Managed Agents and OpenAI Agents API support. Sessions, tools, subagents and recovery on your infrastructure.",
-  "homepage": "https://openma.ai",
+  "description": "麦枢 · 企业智能体执行与管理平台",
+  "homepage": "https://github.com/magicpsyche/maishu",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openma-ai/open-managed-agents"
+    "url": "https://github.com/magicpsyche/maishu"
   },
   "bugs": {
-    "url": "https://github.com/openma-ai/open-managed-agents/issues"
+    "url": "https://github.com/magicpsyche/maishu/issues"
   },
   "keywords": [
     "ai-agents",
@@ -158,5 +158,11 @@
     "drizzle-orm": "^0.45.2",
     "zod": "4.3.6"
   },
-  "packageManager": "pnpm@11.0.8"
+  "packageManager": "pnpm@11.0.8",
+  "x-maishu-modified": true,
+  "pnpm": {
+    "patchedDependencies": {
+      "@openma/common@0.14.0": "patches/@openma__common@0.14.0.patch"
+    }
+  }
 }

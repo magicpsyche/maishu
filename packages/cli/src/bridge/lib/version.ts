@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /**
  * Single source of truth for the daemon's version string.
  *
@@ -10,6 +11,7 @@ import { createRequire } from "node:module";
 const req = createRequire(import.meta.url);
 
 export const PKG_VERSION: string = (() => {
+  if (process.env.MAISHU_CLI === "1" && process.env.MAISHU_BUILD_VERSION) return process.env.MAISHU_BUILD_VERSION;
   for (const path of ["../package.json", "../../package.json"]) {
     try { return (req(path) as { version: string }).version; } catch { /* try next */ }
   }

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -195,6 +196,29 @@ describe("preinstalled Node managed ACP supervisor", () => {
 
   afterEach(async () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+  });
+
+  it("starts the controlled native account harness with MCP authority and no hosted model", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "maishu-native-work-")); roots.push(workspace);
+    const seen: SessionOptions[] = [];
+    const app = createNodeManagedAcpSupervisorApp({
+      environment: { ...claimedEnvironment, MAISHU_AUTH_MODE: "native", MAISHU_CREDENTIAL_REF: "hc_fixture",
+        OPENMA_ACP_HARNESSES: JSON.stringify([{ id: "codex-acp", version: "2.6.0", command: "/usr/local/bin/maishu-harness", args: ["codex"] }]) }, workspacePath: workspace,
+      acpRuntime: fakeAcpRuntime(seen), fetch: productionFetch({}),
+      resolveExecutionChannels: async () => ({ type: "ready", channels: { mcpProxy: { gatewayBaseUrl: "https://gateway.openma.test", sessionsToken: executionToken }, nativeAuthentication: true } }),
+      stateIo: { async readFile() { throw Object.assign(new Error("missing"), { code: "ENOENT" }); }, async writeFile() {}, async writeFileBytes() {}, async exec() { return ""; } },
+      control: { pollIntervalMs: 1, scheduler: { sleep: async () => {} } },
+    });
+    const harness = await app.resolveHarness({ id: "codex-acp", version: "2.6.0" });
+    const run = await harness!.start({ scope, harness: { id: "codex-acp", version: "2.6.0" }, workspacePath: "/workspace", outputPath: null, checkpoint: async () => {}, signal: new AbortController().signal });
+    await run.completed;
+    expect(seen).toHaveLength(1);
+    expect(seen[0]!.agent.command).toBe("/usr/local/bin/maishu-harness");
+    expect(seen[0]!.agent.env?.MAISHU_AUTH_MODE).toBe("native");
+    expect(seen[0]!.agent.env?.CODEX_HOME).toContain("/tmp/openma-harness-state/");
+    expect(seen[0]!.agent.env?.OPENAI_API_KEY).toBeUndefined();
+    expect(seen[0]!.sessionRequestMeta).not.toHaveProperty("openma.model");
+    await run.drain();
   });
 
 

@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { humanText } from "../../human-text.js";
 /**
  * Tiny ANSI styling + logo banner.
  *
@@ -36,6 +38,7 @@ export const c = {
  * block treatment keeps the silhouette recognizable in monospace.
  */
 export function logo(): string {
+  if (process.env.MAISHU_CLI === "1") return c.brand(c.bold("  麦 枢  /  MAISHU"));
   const lines = [
     "   ┏━           ━┓   ",
     "   ┃       ◢      ┃   ",
@@ -48,7 +51,7 @@ export function logo(): string {
 
 /** "oma bridge — <subtitle>" header line, used right after the logo. */
 export function header(subtitle: string, version: string): string {
-  return `${c.bold("oma bridge")}  ${c.dim(`v${version}`)}\n${c.gray(subtitle)}`;
+  return `${c.bold(process.env.MAISHU_CLI === "1" ? "maishu bridge" : "oma bridge")}  ${c.dim(`v${version}`)}\n${c.gray(humanText(subtitle))}`;
 }
 
 /** Print the standard banner (logo + header) once at command start. */
@@ -66,9 +69,9 @@ export const sym = {
 
 /** Stderr writers with the matching prefix symbol. */
 export const log = {
-  step:  (s: string) => process.stderr.write(`${sym.arrow()} ${s}\n`),
-  ok:    (s: string) => process.stderr.write(`${sym.ok()} ${s}\n`),
-  warn:  (s: string) => process.stderr.write(`${sym.warn()} ${c.yellow(s)}\n`),
-  err:   (s: string) => process.stderr.write(`${sym.err()} ${c.red(s)}\n`),
-  hint:  (s: string) => process.stderr.write(`  ${c.gray(s)}\n`),
+  step:  (s: string) => process.stderr.write(`${sym.arrow()} ${humanText(s)}\n`),
+  ok:    (s: string) => process.stderr.write(`${sym.ok()} ${humanText(s)}\n`),
+  warn:  (s: string) => process.stderr.write(`${sym.warn()} ${c.yellow(humanText(s))}\n`),
+  err:   (s: string) => process.stderr.write(`${sym.err()} ${c.red(humanText(s))}\n`),
+  hint:  (s: string) => process.stderr.write(`  ${c.gray(humanText(s))}\n`),
 };

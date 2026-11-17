@@ -1,0 +1,15 @@
+diff --git a/dist/acp-runtime/permission-mapping.js b/dist/acp-runtime/permission-mapping.js
+--- a/dist/acp-runtime/permission-mapping.js
++++ b/dist/acp-runtime/permission-mapping.js
+@@ -19,6 +19,11 @@ const profiles = [
+         modes: { always_ask: "default", auto: "auto", always_allow: "bypassPermissions" } },
+     { id: "codex-acp", name: "@agentclientprotocol/codex-acp", versions: ["1.8.0", "1.10.0"],
+         modes: { always_ask: "read-only", auto: "agent", always_allow: "agent-full-access" } },
++    // Maishu audited profile: adapter 0.4.41 with its pinned DSH 0.2.1-rc.5.
++    // Sandbox modes also select approval ask/ask/never; read-only is stricter
++    // than per-call approval. Unknown adapter versions remain unsupported.
++    { id: "dsh-acp", name: "dsh-acp", versions: ["0.4.41"],
++        modes: { always_ask: "read-only", auto: "workspace-write", always_allow: "danger-full-access" } },
+ ];
+ // Held until the RPC settles, including after a local abort/deadline. A second
+ // write cannot race the late first write through this helper. Other setters

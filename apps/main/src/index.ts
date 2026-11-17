@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { cfMemoryContent } from "./lib/cf-memory-content";
 import { withPublishedSessionFiles } from "@open-managed-agents/files-store";
 import { createR2SessionOutputSource } from "./lib/r2-session-output-source";
@@ -219,6 +220,7 @@ import costReportRoutes from "./routes/cost-report";
 import internalRoutes from "./routes/internal";
 import integrationsRoutes from "./routes/integrations";
 import { runtimesRoutes, runtimeDaemonRoutes, authenticateRuntimeToken } from "./routes/runtimes";
+import { registerMaishuApiAliases } from "./lib/maishu-api-aliases";
 import statsRoutes from "./routes/stats";
 import inferenceProxyRoutes from "./routes/inference-proxy";
 import mcpProxyRoutes, { cfMcpProxyPorts } from "./routes/mcp-proxy";
@@ -1703,6 +1705,7 @@ app.route("/v1/oma/evals", evalsRoutes);
 app.route("/v1/oma/cost_report", costReportRoutes);
 app.route("/v1/oma/integrations", integrationsRoutes);
 app.route("/v1/oma/runtimes", runtimesRoutes);
+app.get("/v1/oma/capabilities", c => c.json({ runtime_bridge: true, remote_sandbox: true, sandbox_backend_settings: false, harness_credentials: false }));
 app.route("/v1/oma/oauth/cli", managedMcpOAuthCliRoutes);
 app.route("/v1/oma/oauth", managedMcpOAuthRoutes);
 app.route("/v1/oma/model_cards", modelCardsRoutes);
@@ -1764,6 +1767,8 @@ app.all("/github-setup/*", async (c) => {
   if (!c.env.INTEGRATIONS) return c.json({ error: "INTEGRATIONS binding missing" }, 503);
   return c.env.INTEGRATIONS.fetch(c.req.raw);
 });
+
+registerMaishuApiAliases(app);
 
 export default {
   fetch: app.fetch,

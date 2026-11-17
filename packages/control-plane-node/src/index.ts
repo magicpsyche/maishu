@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // @open-managed-agents/control-plane-node: the OpenMA control plane for Node,
 // independent of any database driver, blob backend, sandbox provider, or
 // identity provider. A distribution builds NodeComponents (database, auth,
@@ -57,3 +58,8 @@ export { parseAllowHosts } from "./lib/skill-sources.js";
 // The registry is process-scoped, shared by discovery and both session resolvers.
 export { registerHarness, setDefaultHarness, getHarnessCatalog, type HarnessFactory, type HarnessDescriptor, type HarnessCatalog, type HarnessExecutionPlacement } from "@open-managed-agents/agent-harness";
 export type { HarnessInterface, HarnessContext } from "@open-managed-agents/agent-harness";
+
+export { ConsoleSandboxBackend, createConsoleSandboxBackend } from "./lib/console-sandbox-backend.js";
+export type { SandboxBackendController, SandboxBackendSettings, SandboxBackendView, SandboxBackendUpdate } from "./sandbox-backend.js";
+export { EncryptedHarnessCredentials, createHarnessCredentials } from "./lib/harness-credentials.js";
+export type { HarnessCredentialController, HarnessCredentialInput, HarnessCredentialKind, HarnessCredentialView } from "./harness-credentials.js";

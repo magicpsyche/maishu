@@ -1,0 +1,8 @@
+{
+  "product": "麦枢",
+  "slug": "maishu",
+  "repository": "https://github.com/magicpsyche/maishu",
+  "upstream": "https://github.com/openma-ai/open-managed-agents",
+  "baseline": "c60476ecf1c88afc9cd1ee2cf0ce11d5165c7322",
+  "strategy": "保留上游基线；品牌和部署独立配置；核心改动分提交维护；测试后发布，不自动升级生产。"
+}

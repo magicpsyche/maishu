@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 /**
  * OS paths for daemon state, logs, service files, and per-session cwd.
  *
@@ -77,7 +78,7 @@ export interface Paths {
   serviceLabel: string;
 }
 
-const SERVICE_LABEL_BASE = "dev.openma.bridge";
+const SERVICE_LABEL_BASE = process.env.MAISHU_CLI === "1" ? "cn.maishu.bridge" : "dev.openma.bridge";
 
 export function paths(): Paths {
   const home = homedir();
@@ -88,7 +89,7 @@ export function paths(): Paths {
   //   ~/.oma/bridge-staging/, dev.openma.bridge.staging, …plist
   const dirSuffix = profile ? `-${profile}` : "";
   const labelSuffix = profile ? `.${profile}` : "";
-  const configDir = join(home, `.oma/bridge${dirSuffix}`);
+  const configDir = join(home, `${process.env.MAISHU_CLI === "1" ? ".maishu" : ".oma"}/bridge${dirSuffix}`);
   const credsFile = join(configDir, "credentials.json");
   const machineIdFile = join(configDir, "machine-id");
   const sessionsDir = join(configDir, "sessions");

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import {mkdtemp,rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -9,7 +10,7 @@ import {nodeDefaults} from "../src/components";
 import {createNodeControlPlane} from "../src/control-plane";
 import {LocalSubprocessSandbox} from "../../../packages/sandbox/src/adapters/local-subprocess";
 
-it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "cleanup-failed", "cleanup-unconfirmed", "exit-confirmed"] as const)("production Work bootstrap through real HTTP auth: %s",async mode=>{
+it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "cleanup-failed", "cleanup-unconfirmed", "exit-confirmed", "attached-file"] as const)("production Work bootstrap through real HTTP auth: %s",async mode=>{
  const root=await mkdtemp(join(tmpdir(),"oma-work-"));
  const server=createServer();await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));
  const base="http://127.0.0.1:"+(server.address() as {port:number}).port;
@@ -18,6 +19,7 @@ it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "
  const native=sandbox.startManagedProcess.bind(sandbox);
  let cleanupAttempts=0;let confirmedExit=false;let statusChecks=0;let cleanupFault=true;
  sandbox.startManagedProcess=async spec=>{
+  if (mode === "attached-file") expect(await sandbox.readFile(join(root,"sandbox","input.txt"))).toBe("synthetic-work-input");
   if(launches===1&&mode==="exit-confirmed")expect(confirmedExit,"old worker exit must be observed before replacement spawn").toBe(true);
   launches++;scopeToken=spec.env.OPENMA_SANDBOX_TOKEN;tokens.push(scopeToken);const handle=await native(spec);handles.push(handle);
   if(mode==="late-launch")await components.database.sql.prepare("UPDATE managed_environment_work SET claim_at = 0 WHERE id = ?").bind(spec.env.ANTHROPIC_WORK_ID).run();
@@ -39,7 +41,14 @@ it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "
   await api("/v1/oma/model_cards",{model_id:"test",model:"upstream",provider:"anthropic",base_url:"https://upstream.test",api_key:"fake-model-secret"});
   const env=await api("/v1/environments",{name:"native",config:{type:"cloud",networking:{type:"unrestricted"}}});
   const agent=await api("/v1/agents",{name:"installed",model:"test",tools:[],_oma:{harness:"acp-sandbox",acp:{agent:{id:"codex-acp",command:process.execPath}}}});
-  const session=await api("/v1/sessions",{agent:agent.id,environment_id:env.id});
+  let resources: unknown[] = [];
+  if (mode === "attached-file") {
+   const form = new FormData(); form.append("file",new File(["synthetic-work-input"],"input.txt",{type:"text/plain"}));
+   const upload = await cp.fetch(new Request(base+"/v1/files",{method:"POST",headers:{"x-api-key":"admin"},body:form}));
+   expect(upload.status).toBeLessThan(300);const file=await upload.json() as {id:string};
+   resources=[{type:"file",file_id:file.id,mount_path:join(root,"sandbox","input.txt")}];
+  }
+  const session=await api("/v1/sessions",{agent:agent.id,environment_id:env.id,resources});
   await api('/v1/sessions/'+session.id+'/events',{events:[{type:"user.message",content:[{type:"text",text:"begin"}]}]});
   await cp.start();
   if(mode==="late-launch") {
@@ -60,6 +69,7 @@ it.each(["recover", "stopped", "missing-native", "uninstalled", "late-launch", "
   let state="";for(let i=0;i<100;i++){state=(await components.database.sql.prepare("SELECT state FROM managed_environment_work WHERE session_id = ?").bind(session.id).first<{state:string}>())!.state;if(state==="starting")break;await new Promise(resolve=>setTimeout(resolve,20));}
   expect(state).toBe("starting");
   expect(await handles[0].getStatus()).toBe("running");
+  if (mode === "attached-file") return;
   if(mode==="stopped") {
    // Existing stop state is authoritative: an expired stopped Work never reclaims.
    await components.database.sql.prepare("UPDATE managed_environment_work SET state = 'stopped', claim_at = 0 WHERE session_id = ?").bind(session.id).run();

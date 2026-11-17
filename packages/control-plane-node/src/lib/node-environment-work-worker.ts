@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { retireManagementProcess, type ManagementRetirementState } from "./work-management-retirement.js";
 import { callManagementRpc, type ManagementRpcState } from "./work-management-rpc.js";
 import type { Tracer } from "@open-managed-agents/observability";
@@ -6,7 +7,8 @@ import { observeWorkOperation, type WorkOperationObservation } from "./work-oper
 import { createDispatchedManagedEnvironmentWorker, type ManagedEnvironmentWorker } from "@open-managed-agents/managed-runtime-host";
 import type { SandboxManagedProcessHandle } from "@open-managed-agents/sandbox";
 import { toPolledEnvironmentWorkResponse } from "@open-managed-agents/managed-agents-api";
-import type { EnvironmentWorkApplicationPort } from "@open-managed-agents/managed-agents-application";
+import type { EnvironmentWorkApplicationPort, Session } from "@open-managed-agents/managed-agents-application";
+import type { SandboxPort } from "@open-managed-agents/sandbox";
 import { SqlSessionSource, SqlSessionEnvironmentSource } from "@open-managed-agents/managed-agents-adapters-sql";
 import { sessionExecutionPlacement } from "@open-managed-agents/domain/environment-work";
 import { parseInstalledHarnesses } from "@open-managed-agents/acp-runtime/installed-harnesses";
@@ -18,6 +20,7 @@ import type { SqlClient } from "@open-managed-agents/sql-client";
 import type { NodeConfig } from "../config.js";
 import type { NodeSessionSandboxes } from "./node-session-sandbox.js";
 import type { createNodeManagedAcpCapabilities } from "./node-managed-acp-capability.js";
+import { executionProxyEnvironment } from "./execution-proxy-env.js";
 
 /** Bounds one dispatch from reservation to the sandbox worker's ACK. It is
  * also the retry delay after a failed dispatch (the dispatcher never ACKs or
@@ -39,6 +42,8 @@ function reservationReclaimMs(value: string | undefined): number {
 export function createNodeEnvironmentWorkWorker(input: {
   sql: SqlClient;
   config: NodeConfig;
+  harnessCredentials?: import("../harness-credentials.js").HarnessCredentialController;
+  prepareSessionInputs?(input: { workspaceId: string; session: Session; sandbox: SandboxPort }): Promise<void>;
   work: EnvironmentWorkStore;
   application(workspaceId: string): EnvironmentWorkApplicationPort;
   recovery?: { recoverSchedulingPage(input: { limit: number; after?: { workspaceId: string; sessionId: string }; onError(error: unknown): void }): Promise<{ next: { workspaceId: string; sessionId: string } | null }> };
@@ -49,6 +54,7 @@ export function createNodeEnvironmentWorkWorker(input: {
   tracer?: Tracer;
 }) {
   const env = input.config.sandbox.environment;
+  const managementRpcWaitMs = input.config.execution.managementRpcWaitMs ?? 1_000;
   const command = env.OPENMA_WORK_RUNNER_COMMAND;
   parseInstalledHarnesses(env.OPENMA_ACP_HARNESSES);
   const args: unknown = JSON.parse(env.OPENMA_WORK_RUNNER_ARGS ?? "[]");
@@ -58,6 +64,7 @@ export function createNodeEnvironmentWorkWorker(input: {
     command !== "/usr/local/bin/node" || args.length !== 1 || args[0] !== "/opt/oma-managed/worker/node-e2b-work-item-cli.js"
   )) throw new TypeError("A trusted E2B worker requires the fixed preinstalled command and argv");
   const origin = input.config.http.publicBaseUrl;
+  const proxyEnvironment = executionProxyEnvironment(env, origin);
   const reclaimOlderThanMs = reservationReclaimMs(env.OPENMA_WORK_RESERVATION_RECLAIM_MS);
   const controller = new AbortController();
   const workers = new Map<string, { worker: ManagedEnvironmentWorker; completed: Promise<void> }>();
@@ -80,7 +87,7 @@ export function createNodeEnvironmentWorkWorker(input: {
         requestingWorkId: requesting?.workId, requestingGeneration: requesting?.generation,
         operation: `management.${op}`, status: management.phase === "completed" ? "completed" : management.phase === "started" ? "started" : "failed",
         durationMs: management.elapsedMs, management }); } catch { /* Diagnostics only. */ }
-    });
+    }, managementRpcWaitMs);
   }
   // Provider renewal is independent of exact-process cleanup. A stuck renewal
   // must not block a lost claim's SIGTERM, nor be mistaken for cancellation.
@@ -94,7 +101,7 @@ export function createNodeEnvironmentWorkWorker(input: {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       await Promise.race([process.renewal, new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error("Provider renewal wait timed out; native outcome remains pending")), 1_000);
+        timeout = setTimeout(() => reject(new Error("Provider renewal wait timed out; native outcome remains pending")), managementRpcWaitMs);
       })]);
     } finally { if (timeout !== undefined) clearTimeout(timeout); }
   }
@@ -285,14 +292,29 @@ export function createNodeEnvironmentWorkWorker(input: {
                     throw error;
                   }
                   const { harness, inventory: launchInventory } = prepared;
+                  if (input.prepareSessionInputs) {
+                    await observed("session-inputs", () => input.prepareSessionInputs!({ workspaceId: scope.workspaceId, session, sandbox }));
+                    if (!await owned()) throw new Error("Work claim lost during input materialization");
+                  }
+                  const authEnv = session.agent.openma?.acp?.agent?.env;
+                  if (authEnv?.MAISHU_AUTH_MODE === "native" && authEnv.MAISHU_CREDENTIAL_REF) {
+                    if (!input.harnessCredentials) throw new Error("Native account credential authority is unavailable");
+                    await input.harnessCredentials.materialize({ workspaceId: scope.workspaceId, sessionId: session.id,
+                      agentId: session.agent.id, agentConfig: session.agent.openma, sandbox });
+                    if (!await owned()) throw new Error("Work claim lost during native account injection");
+                  }
                   if (!await owned()) throw new Error("Work claim lost during Environment setup");
                   await assertSlotCleanupResolved(slot, { workId: work.id, generation });
                   const spec = { command, args: args as string[], env: {
+                    PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                    ...proxyEnvironment,
                     ANTHROPIC_BASE_URL: origin, ANTHROPIC_ENVIRONMENT_ID: scope.environmentId,
                     ANTHROPIC_SESSION_ID: session.id, ANTHROPIC_WORK_ID: work.id, ANTHROPIC_WORK_SECRET: work.secret!,
                     OPENMA_WORKSPACE_ID: scope.workspaceId, OPENMA_SANDBOX_TOKEN: token,
                     OPENMA_HARNESS_ID: harness.id, OPENMA_HARNESS_VERSION: harness.version,
                     OPENMA_ACP_HARNESSES: launchInventory,
+                    ...(authEnv?.MAISHU_AUTH_MODE ? { MAISHU_AUTH_MODE: authEnv.MAISHU_AUTH_MODE } : {}),
+                    ...(authEnv?.MAISHU_CREDENTIAL_REF ? { MAISHU_CREDENTIAL_REF: authEnv.MAISHU_CREDENTIAL_REF } : {}),
                   } };
                   let handle: SandboxManagedProcessHandle;
                   try { handle = await observed("native-start", () => sandbox.startManagedProcess(spec)); }

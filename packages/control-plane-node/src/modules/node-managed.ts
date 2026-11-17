@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { nodePublishedSessionFiles } from "../lib/node-published-session-files";
 
 /**
@@ -119,6 +120,7 @@ import { nodeSessionModelEgress } from "../lib/node-session-budget-gates.js";
 
 import { Disposables } from "../lifecycle.js";
 import type { NodeComponents } from "../components.js";
+import { usesNativeAccountFiles } from "../harness-credentials.js";
 import { createManagedIdGenerator } from "../managed-ids.js";
 
 import type { NodeFoundation } from "./node-foundation.js";
@@ -276,6 +278,7 @@ export async function createManagedNodeRuntime(
   // The Session sandbox is the shared core (design §0.0 rule 15); Node
   // injects its adapter, storage, egress relay and fence here.
   const sessionSandboxes = new NodeSessionSandboxes({
+    managementRpcWaitMs: config.execution.managementRpcWaitMs,
     tracer: foundation.tracer,
     ...(components.sessionSandboxAdapter === undefined ? {} : { adapter: components.sessionSandboxAdapter }),
     ...(foundation.sessionSandboxProvider === undefined ? {} : { provider: foundation.sessionSandboxProvider }),
@@ -417,6 +420,13 @@ export async function createManagedNodeRuntime(
     // Cold preparation calls this last; warm reuse calls it for each new
     // execution: the core re-attaches egress with a sandbox token bound to it.
     refreshSandboxEnvironment: async ({ workspaceId, session, environment, executionFence }) => {
+      const authEnv = session.agent.openma?.acp?.agent?.env;
+      if (authEnv?.MAISHU_CREDENTIAL_REF && authEnv.MAISHU_AUTH_MODE === "native") {
+        if (!components.harnessCredentials) throw new Error("当前部署未启用加密账户凭证");
+        const sandbox = sessionSandboxes.get({ workspaceId, session });
+        await components.harnessCredentials.materialize({ workspaceId, sessionId: session.id,
+          agentId: session.agent.id, agentConfig: session.agent.openma, sandbox });
+      }
       if (session.vaultIds.length > 0 && (!platformRootSecret || !config.http.publicBaseUrl)) {
         throw new Error("Vault credential egress requires PLATFORM_ROOT_SECRET and the ordinary HTTPS PUBLIC_BASE_URL");
       }
@@ -456,6 +466,10 @@ export async function createManagedNodeRuntime(
       return activeModelCardPricing(card);
     },
     buildModel: async ({ workspaceId, session }) => {
+      // Native ACP owns inference. Supply only the metadata identifier to the
+      // host context; resolving a Pi model here would incorrectly require a
+      // platform API Model Card even though the harness uses its own account.
+      if (usesNativeAccountFiles(session.agent.openma)) return "native";
       if (session.agent.openma?.harness === "acp-sandbox") {
         await resolveHostedModel(workspaceId, session.agent.model);
       }
@@ -509,10 +523,11 @@ export async function createManagedNodeRuntime(
     }),
     buildHarnessContext: async (input) => {
       const agent = toLegacyHarnessAgentConfig(input.session);
+      const nativeAccount = usesNativeAccountFiles(input.session.agent.openma);
       let sandboxEnv: HarnessContext["env"] | undefined;
       let acpRecoveryHistory: HarnessContext["acpRecoveryHistory"];
       if (agent.harness === "acp-sandbox") {
-        const model = await resolveHostedModel(input.workspaceId, agent.model);
+        const model = nativeAccount ? undefined : await resolveHostedModel(input.workspaceId, agent.model);
         const capability = await managedAcpCapabilities.issue(input);
         acpRecoveryHistory = input.runtime.sessionThreadId !== "sthr_primary" ? input.runtime.history.getEvents() : await loadNodeManagedAcpRecoveryHistory({
           sql, history: managedRuntimeReaders.history,
@@ -521,12 +536,14 @@ export async function createManagedNodeRuntime(
         sandboxEnv = {
           ANTHROPIC_API_KEY: "",
           mcpProxy: capability,
-          hostedInference: { ...capability, model: { providerId: model.provider, baseUrl: model.baseURL ?? null, wireModel: model.wireModel, protocolEndpoints: model.protocolEndpoints } },
+          ...(model ? { hostedInference: { ...capability, model: { providerId: model.provider, baseUrl: model.baseURL ?? null, wireModel: model.wireModel, protocolEndpoints: model.protocolEndpoints } } } : {}),
         };
       }
-      const creds = await resolveNodeModelCreds(input.workspaceId, agent.model);
+      let pi: ReturnType<typeof createPiModelRuntime> | undefined;
+      const creds = nativeAccount ? undefined : await resolveNodeModelCreds(input.workspaceId, agent.model);
+      if (creds) {
       const modelSettings = readHarnessAgentModelSettings(agent.model);
-      const pi = createPiModelRuntime({
+      pi = createPiModelRuntime({
         model: creds.wireModel,
         apiKey: creds.apiKey,
         provider: creds.provider,
@@ -544,6 +561,7 @@ export async function createManagedNodeRuntime(
         thinkingLevel: typeof agent.model === "string" ? undefined : agent.model.effort,
         speed: typeof agent.model === "string" ? undefined : agent.model.speed === "fast" ? "fast" : "standard",
       });
+      }
       const rawSystemPrompt = input.session.agent.system ?? "";
       const assemblySkills = agentUsesAssemblySkillMount(agent);
       const skillMounts = assemblySkills
@@ -579,8 +597,8 @@ export async function createManagedNodeRuntime(
         resourceFacts,
         ...(skillMounts?.length ? { skillMounts } : {}),
         env: sandboxEnv ?? {
-          ANTHROPIC_API_KEY: creds.apiKey,
-          ANTHROPIC_BASE_URL: creds.baseURL,
+          ANTHROPIC_API_KEY: creds?.apiKey ?? "",
+          ANTHROPIC_BASE_URL: creds?.baseURL,
         },
         runtime: input.runtime,
       } satisfies HarnessContext;
@@ -1269,6 +1287,13 @@ export async function createManagedNodeRuntime(
   );
 
   return {
+    prepareWorkSessionInputs: async (input: { workspaceId: string; session: import("@open-managed-agents/managed-agents-application").Session; sandbox: import("@open-managed-agents/sandbox").SandboxPort }) => {
+      // Work supervisor owns its Skill layout. Reuse the existing input
+      // materializer when ordinary attached files/repositories need staging.
+      if (input.session.resources.some(resource => resource.type === "file" || resource.type === "github_repository")) {
+        await managedSessionInputs(input.workspaceId).prepareInputs(input);
+      }
+    },
     managedCredentialEgressRoutes,
     mcpProxyPorts,
     inferenceProxyPorts,

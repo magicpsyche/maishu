@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./firewall": "./src/firewall.ts",
     "./object-storage": "./src/object-storage.ts",
-    "./ports": "./src/ports.ts"
+    "./ports": "./src/ports.ts",
+    "./managed-bootstrap": "./src/managed-bootstrap.ts"
   },
   "scripts": {
     "test": "vitest run --config vitest.config.ts",
@@ -24,5 +25,6 @@
   "devDependencies": {
     "@types/node": "^26.6.6",
     "vitest": "^5.0.5"
-  }
+  },
+  "x-maishu-modified": true
 }

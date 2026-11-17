@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { createWorkVerifierExec } from "./node-work-verifier.js";
 import { createExecutionChannelsHttpResolver } from "./execution-channels-http.js";
 import { withUngatedPermissionProfiles } from "./ungated-permission-mode.js";
@@ -64,8 +65,9 @@ export class WorkTurnActivities {
   private inFlightPrompts = 0;
   private joins = new Map<string, Promise<void>>();
   private opaque = new Set<string>();
-  private nativeTools = new Map<string, { kind?: string; status?: string; detached: boolean; exited: boolean; shell?: boolean }>();
+  private nativeTools = new Map<string, { kind?: string; status?: string; detached: boolean; exited: boolean; shell?: boolean; dshForeground?: boolean }>();
   private nativeContract = false;
+  private dshContract = false;
   private terminalStatusProvesExit = false;
   private children = new Map<string, boolean>();
   private invalid: Error | undefined;
@@ -132,7 +134,13 @@ export class WorkTurnActivities {
     for (const [id, tool] of this.nativeTools) {
       const synchronous = this.nativeContract && !tool.detached
         && (tool.status === "completed" || tool.status === "failed")
-        && tool.kind !== undefined && (tool.kind !== "execute" || tool.exited || (this.terminalStatusProvesExit && tool.shell === true));
+        && tool.kind !== undefined
+        // DSH's terminal_exit is a display acknowledgement even for promoted
+        // background jobs. Only its structured foreground result proves exit.
+        // Unknown/other tools (schedulers, extensions, subagents) need real joins.
+        && (!this.dshContract || (tool.kind === "execute" ? tool.dshForeground === true
+          : ["read", "edit", "search"].includes(tool.kind)))
+        && (tool.kind !== "execute" || tool.exited || (this.dshContract && tool.dshForeground) || (this.terminalStatusProvesExit && tool.shell === true));
       if (!synchronous && !this.joins.has(id)) {
         workActivityDiagnostic("drain_rejected", { turnId: context.command.turnId, reason: "native_activity_unproven", id, kind: tool.kind, status: tool.status, detached: tool.detached, exited: tool.exited });
         throw new Error(`Work native activity completion unproven: ${id}`);
@@ -188,9 +196,10 @@ export class WorkTurnActivities {
       // tool_call_update only after waiting for the shell's exit (no exit_code
       // field is projected). A terminal execute status is therefore its exit.
       const pi = info?.version === "0.1.8" && info?.name === "openma-pi-acp";
+      this.dshContract = info?.name === "dsh-acp" && info?.version === "0.4.41";
       this.nativeContract = (["0.75.1", "0.94.0"].includes(info?.version ?? "") && ["claude-agent-acp", "@agentclientprotocol/claude-agent-acp"].includes(info?.name ?? ""))
         || (info?.version === "1.8.0" && ["codex-acp", "@agentclientprotocol/codex-acp"].includes(info?.name ?? ""))
-        || pi;
+        || pi || this.dshContract;
       this.terminalStatusProvesExit = pi;
       const activities = this;
       return new Proxy(session, { get(target, property) {
@@ -240,9 +249,12 @@ export class WorkTurnActivities {
       const air = record(record(meta.jetbrains).air), codex = record(meta.codex);
       const collaboration = record(codex.collaboration), subagent = record(codex.subagent);
       const toolResponse = record(record(meta.claudeCode).toolResponse);
+      const dshResult = record(record(record(meta.dsh).toolResult).value);
       const detached = toolResponse.isAsync === true || toolResponse.status === "async_launched" || input.run_in_background === true || input.background === true || output.isAsync === true
         || typeof output.backgroundTaskId === "string" || typeof output.task_id === "string"
-        || record(air.asyncTasks).backgrounded === true;
+        || record(air.asyncTasks).backgrounded === true
+        || (this.dshContract && (dshResult.kind === "promoted" || dshResult.kind === "background"
+          || typeof dshResult.jobId === "string"));
       this.nativeTools.set(id, { kind: typeof tool.kind === "string" ? tool.kind : previous.kind,
         status: typeof tool.status === "string" ? tool.status : previous.status,
         detached: previous.detached || detached,
@@ -250,6 +262,8 @@ export class WorkTurnActivities {
         // Only pi's own shell tool (string command input) awaits child exit;
         // an MCP/extension tool pi merely labels "execute" proves nothing.
         shell: previous.shell || typeof input.command === "string",
+        dshForeground: previous.dshForeground || (dshResult.kind === "foreground"
+          && (Number.isInteger(dshResult.exitCode) || typeof dshResult.signal === "string")),
       });
       if (typeof subagent.threadId === "string") this.children.set(subagent.threadId, subagent.activity === "interrupted");
       const ids = collaboration.receiverThreadIds;

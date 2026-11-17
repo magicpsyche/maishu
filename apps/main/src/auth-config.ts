@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { betterAuth } from "better-auth";
 import { drizzle } from "drizzle-orm/d1";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -293,8 +294,8 @@ export async function ensureTenant(
   // an empty name into the template.
   const trimmedName = (userName ?? "").trim();
   const emailPrefix = (userEmail ?? "").split("@")[0]?.trim() ?? "";
-  const display = trimmedName || emailPrefix || "User";
-  const tenantName = `${display}'s workspace`;
+  const display = trimmedName || emailPrefix || "用户";
+  const tenantName = `${display}的工作区`;
   await db
     .prepare("INSERT INTO tenant (id, name, createdAt, updatedAt) VALUES (?, ?, ?, ?)")
     .bind(tenantId, tenantName, now, now)

@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 // The components a Node control plane is assembled from. Each one is a value:
 // construct it yourself, or let nodeDefaults() build it from NodeConfig.
 //
@@ -15,6 +16,7 @@
 import { NodemailerSender } from "@open-managed-agents/email/adapters/nodemailer";
 import {
   createNodeSecrets,
+  createHarnessCredentials,
   sandboxIdlePauseMs,
   type NodeComponentOverrides,
   type NodeComponents,
@@ -31,6 +33,7 @@ import { createNodeE2BSessionAdapter } from "./e2b-session-adapter.js";
 import { createNodeRealtime } from "./realtime.js";
 import { resolveSandboxProviderForEnvironment } from "./sandbox-provider.js";
 import { assertSandboxProviderSdk } from "./sandbox-provider-sdk.js";
+import { ConsoleSandboxBackend, createConsoleSandboxBackend } from "@open-managed-agents/control-plane-node";
 
 // Building blocks. Each default is an ordinary exported constructor, so a
 // composition root can call the ones it wants and hand-build the rest.
@@ -97,12 +100,21 @@ export async function nodeDefaults(
   const bridge = overrides.sandbox === undefined && config.processMode === "standalone"
     && resolveSandboxProviderForEnvironment(config.sandbox.environment).provider === "cloudflare-bridge"
     ? await createBridgeComposition(config, blobs.files.store) : undefined;
-  const sandbox = overrides.sandbox ?? bridge?.factory ?? await loadSandboxFactory(config);
+  let sandbox = overrides.sandbox ?? bridge?.factory ?? await loadSandboxFactory(config);
   const sessionSandboxAdapter = overrides.sessionSandboxAdapter
     ?? (overrides.sandbox === undefined ? await loadSessionSandboxAdapter(config) : undefined);
-  const sessionSandboxProvider = overrides.sessionSandboxProvider
+  let sessionSandboxProvider = overrides.sessionSandboxProvider
     ?? bridge?.sessionProvider
     ?? (overrides.sandbox === undefined && sessionSandboxAdapter === undefined ? await loadSessionSandboxProvider(config) : undefined);
+  const sandboxBackend = overrides.sandboxBackend ?? (secrets && overrides.sandbox === undefined
+    && sessionSandboxProvider?.name === "opensandbox" && config.processMode === "standalone"
+    ? createConsoleSandboxBackend(database, secrets.cipherFor("platform.sandbox.backend"), config.sandbox.environment, sessionSandboxProvider.provider,
+        "connectWorkReadonly" in sessionSandboxProvider ? sessionSandboxProvider.connectWorkReadonly : undefined)
+    : undefined);
+  if (sandboxBackend instanceof ConsoleSandboxBackend) {
+    sandbox = sandboxBackend.factory();
+    sessionSandboxProvider = { name: "opensandbox", provider: sandboxBackend.provider(), connectWorkReadonly: sandboxBackend.connectWorkReadonly.bind(sandboxBackend) };
+  }
   const realtime = overrides.realtime ?? await createNodeRealtime(config.realtime, database, {
     ...(config.database.kind === "postgres" && { postgresDsn: config.database.url }),
   });
@@ -113,6 +125,8 @@ export async function nodeDefaults(
     auth,
     email,
     sandbox,
+    ...(overrides.harnessCredentials ? { harnessCredentials: overrides.harnessCredentials } : secrets ? { harnessCredentials: createHarnessCredentials(database, secrets) } : {}),
+    ...(sandboxBackend ? { sandboxBackend } : {}),
     ...(sessionSandboxAdapter !== undefined && { sessionSandboxAdapter }),
     ...(sessionSandboxProvider !== undefined && { sessionSandboxProvider }),
     realtime,
@@ -197,7 +211,7 @@ async function loadSessionSandboxProvider(config: NodeConfig): Promise<NodeSessi
   const selection = resolveSandboxProviderForEnvironment(config.sandbox.environment);
   const name = SESSION_SANDBOX_PROVIDERS[selection.provider];
   if (name === undefined) return undefined;
-  const mod = (await import(selection.modulePath)) as { sandboxProvider?: SandboxProviderPort<SandboxPort & SandboxRuntimePort> };
+  const mod = (await import(selection.modulePath)) as { sandboxProvider?: SandboxProviderPort<SandboxPort & SandboxRuntimePort>; connectWorkReadonly?: NodeSessionSandboxProvider["connectWorkReadonly"] };
   if (mod.sandboxProvider === undefined) throw new Error(`SANDBOX_PROVIDER=${selection.provider}: ${selection.modulePath} exports no sandboxProvider`);
-  return { name, provider: mod.sandboxProvider };
+  return { name, provider: mod.sandboxProvider, ...(mod.connectWorkReadonly ? { connectWorkReadonly: mod.connectWorkReadonly } : {}) };
 }

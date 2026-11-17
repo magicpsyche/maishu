@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { WorkVerifierExitUnconfirmedError } from "./node-work-verifier.js";
 import { randomUUID } from "node:crypto";
 import { createSessionOutcomes, createVerifierOutcomeEvaluator, type SessionOutcome, type SessionOutcomeUsage } from "@open-managed-agents/session-outcomes";
@@ -74,7 +75,7 @@ export function createWorkOutcomeCompletion(options: {
       evaluator: { prepare: async ({ outcome }) => ({ type: "ready", outcome, evaluator: {
         evaluate: async ({ iteration, abortSignal }) => {
           if(historyIncomplete)return {result:"failed",explanation:"Canonical outcome history truncated; evaluation cannot establish success"};
-          if (!outcome.verifier && !options.channels()?.hostedInference.model.wireModel) return { result: "failed", explanation: "Outcome execution channels/model capability unavailable" };
+          if (!outcome.verifier && !options.channels()?.hostedInference?.model.wireModel) return { result: "failed", explanation: "Outcome execution channels/model capability unavailable" };
           const prepared = await evaluator.prepare({ outcome: active ?? outcome, abortSignal });
           if (prepared.type === "failed") return { result: "failed", explanation: prepared.explanation };
           active = prepared.outcome;

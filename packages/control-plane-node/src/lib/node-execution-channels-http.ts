@@ -1,9 +1,11 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { Hono } from "hono";
 import { authenticateSandboxToken, type SandboxTokenStore } from "@open-managed-agents/sandbox-gateway";
 import { SqlSessionSource } from "@open-managed-agents/managed-agents-adapters-sql";
 import { resolveProtocolEndpointsFromModelCard } from "@open-managed-agents/inference-proxy";
 import type { SqlClient } from "@open-managed-agents/sql-client";
 import type { ModelCardService } from "@open-managed-agents/model-cards-store";
+import { usesNativeAccountFiles } from "../harness-credentials.js";
 
 /** Separate pre-auth endpoint: accepts only the existing all-scope sandbox
  * token, never an admin/Work bearer. No issue/rotation or provider effects. */
@@ -26,10 +28,13 @@ export function nodeExecutionChannelsHttp(options: {
     try {
       const session = await new SqlSessionSource(options.sql).find({workspaceId:checked.session.workspaceId,sessionId:checked.session.sessionId});
       if (!session || session.archivedAt !== null) return c.json({type:"failed",phase:"session_lookup",code:"session_not_found",message:"Execution Session unavailable"},404);
+      const capability = {gatewayBaseUrl:options.gatewayBaseUrl!,sessionsToken:token};
+      if (usesNativeAccountFiles(session.agent.openma) && session.agent.openma?.acp?.agent?.command === "/usr/local/bin/maishu-harness") {
+        return c.json({ type: "ready", channels: { mcpProxy: capability, nativeAuthentication: true } });
+      }
       const model = session.agent.model;
       const card = await options.modelCards.findByModelId({tenantId:checked.session.workspaceId,modelId:typeof model === "string" ? model : model.id});
       if (!card || card.archived_at || !card.provider?.trim() || !card.model?.trim()) return c.json({type:"failed",phase:"model_lookup",code:"model_unavailable",message:"Active workspace model required"},409);
-      const capability = {gatewayBaseUrl:options.gatewayBaseUrl!,sessionsToken:token};
       return c.json({type:"ready",channels:{mcpProxy:capability,hostedInference:{...capability,model:{providerId:card.provider,baseUrl:card.base_url ?? null,wireModel:card.model,protocolEndpoints:resolveProtocolEndpointsFromModelCard({providerId:card.provider,baseUrl:card.base_url,wireModel:card.model,piConfig:card.pi_config ?? undefined})}}}});
     } catch { return c.json({type:"failed",phase:"session_lookup",code:"unavailable",message:"Execution channels authority unavailable"},503); }
   });

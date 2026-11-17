@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcpSandboxHarness } from "../src/acp-sandbox-loop";
 import type { HarnessContext } from "../src/interface";
@@ -308,6 +309,17 @@ describe("acp-sandbox child lifetime", () => {
     };
     await new AcpSandboxHarness().run(ctx);
     expect(wired.map((input) => input.model.wireModel)).toEqual(["claude-sonnet-5-5"]);
+  });
+
+  it("keeps native account launches independent from hosted model configuration", async () => {
+    wired.length = 0;
+    const s = sandbox(false);
+    const ctx = context(s.port, { agent: { id: "codex-acp", command: "/usr/local/bin/maishu-harness", args: ["codex"], env: { MAISHU_AUTH_MODE: "native", MAISHU_CREDENTIAL_REF: "hc_test" } } });
+    (ctx as { env: unknown }).env = { hostedInference: { model: {} } };
+    await new AcpSandboxHarness().run(ctx);
+    expect(wired).toEqual([]);
+    expect(started).toHaveLength(1);
+    expect(ctx.runtime.history.getEvents().filter(e => e.type === "session.error")).toEqual([]);
   });
 
   it("reports pre-call ACP failure without transferring sandbox ownership to Session", async () => {

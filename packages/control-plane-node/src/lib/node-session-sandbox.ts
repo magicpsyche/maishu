@@ -1,5 +1,7 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import type { Tracer } from "@open-managed-agents/observability";
 import { traceSandboxOperation } from "@open-managed-agents/session-runtime";
+import { usesNativeAccountFiles } from "../harness-credentials.js";
 import { configureNodeNativeStorage, type NodeNativeBucket } from "./work-finalization-host/native-storage.js";
 // The Node Session sandbox (research/sandbox-sdk-v2-design.md §0.0 rule 15,
 // §0.7): composition only. The lifecycle is the shared core
@@ -120,6 +122,9 @@ export interface NodeSessionSandboxContext {
 export interface NodeSessionSandboxProvider {
   name: string;
   provider: SandboxProviderPort<SandboxPort & SandboxRuntimePort>;
+  /** Explicit non-mutating connection; provider.resume is not a substitute. */
+  connectWorkReadonly?(handle: import("@open-managed-agents/sandbox").SandboxRuntimeHandle,
+    context: SandboxFactoryContext, env: SandboxFactoryEnv): Promise<(SandboxPort & SandboxRuntimePort) | "gone">;
 }
 
 /** A deployment's Sandbox SDK v2 adapter for Session sandboxes (design §0.2). */
@@ -136,6 +141,8 @@ export interface NodeSessionSandboxAdapter {
 }
 
 export interface NodeSessionSandboxOptions {
+  /** Caller wait only; timing out never cancels or releases discovery ownership. */
+  managementRpcWaitMs?: number;
   tracer?: Tracer;
   /** Omitted: the v1 provider bridge when `provider` is given, else the v1 factory (`createV1`) through the v1 bridge. */
   adapter?: NodeSessionSandboxAdapter;
@@ -283,13 +290,16 @@ export class NodeSessionSandboxes {
     const authority = input.workAuthority;
     const holderHash = authority.holderHash?.();
     if (!state || state.phase !== "running" || !holderHash || !await authority.isCurrent()) throw new Error("Current recorded Work runtime required");
-    // E2B currently supplies the only trusted process-bound holder locator.
-    // A local directory/provider.resume is not a process identity proof.
+    // Only explicit readonly attachment ports are eligible. A directory or
+    // provider.resume is not a process identity proof and may mutate lifetime.
     const adapter = this.options.adapter?.adapter;
-    if (state.handle.provider !== "e2b" || adapter?.name !== "e2b") throw new Error("Trusted Work process reconnect unsupported by provider");
-    const read = this.options.adapter?.connectWorkReadonly;
-    if (!read) throw new Error("Trusted Work read-only reconnect unsupported by provider");
-    const attachedRuntime = await read(state.handle.runtimeId);
+    const provider = this.options.provider;
+    let attachedRuntime: (SandboxPort & SandboxRuntimePort) | "gone";
+    if (state.handle.provider === "e2b" && adapter?.name === "e2b" && this.options.adapter?.connectWorkReadonly) {
+      attachedRuntime = await this.options.adapter.connectWorkReadonly(state.handle.runtimeId);
+    } else if (state.handle.provider === "opensandbox" && provider?.name === "opensandbox" && provider.connectWorkReadonly) {
+      attachedRuntime = await provider.connectWorkReadonly(state.handle, provider.context(input), provider.env);
+    } else throw new Error("Trusted Work read-only reconnect unsupported by provider");
     // Find and attach, or report unavailable so the scheduler re-requests a
     // sandbox through openSandbox. A provider read failure propagates.
     if (attachedRuntime === "gone") return "unavailable";
@@ -324,6 +334,7 @@ export class NodeSessionSandboxes {
     const handle = await runtime.restoreManagedProcess(locator);
     if (handle.id !== locator.id || handle.pid !== locator.pid) throw new Error("Restored Work process differs from locator");
     const fingerprint = (l: typeof locator) => JSON.stringify([l.sandboxId,l.id,l.epoch,l.pid,l.holderHash,l.identity]);
+    const expectedFingerprint = fingerprint(locator);
     const isCurrent = async () => {
       if (!await authority.isCurrent() || authority.holderHash?.() !== holderHash) return false;
       const saved = await records!.load(input.workspaceId,input.session.id);
@@ -334,7 +345,7 @@ export class NodeSessionSandboxes {
         || saved.handle.provider !== state.handle.provider
         || saved.handle.runtimeId !== state.handle.runtimeId) return false;
       const latest = await inspect();
-      return fingerprint(latest) === fingerprint(locator)
+      return fingerprint(latest) === expectedFingerprint
         && (republish ? latest.status === "running"
           : input.terminal ? source.generation === authority.attempt.generation || latest.status === "exited" : latest.status === "running") && await authority.isCurrent();
     };
@@ -357,6 +368,10 @@ export class NodeSessionSandboxes {
    * the provider lifecycle port is the only snapshot authority, and the
    * Session sandbox record is the only durable restore pointer. */
   async checkpointNativeWork(input: NodeWorkStorageInput & { handle: NonNullable<ReturnType<typeof recordedHandle>> }, assertCurrent: () => Promise<void>): Promise<void> {
+    // Native credentials are outside /workspace but a provider rootfs snapshot
+    // would still contain /tmp and /run. Only workspace-level persistence is
+    // permitted; do not call a full-filesystem provider checkpoint here.
+    if (usesNativeAccountFiles(input.session.agent.openma)) { await assertCurrent(); return; }
     let facade: NodeSessionSandbox | undefined;
     try { facade = this.get({ workspaceId: input.workspaceId, session: { id: input.session.id } }); } catch { /* cold reconnect */ }
     const lifecycle = facade?.workCheckpointLifecycle() ?? this.options.adapter?.adapter.lifecycle;
@@ -560,7 +575,9 @@ export class NodeSessionSandbox implements SandboxPort {
             }));
         const lifecycle = adapter.lifecycle;
         const trackedAdapter = {...adapter,lifecycle:{...lifecycle,
-          checkpoint: (input: Parameters<typeof lifecycle.checkpoint>[0]) => lifecycle.checkpoint(input),
+          checkpoint: async (input: Parameters<typeof lifecycle.checkpoint>[0]) => usesNativeAccountFiles(this.context.session.agent.openma)
+            ? { kind: "self" as const, provider: input.handle.provider, ref: input.handle.runtimeId }
+            : lifecycle.checkpoint(input),
           attach: async (input: Parameters<typeof lifecycle.attach>[0]) => {
             const result = await lifecycle.attach(input);
             if (result !== "gone") this.acquiredWorkRuntime = false;
@@ -801,7 +818,7 @@ export class NodeSessionSandbox implements SandboxPort {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       const result = await Promise.race([discovery.pending, new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error("Management discovery wait timed out; native outcome remains pending")), 1_000);
+        timeout = setTimeout(() => reject(new Error("Management discovery wait timed out; native outcome remains pending")), this.options.managementRpcWaitMs ?? 1_000);
       })]);
       if (this.live !== runtime || this.physicalGeneration !== generation) throw new Error("Physical sandbox changed during management discovery");
       if (discovery.owner !== this) throw new Error("Prior management discovery settled; current claim must rediscover");
@@ -1032,7 +1049,10 @@ export class NodeSessionSandbox implements SandboxPort {
     this.renewLease = async () => { await this.renewActivityTimeout(); };
     this.suspend = async (input) => (port() ?? runtime).suspend(input);
     this.resume = async (checkpoint) => (port() ?? runtime).resume(checkpoint);
-    this.checkpoint = async (input) => (port() ?? runtime).checkpoint(input);
+    this.checkpoint = async (input) => {
+      if (usesNativeAccountFiles(this.context.session.agent.openma)) throw new Error("原生账户认证模式禁止创建包含凭证的全容器快照");
+      return (port() ?? runtime).checkpoint(input);
+    };
   }
 
   private scheduleIdle(delayMs: number, version?: number): void {

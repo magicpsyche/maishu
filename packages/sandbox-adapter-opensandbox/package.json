@@ -12,7 +12,8 @@
     "test:certification": "OMA_OPENSANDBOX_CERTIFICATION=1 vitest run --config vitest.config.ts test/opensandbox-certification.e2e.test.ts"
   },
   "dependencies": {
-    "@open-managed-agents/sandbox": "workspace:*"
+    "@open-managed-agents/sandbox": "workspace:*",
+    "@open-managed-agents/sandbox-port-kit": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
@@ -27,5 +28,6 @@
     "@alibaba-group/opensandbox": {
       "optional": true
     }
-  }
+  },
+  "x-maishu-modified": true
 }

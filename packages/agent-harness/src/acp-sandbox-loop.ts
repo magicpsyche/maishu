@@ -1,3 +1,4 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { parkUnknownToolRetry, isDispatchedUnknown } from "./unknown-tool-retry";
 import { installAcpAgentWithHistory } from "./acp-install";
 import { gateExhausted } from "./budget";
@@ -200,7 +201,12 @@ export class AcpSandboxHarness implements HarnessInterface {
           ? ctx.agent.model
           : ctx.agent.model.id;
         let launchEnv = preparation.launch.env;
-        const hostedInference = ctx.env.hostedInference;
+        // The controlled native-account launcher uses the harness's own login,
+        // not a platform Model Card. Do not require or overwrite its provider
+        // endpoint before the account-file launcher can start.
+        const nativeAccount = config.agent.command === "/usr/local/bin/maishu-harness"
+          && config.agent.env?.MAISHU_AUTH_MODE === "native";
+        const hostedInference = nativeAccount ? undefined : ctx.env.hostedInference;
         if (hostedInference) {
           const inferenceModel = hostedInference.model;
           if (!inferenceModel?.providerId) {

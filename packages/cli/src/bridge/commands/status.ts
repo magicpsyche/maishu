@@ -1,3 +1,5 @@
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { humanText } from "../../human-text.js";
 /**
  * `oma bridge status` — print local creds + (best-effort) ping the server
  * to verify the runtime is reachable and the token is still valid.
@@ -32,7 +34,7 @@ export async function runStatus(): Promise<void> {
 
   const kind = detectServiceKind();
   const row = (k: string, v: string) =>
-    process.stderr.write(`  ${c.dim(k.padEnd(11))} ${v}\n`);
+    process.stderr.write(`  ${c.dim(humanText(k).padEnd(11))} ${v}\n`);
   row("server",     creds.serverUrl);
   row("runtime_id", creds.runtimeId);
   row("machine_id", creds.machineId);

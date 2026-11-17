@@ -1,4 +1,5 @@
-import { mkdtemp, rm } from "node:fs/promises";
+// 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import { loadNodeConfig } from "../src/config";
@@ -8,7 +9,8 @@ import { SqlSessionExecutionCoordinator } from "@open-managed-agents/session-run
 import { createSqlGatewaySandboxTokenStore } from "../../../packages/sandbox-gateway-sql/src/index";
 import { issueSandboxToken } from "../../../packages/sandbox-gateway/src/index";
 
-it("actual Node HTTP authority returns only current all-scope channels, never creates a token", async () => {
+it.each(["managed", "native"] as const)("actual Node HTTP authority returns current %s channels without creating a token", async mode => {
+  await mkdir(join(process.cwd(), ".test-artifacts"), { recursive: true });
   const root = await mkdtemp(join(process.cwd(), ".test-artifacts/channels-"));
   const components = await nodeDefaults(loadNodeConfig({NODE_ENV:"test",AUTH_DISABLED:"0",API_KEY:"admin",PLATFORM_ROOT_SECRET:"test-root-secret-not-production",PUBLIC_BASE_URL:"https://control.test",MEMORY_QUEUE:"disabled",LOG_LEVEL:"silent",PROCESS_MODE:"api",
     DATABASE_PATH:join(root,"db.sqlite"),AUTH_DATABASE_PATH:join(root,"auth.sqlite"),SANDBOX_WORKDIR:join(root,"sandboxes"),MEMORY_BLOB_DIR:join(root,"memory"),FILES_BLOB_DIR:join(root,"files"),SESSION_OUTPUTS_DIR:join(root,"outputs")}),{sandbox:async()=>{throw new Error("No provider launch in channels authority");}});
@@ -18,9 +20,10 @@ it("actual Node HTTP authority returns only current all-scope channels, never cr
       const response = await cp.fetch(new Request("https://control.test"+path,{method:"POST",headers:{"x-api-key":"admin","content-type":"application/json"},body:JSON.stringify(body)}));
       const data:any=await response.json(); expect(response.status,JSON.stringify(data)).toBeLessThan(300); return data;
     };
-    await admin("/v1/oma/model_cards",{model_id:"hosted",model:"upstream-model",provider:"anthropic",base_url:"https://upstream.test",api_key:"must-not-appear"});
+    if (mode === "managed") await admin("/v1/oma/model_cards",{model_id:"hosted",model:"upstream-model",provider:"anthropic",base_url:"https://upstream.test",api_key:"must-not-appear"});
     const environment = await admin("/v1/environments",{name:"external",config:{type:"self_hosted"}});
-    const agent = await admin("/v1/agents",{name:"pinned",model:"hosted",system:"hello",tools:[]});
+    const agent = await admin("/v1/agents",{name:"pinned",model:mode === "native" ? "native" : "hosted",system:"hello",tools:[],
+      ...(mode === "native" ? { _oma: { harness: "acp-sandbox", acp: { agent: { id: "codex-acp", command: "/usr/local/bin/maishu-harness", args: ["codex"], env: { MAISHU_AUTH_MODE: "native", MAISHU_CREDENTIAL_REF: "hc_fixture" } } } } } : {}) });
     const session = await admin("/v1/sessions",{agent:{type:"agent",id:agent.id,version:agent.version},environment_id:environment.id});
     const sql=components.database.sql;
     const row=await sql.prepare("SELECT workspace_id FROM managed_sessions WHERE id = ?").bind(session.id).first<{workspace_id:string}>();
@@ -32,7 +35,9 @@ it("actual Node HTTP authority returns only current all-scope channels, never cr
     const token=await issueSandboxToken(store,claim.fence,{scope:"all"});
     const call=(bearer:string,id=session.id)=>cp.fetch(new Request("https://control.test/v1/oma/sessions/"+id+"/execution-channels",{method:"POST",headers:{authorization:"Bearer "+bearer,"content-type":"application/json"},body:"{}"}));
     const response=await call(token); const result:any=await response.json();
-    expect(response.status).toBe(200); expect(result).toMatchObject({type:"ready",channels:{mcpProxy:{sessionsToken:token},hostedInference:{sessionsToken:token,model:{providerId:"anthropic",wireModel:"upstream-model"}}}});
+    expect(response.status).toBe(200);
+    if (mode === "managed") expect(result).toMatchObject({type:"ready",channels:{mcpProxy:{sessionsToken:token},hostedInference:{sessionsToken:token,model:{providerId:"anthropic",wireModel:"upstream-model"}}}});
+    else { expect(result).toMatchObject({ type: "ready", channels: { mcpProxy: { sessionsToken: token }, nativeAuthentication: true } }); expect(result.channels.hostedInference).toBeUndefined(); }
     expect(JSON.stringify(result)).not.toContain("must-not-appear");
     expect((await call("sk-ant-req-v1.not-sandbox")).status).toBe(401);
     expect((await call(token,"other-session")).status).toBe(401);
