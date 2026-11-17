@@ -10,6 +10,16 @@ import { loadNodeConfig, redactNodeConfig, type NodeConfig } from "../src/config
 const minimal = { NODE_ENV: "test", MEMORY_BLOB_DIR: "./data/memory-blobs" };
 
 describe("loadNodeConfig", () => {
+  it("bounds the operator Work checkpoint wait without changing the default or SQL lease", () => {
+    expect(loadNodeConfig(minimal).execution.workFinalizationRequestTimeoutMs).toBe(30_000);
+    const configured = loadNodeConfig({ ...minimal, MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS: "75000" });
+    expect(configured.execution.workFinalizationRequestTimeoutMs).toBe(75_000);
+    expect(configured.execution.leaseTtlMs).toBe(90_000);
+    for (const value of ["0", "-1", "1.5", "90000", "NaN", "Infinity"]) {
+      expect(() => loadNodeConfig({ ...minimal, MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS: value })).toThrow(/MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS/);
+    }
+  });
+
   it("bounds the operator management wait budget below the 90 second lease without changing the default", () => {
     expect(loadNodeConfig(minimal).execution.managementRpcWaitMs).toBe(1_000);
     expect(loadNodeConfig({ ...minimal, MAISHU_MANAGEMENT_RPC_WAIT_MS: "5000" }).execution.managementRpcWaitMs).toBe(5_000);
@@ -129,6 +139,15 @@ describe("loadNodeConfig", () => {
     expect(() => loadNodeConfig({ ...minimal, OMA_SANDBOX_LEASE_TTL_SEC: "30" })).toThrow(/OMA_SANDBOX_LEASE_TTL_SEC/);
   });
 
+  it("allows LocalFs workspace checkpoints only for a standalone OpenSandbox control instance", () => {
+    const selected = {...minimal, SANDBOX_PROVIDER: "opensandbox", OMA_WORKSPACE_STRATEGY: "checkpoint_restore"};
+    expect(loadNodeConfig(selected).blobs.files.kind).toBe("localfs");
+    expect(loadNodeConfig(selected).workspace.strategy).toBe("checkpoint_restore");
+    expect(loadNodeConfig({...minimal, SANDBOX_PROVIDER: "opensandbox"}).workspace.strategy).toBe("ephemeral");
+    expect(() => loadNodeConfig({...selected, SANDBOX_PROVIDER: "e2b"})).toThrow(/FILES_S3/);
+    expect(() => loadNodeConfig({...selected, OPENMA_PROCESS_MODE: "serverless"})).toThrow(/FILES_S3/);
+  });
+
   it("parses the string-encoded flags and numbers exactly as the assembly did", () => {
     const config = loadNodeConfig({
       ...minimal,
@@ -142,7 +161,7 @@ describe("loadNodeConfig", () => {
     expect(config.feishuWsRunner).toBe(true);
     expect(config.memoryQueue).toBe("disabled");
     expect(config.dreamCurator).toBe("dedup");
-    expect(config.execution).toEqual({ concurrency: 3, ownerId: "replica-a", leaseTtlMs: 90_000, managementRpcWaitMs: 1_000 });
+    expect(config.execution).toEqual({ concurrency: 3, ownerId: "replica-a", leaseTtlMs: 90_000, managementRpcWaitMs: 1_000, workFinalizationRequestTimeoutMs: 30_000 });
     expect(config.email).toEqual({ host: "smtp", port: 465, secure: true, user: "u", pass: "p", fromAddress: "noreply@x" });
     expect(config.http.gatewayOrigin).toBe("https://gw");
     expect(config.http.publicBaseUrl).toBe("https://pub");

@@ -1,0 +1,11 @@
+[Unit]
+Description=麦枢可选沙箱出站代理入口
+After=maishu-docker.service
+Requires=maishu-docker.service
+
+[Socket]
+ListenStream=172.30.0.1:17990
+NoDelay=true
+
+[Install]
+WantedBy=sockets.target

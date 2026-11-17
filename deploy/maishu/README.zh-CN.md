@@ -128,3 +128,144 @@ node --env-file=/etc/maishu/control.env --import tsx apps/main-node/src/index.ts
 ### 跨 VPS 的管理调用等待预算
 
 `MAISHU_MANAGEMENT_RPC_WAIT_MS` 只配置 Node 控制端对安全管理 RPC、提供商续租和进程发现的单次等待。默认仍为 `1000` 毫秒，允许正整数 `1—89999`；跨 VPS 可依据实际延迟选择 `5000—10000`。它不改变 Work 租约、SQL fence、进程 epoch/holder 或 single-flight：等待超时后底层调用仍在 pending，同一操作继续加入原调用，不会启动重复操作。应先查明网络、执行进程和底层服务的原因，再决定是否调整预算；延长等待不是执行成功的证明。
+
+### 从干净源码部署双 VPS（systemd 模板）
+
+`systemd/`、`execution.env.example`、`docker.json.example`、`opensandbox.toml.example` 和
+`prepare-execution-network.sh` 提供可人工审阅的部署模板，不会自动安装或覆盖服务。
+本节对应 Linux/systemd、Docker Engine 29.1.3、Python venv 中的
+`opensandbox-server==1.2.1`、控制端 Node.js 24（本轮实际为 24.22.2）。
+OpenSandbox 客户端 SDK 由仓库锁文件固定为 1.1.1。其他版本需重新验证配置和并存行为。
+执行端的 Python 服务拥有创建容器的权限，应作为受信部署组件运行。
+
+两台 VPS 都需要 root 完成首次配置，并已接入独立、可控的 Tailscale 网络。
+控制端需要 Node.js 24、systemd、Nginx、DNS-01 获取的 TLS 证书，以及所选 SQL
+后端或本地 SQLite。执行端需要现有 Docker Engine/containerd、Docker CLI、
+Python 3.11+ 与 venv/pip、`iproute2`、`iptables`、`procps`、systemd。
+不要为安装本产品重装或重启已有 Docker。构建机还需要仓库固定版本 pnpm；
+已有 OMA 的目录、容器、Docker 默认 socket、数据库和秘密均不作为安装来源。
+
+1. **构建并上传版本。** 按前文生成独立控制端发布包；用
+   `runtime/build-worker.mjs` 生成本版 Worker，保留其摘要。
+   两端分别解包所需源码/部署资产到 `/opt/maishu/releases/RELEASE/`，将
+   `/opt/maishu/current` 指向该版本。控制端 Node.js 安装到独立目录，建立
+   `/opt/maishu/tooling/node24` 符号链接；模板使用该路径，不改变系统默认 Node。
+   执行端 Worker 上传至 `/var/lib/maishu/runtime/RELEASE/`，文件只读。
+   每个发布单独记录源码提交、Worker 摘要及最终镜像 digest。
+
+2. **准备执行端配置。** 新建专属目录，不迁移旧 OMA 的文件：
+
+   ```sh
+   install -d -m 0700 /etc/maishu /var/lib/maishu/opensandbox
+   install -d /var/lib/maishu/docker /var/lib/maishu/runtime /var/lib/maishu/projects /var/lib/maishu/cache
+   python3 -m venv /opt/maishu/opensandbox-venv
+   /opt/maishu/opensandbox-venv/bin/pip install 'opensandbox-server==1.2.1'
+   /opt/maishu/opensandbox-venv/bin/pip freeze > /etc/maishu/opensandbox-requirements.txt
+   install -m 0600 deploy/maishu/execution.env.example /etc/maishu/execution.env
+   install -m 0600 deploy/maishu/opensandbox.toml.example /etc/maishu/opensandbox.toml
+   install -m 0600 deploy/maishu/docker.json.example /etc/maishu/docker.json
+   ```
+
+   编辑环境和 TOML 文件。`docker.json` 保留空对象，其他引擎参数已显式写在 unit；
+   独立配置路径避免新 daemon 继承旧 `/etc/docker/daemon.json`。
+   `execution.env` 的地址是非秘密参数，必须是两台机器实际的
+   Tailscale IPv4；脚本会检查执行地址确属本机。TOML 中两个 `EXECUTOR_TAIL_IP`
+   必须替换成同一执行地址，不能使用 `0.0.0.0`；替换随机执行 API key，并将
+   同一值安全写入控制端配置，不放进命令历史、Git 或镜像。TOML 不展开环境变量。
+   默认 `maishu0=172.30.0.1/24`；脚本遇到接口或路由网段冲突会停止，需先重新规划。
+   这些命令从已解包的发布目录执行。
+
+3. **启动独立容器服务。** 初次安装先核对没有同名麦枢服务，维护已有实例时使用
+   下文维护窗口流程。只复制本产品的 unit：
+
+   ```sh
+   install -m 0644 deploy/maishu/systemd/maishu-docker.service /etc/systemd/system/
+   install -m 0644 deploy/maishu/systemd/maishu-sandbox.service /etc/systemd/system/
+   sh -n deploy/maishu/prepare-execution-network.sh
+   systemd-analyze verify /etc/systemd/system/maishu-docker.service /etc/systemd/system/maishu-sandbox.service
+   systemctl daemon-reload
+   systemctl enable --now maishu-docker.service
+   docker --host unix:///run/maishu-docker.sock info --format '{{.DockerRootDir}}'
+   docker --host unix:///run/maishu-docker.sock pull opensandbox/execd:v1.1.0
+   # 在有源码和构建依赖的执行端构建；也可从构建机导入已校验的镜像归档。
+   docker --host unix:///run/maishu-docker.sock build -f deploy/maishu/runtime/Dockerfile -t maishu-runtime:2026.11.17 .
+   systemctl enable --now maishu-sandbox.service
+   ```
+
+   输出 DockerRootDir 必须是 `/var/lib/maishu/docker`。模板显式隔离 socket、
+   data-root、exec-root、pidfile、containerd namespace=`maishu`、插件 namespace
+   `plugins.maishu`，并使用自建 `maishu0`；不会将旧 Docker 的容器纳入新后端。
+   `prepare-execution-network.sh` 只重建本产品的 `MAISHU-*` 链和对应跳转，
+   不清空系统表、不改默认策略、不删除旧 `DOCKER*` 链或旧桥；它启用 IPv4 转发，
+   为本产品网段提供 NAT，限制执行端 API/动态端口的来源，并限制沙箱到控制端
+   Tailscale 地址的出站 TCP 端口。非 443 控制入口需调整
+   `MAISHU_CONTROLLER_PORT`；确有其他私网服务需求时审阅这条专属链再放行。
+   这组更窄的模板规则已做静态检查，尚未替换现网规则做整机实测。
+
+4. **可选出站 HTTP 代理。** 默认直连，不安装 `maishu-egress.*`。
+   若客户确有一个可用的 HTTP CONNECT 上游，先修改 `maishu-egress.service`
+   中的转发目标，核对本发行版 `systemd-socket-proxyd` 的路径，再安装同名
+   `.service/.socket` 并启用 socket。示例 `127.0.0.1:17890` 不是本产品内置服务，
+   不能假定客户机器存在。随后取消 TOML 中 `[docker.sandbox_env]` 的注释，
+   替换 NO_PROXY 的控制域名和两端私网 IP，重启**新** `maishu-sandbox` 后验证。
+   NO_PROXY 必须覆盖控制端真实域名/IP，避免管理回调绕行外部代理。
+
+5. **准备控制端。** 创建专属非登录系统用户 `maishu`，使其能读发布目录，
+   并拥有 `/var/lib/maishu`、文件/记忆/产物目录；只授予所需权限。
+   复制 `control.env.example` 到 `/etc/maishu/control.env`，设为 root 所有、0600。
+   分别生成平台长期随机秘密，填写管理员身份；不要复用旧 OMA 的秘密。
+   填写新的执行端 `TAIL_IP:8818`、相同执行 key、镜像标签/digest、Worker
+   版本目录挂载，保留 `OPENSANDBOX_MANAGED_BOOTSTRAP=1`。
+   使用只读 Worker 挂载，不挂 Docker socket、宿主机 home 或所有客户的认证总目录。
+   控制端发布包必须含前端、`downloads/`、egress 产物和本版依赖闭包。
+
+   ```sh
+   install -m 0644 deploy/maishu/systemd/maishu.service /etc/systemd/system/
+   systemd-analyze verify /etc/systemd/system/maishu.service
+   systemctl daemon-reload
+   systemctl enable --now maishu.service
+   curl --fail http://127.0.0.1:8797/health
+   ```
+
+   `nginx-private.conf.example` 的占位符替换后放入新 server block，先运行
+   `nginx -t` 再 reload；不要覆盖现有站点或抢占已有监听。
+   DNS 使用 DNS-only A 指向控制端 Tailscale IP，TLS 用 DNS-01，Nginx 仅绑定该
+   私网地址。`PUBLIC_BASE_URL`、`CONSOLE_ORIGINS` 和 CLI 下载产物的默认地址必须
+   同源。可从任何未加入该私网的设备验证公网无法访问。
+
+Tailscale ACL/宿主机防火墙至少需要：授权用户到控制端 TCP 443；控制端到执行端
+TCP 8818 与 48000—49999（生命周期、execd 和 ACP relay）；执行沙箱到控制端
+TCP 443（或配置的控制端口）用于受限管理回调。DNS 也必须可用。
+不能只放行生命周期 API。动态端口由新 daemon 的 userland proxy 绑定执行端私网
+地址；不要公网转发这些端口。模板不修改 Tailscale 管理端 ACL，需部署者按实际身份配置。
+
+### 双 Docker 并存验收与维护窗口
+
+**禁止给新 daemon 加 `--default-address-pool` 或 JSON `default-address-pools`。**
+Moby 29.1.3 在清理自己的默认 bridge 记录时，只要显式地址池非空且 live-restore
+关闭，就会直接删除主机固定名称 `docker0`，即使本 daemon 已选择
+`--bridge=maishu0`。`--bridge=none` 也会进入清理路径。
+详见 [同版本上游实现](https://github.com/moby/moby/blob/docker-v29.1.3/daemon/daemon_unix.go#L808-L824)。
+隔离 socket/data/namespace 并不能隔离这个内核网桥副作用。
+不通过切换 live-restore 或启动后强行修旧网桥掩盖该问题；本模板删除触发参数。
+
+安装和维护前后分别记录旧服务的 MainPID/NRestarts、旧容器完整 ID/StartedAt、
+`docker0` 名称/IP/MAC/网卡成员、旧存储与 OMA 的健康状态，以及新 `maishu0`。
+只用显式 `--host unix:///run/maishu-docker.sock` 操作新资源。
+除新平台真实任务外，还应从旧 OpenSandbox 创建一个无账户、无挂载的临时
+`node:22-bookworm` 沙箱，执行 Node echo；若旧平台依赖代理，再验证 HTTP CONNECT，
+随后通过原 API 删除并检查无残留。这些测试不能使用或修改旧会话和认证。
+
+本轮现网已完成：恢复旧桥后，旧 provider 临时沙箱创建、执行、代理连接和删除均成功，
+旧平台和存储健康响应为 200；旧 OMA/OpenSandbox/Docker、新 Docker 主进程和旧存储
+容器均未重启。只有旧附属代理因绑定了已删除的网桥设备编号而重新绑定。
+新 daemon 删除触发参数后只执行过 unit 校验和 daemon-reload；**未在真实任务运行时
+重启新 daemon 验证下一次启动**。模板的语法校验不替代该维护窗口验收。
+
+新 Docker 的重启、执行网络脚本变更、OpenSandbox 升级都需要维护窗口：停止接收
+新任务，等待或明确结束新平台任务，记录容器与桥状态，先核对无地址池触发配置，
+再仅重启新 `maishu-docker`，启动新 `maishu-sandbox`（以及已启用的可选代理 socket）。
+重启容器引擎可能中断运行中的新任务；不要将 daemon-reload 当作已重启。
+随后立即检查旧 `docker0`/旧代理、旧健康及旧临时沙箱正例，再验证新平台真实任务。
+任何旧服务异常都应停止继续发布，按已记录的原桥元数据定位恢复，不能重装 Docker、
+清理全部网络或重启旧 OMA 来碰运气。

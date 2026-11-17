@@ -1,0 +1,16 @@
+[Unit]
+Description=麦枢 OpenSandbox 执行服务
+After=network-online.target maishu-docker.service
+Requires=maishu-docker.service
+
+[Service]
+Type=simple
+Environment=DOCKER_HOST=unix:///run/maishu-docker.sock
+WorkingDirectory=/opt/maishu
+ExecStart=/opt/maishu/opensandbox-venv/bin/python -c "from opensandbox_server.cli import main; main()" --config /etc/maishu/opensandbox.toml
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

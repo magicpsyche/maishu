@@ -78,6 +78,8 @@ export interface NodeConfig {
     ownerId: string; concurrency: number; leaseTtlMs?: number;
     /** Caller wait only (1..89999ms); unresolved provider RPCs remain pending. */
     managementRpcWaitMs?: number;
+    /** Work checkpoint HTTP wait only; other finalization mutations keep their default timeout. */
+    workFinalizationRequestTimeoutMs?: number;
   };
   workspace: {
     strategy: "ephemeral" | "checkpoint_restore";

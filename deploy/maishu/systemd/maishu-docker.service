@@ -1,0 +1,23 @@
+[Unit]
+Description=麦枢独立执行容器引擎
+After=network-online.target containerd.service tailscaled.service
+Wants=network-online.target
+Requires=containerd.service
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/maishu/execution.env
+ExecStartPre=/opt/maishu/current/deploy/maishu/prepare-execution-network.sh
+# 不得添加 --default-address-pool(s)：Moby 29.1.3 会因此删除另一个 daemon 的 docker0。
+# 不使用 --bridge=none；它同样会清理固定名称 docker0。
+ExecStart=/usr/bin/dockerd --config-file=/etc/maishu/docker.json --host=unix:///run/maishu-docker.sock --data-root=/var/lib/maishu/docker --exec-root=/run/maishu-docker --pidfile=/run/maishu-docker.pid --containerd=/run/containerd/containerd.sock --containerd-namespace=maishu --containerd-plugins-namespace=plugins.maishu --dns=${MAISHU_DOCKER_DNS} --dns=${MAISHU_DOCKER_FALLBACK_DNS} --dns-opt=timeout:1 --dns-opt=attempts:2 --bridge=maishu0 --iptables=false --ip6tables=false --ip-masq=false --userland-proxy=true
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=90
+LimitNOFILE=infinity
+Delegate=yes
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

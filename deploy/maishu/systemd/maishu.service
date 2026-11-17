@@ -1,0 +1,22 @@
+[Unit]
+Description=麦枢智能体控制平台
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=maishu
+Group=maishu
+WorkingDirectory=/opt/maishu/current/apps/main-node
+EnvironmentFile=/etc/maishu/control.env
+Environment=PATH=/opt/maishu/tooling/node24/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/maishu/tooling/node24/bin/node --import tsx src/index.ts
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

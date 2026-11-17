@@ -333,6 +333,11 @@ class NodeBlobWorkspacePort implements WorkspacePersistencePort {
   }
 }
 
+/** Reuse the archive safety boundary with another domain publication authority. */
+export function createNodeWorkspacePersistencePort(sandbox: SandboxExecutor, blobs: BlobStore): WorkspacePersistencePort {
+  return new NodeBlobWorkspacePort(sandbox, blobs);
+}
+
 export interface NodeManagedWorkspaceCheckpointsDependencies {
   sql: SqlClient;
   blobs: BlobStore;

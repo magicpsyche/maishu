@@ -1,3 +1,4 @@
+// 麦枢修改：工作区持久化与远程执行配置扩展；保留上游兼容接口。
 import { observeWorkOperation, type WorkOperationObservation } from "../work-operation-observation.js";
 import { SqlSessionSource, SqlSessionEnvironmentSource } from "@open-managed-agents/managed-agents-adapters-sql";
 import type { WorkFinalizationHostPort, WorkFinalizationScope } from "@open-managed-agents/managed-agents-application";
@@ -5,6 +6,7 @@ import type { SqlClient } from "@open-managed-agents/sql-client";
 import type { BlobStore } from "@open-managed-agents/blob-store";
 import { environmentWorkSandboxTokenRef } from "@open-managed-agents/sandbox-gateway-sql";
 import type { NodeSessionSandboxes } from "../node-session-sandbox.js";
+import type { NodeWorkWorkspaceCheckpoints } from "../work-workspace-checkpoints.js";
 import type { createNodeWorkArtifactPublisher } from "../../openai-artifact-publication.js";
 
 export interface NodeWorkFinalizationHostDependencies {
@@ -12,6 +14,7 @@ export interface NodeWorkFinalizationHostDependencies {
   dialect: "sqlite" | "postgres" | "mysql";
   blobs: BlobStore;
   sandboxes: NodeSessionSandboxes;
+  workspaceCheckpoints?: Pick<NodeWorkWorkspaceCheckpoints, "prepare">;
   afterExecution: ReturnType<typeof createNodeWorkArtifactPublisher>;
   /** Stage timing only; never errors, bodies or credentials. */
   observe?(event: WorkOperationObservation): void;
@@ -155,6 +158,10 @@ export async function createNodeWorkFinalizationHost(deps: NodeWorkFinalizationH
       // Preserve the captured process fence through every canonical storage write.
       await stage(scope, "finalize-synchronize", () => deps.sandboxes.synchronizeReconnectedWork(physical));
       await assertCurrent();
+      if (deps.workspaceCheckpoints) {
+        await stage(scope, "finalize-workspace-snapshot", () => deps.workspaceCheckpoints!.prepare(scope, physical, assertCurrent));
+        await assertCurrent();
+      }
       await stage(scope, "finalize-native-snapshot", () => deps.sandboxes.checkpointNativeWork(physical, assertCurrent));
       await assertCurrent();
       prepared.set(key, {expiresAt: Date.now() + preparedTtlMs, current: async () => await captured.current() && await scope.isCurrent()});

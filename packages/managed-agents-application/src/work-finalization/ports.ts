@@ -1,3 +1,4 @@
+// 麦枢修改：工作区持久化与远程执行配置扩展；保留上游兼容接口。
 import type { WorkInputClaim } from "../session-execution/work-inputs";
 import type { RuntimeProducedSessionEvent } from "../session-execution/port";
 
@@ -44,4 +45,32 @@ export interface WorkFinalizationHostPort {
   prepare(scope:WorkFinalizationScope):Promise<{type:"prepared"}|{type:"unavailable"}>;
   /** Original canonical outcome is immutable even when this fails. */
   publish(scope:WorkFinalizationScope & {terminal:WorkTerminalReceipt}):Promise<{type:"published"}|{type:"unavailable"}>;
+}
+
+/** Portable workspace bytes are prepared by the host; this port publishes only
+ * an immutable pointer under the existing Work authority, never SessionExecution. */
+export interface WorkWorkspaceCheckpointRecord<Candidate extends { id: string }> {
+  version: 1;
+  candidate: Candidate;
+  workId: string;
+  generation: number;
+  turnId: string;
+  revision: number;
+  runtime: { provider: string; runtimeId: string };
+}
+export interface WorkWorkspaceCheckpointPublication<Candidate extends { id: string }> {
+  scope: WorkFinalizationScope;
+  holderHash: string;
+  runtime: { provider: string; runtimeId: string };
+  candidate: Candidate;
+  /** Exact durable base read before capture; a stale base cannot replace a successor. */
+  expected: string | null;
+}
+export interface WorkWorkspaceCheckpointPersistencePort<Candidate extends { id: string }> {
+  load(scope: { workspaceId: string; sessionId: string }): Promise<{
+    record: WorkWorkspaceCheckpointRecord<Candidate> | null;
+    version: string | null;
+  }>;
+  /** Atomic Work + canonical turn + physical handle + previous pointer CAS. */
+  publish(input: WorkWorkspaceCheckpointPublication<Candidate>): Promise<boolean>;
 }

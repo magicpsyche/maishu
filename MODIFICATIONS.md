@@ -144,6 +144,7 @@
 - `apps/main-node/package.json`
 - `apps/main-node/src/components.ts`
 - `apps/main-node/src/config.ts`
+- `apps/main-node/test/_helpers/work-workspace-checkpoint.fixture.ts`
 - `apps/main-node/test/config.test.ts`
 - `apps/main-node/test/execution-proxy-env.test.ts`
 - `apps/main-node/test/harness-credentials.test.ts`
@@ -157,7 +158,10 @@
 - `apps/main-node/test/sandbox-backend.test.ts`
 - `apps/main-node/test/tenant-provisioning.test.ts`
 - `apps/main-node/test/work-management-rpc.test.ts`
+- `apps/main-node/test/work-workspace-checkpoints.storage.integration.ts`
+- `apps/main-node/test/work-workspace-checkpoints.test.ts`
 - `apps/main-node/vitest.sandbox-backend.config.ts`
+- `apps/main-node/vitest.work-workspace.config.ts`
 - `apps/main/src/auth-config.ts`
 - `apps/main/src/index.ts`
 - `apps/main/src/lib/maishu-api-aliases.ts`
@@ -171,7 +175,11 @@
 - `deploy/maishu/cli/README.md`
 - `deploy/maishu/cli/install.sh`
 - `deploy/maishu/control.env.example`
+- `deploy/maishu/docker.json.example`
+- `deploy/maishu/execution.env.example`
 - `deploy/maishu/nginx-private.conf.example`
+- `deploy/maishu/opensandbox.toml.example`
+- `deploy/maishu/prepare-execution-network.sh`
 - `deploy/maishu/runtime/DSH-COMPATIBILITY.md`
 - `deploy/maishu/runtime/Dockerfile`
 - `deploy/maishu/runtime/README.md`
@@ -186,6 +194,11 @@
 - `deploy/maishu/runtime/test_runtime.py`
 - `deploy/maishu/runtime/verify-dsh-work.py`
 - `deploy/maishu/runtime/verify-dsh.py`
+- `deploy/maishu/systemd/maishu-docker.service`
+- `deploy/maishu/systemd/maishu-egress.service`
+- `deploy/maishu/systemd/maishu-egress.socket`
+- `deploy/maishu/systemd/maishu-sandbox.service`
+- `deploy/maishu/systemd/maishu.service`
 - `deploy/maishu/upstream.json`
 - `package.json`
 - `packages/agent-harness/src/acp-sandbox-loop.ts`
@@ -220,7 +233,9 @@
 - `packages/control-plane-node/src/lib/node-session-sandbox.ts`
 - `packages/control-plane-node/src/lib/platform-settings-store.ts`
 - `packages/control-plane-node/src/lib/sandbox-backend-http.ts`
+- `packages/control-plane-node/src/lib/work-finalization-host/index.ts`
 - `packages/control-plane-node/src/lib/work-management-rpc.ts`
+- `packages/control-plane-node/src/lib/work-workspace-checkpoints.ts`
 - `packages/control-plane-node/src/modules/node-foundation.ts`
 - `packages/control-plane-node/src/modules/node-http.ts`
 - `packages/control-plane-node/src/modules/node-managed.ts`
@@ -231,10 +246,14 @@
 - `packages/harness-runtime-acp/src/node-supervisor.ts`
 - `packages/harness-runtime-acp/src/node-work-composition.ts`
 - `packages/harness-runtime-acp/src/node-work-outcomes.ts`
+- `packages/harness-runtime-acp/src/work-finalization-input-http.ts`
+- `packages/harness-runtime-acp/src/work-turn-coordinator.ts`
+- `packages/harness-runtime-acp/test/checkpoint-deadlines.test.ts`
 - `packages/harness-runtime-acp/test/dsh-work-profile.test.ts`
 - `packages/harness-runtime-acp/test/execution-channels-http.test.ts`
 - `packages/harness-runtime-acp/test/fixtures/dsh-native-0.4.41.json`
 - `packages/harness-runtime-acp/test/node-supervisor.test.ts`
+- `packages/managed-agents-application/src/work-finalization/ports.ts`
 - `packages/sandbox-adapter-e2b/src/managed-bootstrap.ts`
 - `packages/sandbox-adapter-e2b/test/managed-holder-binding.test.ts`
 - `packages/sandbox-adapter-opensandbox/README.md`

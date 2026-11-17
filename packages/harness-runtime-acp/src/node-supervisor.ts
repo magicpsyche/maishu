@@ -209,6 +209,11 @@ export function createNodeManagedAcpSupervisorApp(
   options: NodeManagedAcpSupervisorAppOptions = {},
 ): NodeManagedAcpSupervisorApp {
   const environment = options.environment ?? process.env;
+  const checkpointWait = environment.MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS;
+  const checkpointRequestTimeoutMs = checkpointWait === undefined || checkpointWait === "" ? 30_000 : Number(checkpointWait);
+  if (!Number.isSafeInteger(checkpointRequestTimeoutMs) || checkpointRequestTimeoutMs < 1 || checkpointRequestTimeoutMs > 89_999) {
+    throw new TypeError("MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS must be an integer from 1 to 89999");
+  }
   const installedHarnesses = parseInstalledHarnesses(environment.OPENMA_ACP_HARNESSES);
   if (installedHarnesses !== null && (options.agentId !== undefined || options.resolveAgent !== undefined)) {
     throw new TypeError("OPENMA_ACP_HARNESSES cannot be combined with agentId or resolveAgent");
@@ -492,6 +497,7 @@ export function createNodeManagedAcpSupervisorApp(
       runtime,
       fallbackHarnessId: options.agentId ?? harness.id,
       fetch: options.fetch,
+      checkpointRequestTimeoutMs,
       pollIntervalMs: options.control?.pollIntervalMs,
       scheduler: options.control?.scheduler,
       hasOutcomeEvaluator: options.onTurnComplete !== undefined,

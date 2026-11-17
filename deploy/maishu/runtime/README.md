@@ -33,7 +33,7 @@ OPENMA_WORK_RUNNER_ARGS=["/opt/maishu-worker/runner.mjs"]
 
 ## 软件与缓存
 
-- Node 24.13.1，Python 3.12.12，uv 0.11.6，pnpm 11.28.12。
+- Node 24.22.2，Python 3.12.12，uv 0.11.6，pnpm 11.28.12。
 - Codex 0.166.0、Codex ACP 1.8.0、Claude Code 2.1.326、Claude ACP 0.94.0、
   DeepSeek Harness ACP 0.4.41（其独立发行包自带所锁定的 Harness 运行时）。
 - npm 依赖使用本目录的 lockfile；基础工具包括 git/curl/jq/rg/zip/unzip/ssh、编译工具。
@@ -147,6 +147,12 @@ checkpoint，并拒绝包含认证根目录的工作区快照。恢复只可使�
 由部署负责人执行；不要由镜像构建或单元测试自动触发计费任务。
 
 ## Work 引擎兼容矩阵
+
+跨 VPS 的 Work checkpoint 会收集记忆和产物，HTTP 等待时间由控制端运营配置
+`MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS` 指定，默认 `30000`，合法范围
+`1..89999` 毫秒。控制端仅向可信 Work 进程转发该值。本部署使用 `75000`；它只
+调整 `work-checkpoint` 的等待，其他终端写入仍使用原来的 30 秒等待和未知结果屏障。
+SQL 租约、holder/generation 检查、单飞与有限重试规则保持原有语义。
 
 控制台能选择、ACP 能 initialize、认证文件格式正确，都不等于 Work 任务可执行。
 当前平台公共运行库 `@openma/common 0.14.0` 的原生权限映射与本项目的工具完成门禁

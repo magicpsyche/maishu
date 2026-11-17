@@ -1,3 +1,4 @@
+// 麦枢修改：工作区持久化与远程执行配置扩展；保留上游兼容接口。
 import { log as logInfo, logWarn } from "@open-managed-agents/shared/log";
 import { randomUUID } from "node:crypto";
 import type { AcpSession, ClientCallbacks } from "@openma/common/acp-runtime";
@@ -22,6 +23,7 @@ interface WorkTurnCoordinatorOptions {
   runtime: WorkControlRuntime;
   fallbackHarnessId: string;
   fetch?: typeof globalThis.fetch;
+  checkpointRequestTimeoutMs?: number;
   pollIntervalMs?: number;
   scheduler?: ManagedHarnessHttpScheduler;
   hasOutcomeEvaluator: boolean;
@@ -131,6 +133,7 @@ export function createWorkTurnCoordinator(options: WorkTurnCoordinatorOptions): 
         sessionId: input.scope.sessionId,
         sessionsToken: input.sessionsToken,
         fetch: options.fetch,
+        checkpointRequestTimeoutMs: options.checkpointRequestTimeoutMs,
         signal: input.signal,
       });
       let activeRootProof: {inputId:string;turnId:string;expectedDocument:string} | undefined;

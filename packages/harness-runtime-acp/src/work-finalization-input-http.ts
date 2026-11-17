@@ -1,3 +1,4 @@
+// 麦枢修改：工作区持久化与远程执行配置扩展；保留上游兼容接口。
 /** In-process turn finalization only, NOT replacement admission/recovery. The
  * admitted set is populated after this process receives a consume receipt.
  * A consumed/no-terminal gap supplies a CAS revision, never model permission. */
@@ -13,11 +14,13 @@ function receipt(v:unknown,turnId:string):v is Receipt {
   (v.stopReason.type==="end_turn"||v.stopReason.type==="budget_reached"||
     v.stopReason.type==="requires_action"&&Array.isArray(v.stopReason.eventIds)&&v.stopReason.eventIds.length>0&&v.stopReason.eventIds.every(id=>typeof id==="string"&&id.length>0));
 }
-export function createWorkTurnFinalizer(options:{apiBaseUrl:string;sessionId:string;sessionsToken:string;signal:AbortSignal;fetch?:typeof globalThis.fetch;requestTimeoutMs?:number}) {
+export function createWorkTurnFinalizer(options:{apiBaseUrl:string;sessionId:string;sessionsToken:string;signal:AbortSignal;fetch?:typeof globalThis.fetch;requestTimeoutMs?:number;checkpointRequestTimeoutMs?:number}) {
  const admitted=new Set<string>();const prepared=new Map<string,number>();const terminals=new Map<string,{revision:number;terminal:Receipt}>();
  const operationTails=new Map<string,Promise<unknown>>();
  const requestTimeoutMs=options.requestTimeoutMs??30_000;
  if(!Number.isSafeInteger(requestTimeoutMs)||requestTimeoutMs<=0)throw new TypeError("Work finalization request timeout must be a positive integer");
+ const checkpointRequestTimeoutMs=options.checkpointRequestTimeoutMs??requestTimeoutMs;
+ if(options.checkpointRequestTimeoutMs!==undefined&&(!Number.isSafeInteger(checkpointRequestTimeoutMs)||checkpointRequestTimeoutMs<1||checkpointRequestTimeoutMs>89_999))throw new TypeError("Work checkpoint request timeout must be an integer from 1 to 89999");
  async function wait(ms:number){await new Promise<void>((resolve,reject)=>{let settled=false;const timer=setTimeout(()=>{settled=true;options.signal.removeEventListener("abort",abort);resolve();},ms);const abort=()=>{if(settled)return;settled=true;clearTimeout(timer);reject(options.signal.reason??new Error("Work finalization aborted"));};if(options.signal.aborted)abort();else options.signal.addEventListener("abort",abort,{once:true});});}
  async function post(action:string,body:object,allowGap=false,allowStaleTerminalRevision=false,allowCheckpointRevisionRace=false):Promise<Record<string,unknown>> {
   options.signal.throwIfAborted();
@@ -25,7 +28,8 @@ export function createWorkTurnFinalizer(options:{apiBaseUrl:string;sessionId:str
   const startedAt=Date.now();
   const controller=new AbortController();
   const abort=()=>controller.abort(options.signal.reason);
-  const timer=setTimeout(()=>controller.abort(new Error(`Work ${action} request timed out after ${requestTimeoutMs}ms`)),requestTimeoutMs);
+  const timeoutMs=action==="work-checkpoint"?checkpointRequestTimeoutMs:requestTimeoutMs;
+  const timer=setTimeout(()=>controller.abort(new Error(`Work ${action} request timed out after ${timeoutMs}ms`)),timeoutMs);
   if(options.signal.aborted)abort();else options.signal.addEventListener("abort",abort,{once:true});
   try {
    try {response=await (options.fetch??globalThis.fetch)(new URL(`/v1/oma/sessions/${encodeURIComponent(options.sessionId)}/${action}`,options.apiBaseUrl),{method:"POST",redirect:"error",signal:controller.signal,headers:{authorization:`Bearer ${options.sessionsToken}`,"content-type":"application/json"},body:JSON.stringify(body)});}

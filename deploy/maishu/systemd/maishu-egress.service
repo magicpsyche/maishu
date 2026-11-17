@@ -1,0 +1,12 @@
+[Unit]
+Description=麦枢可选沙箱代理转接
+Requires=maishu-egress.socket
+After=maishu-egress.socket
+
+[Service]
+# 仅为已有 HTTP CONNECT 代理的示例。使用前改为客户真实上游地址。
+# 此服务自己不实现代理协议，也不创建上游代理服务。
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 127.0.0.1:17890
+DynamicUser=true
+PrivateTmp=true
+NoNewPrivileges=true

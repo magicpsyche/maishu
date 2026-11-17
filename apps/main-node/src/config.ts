@@ -136,7 +136,8 @@ export function loadNodeConfig(env: NodeEnvironment): NodeConfig {
   if (workspaceStrategy !== "ephemeral" && workspaceStrategy !== "checkpoint_restore") {
     problems.push("OMA_WORKSPACE_STRATEGY must be ephemeral or checkpoint_restore");
   }
-  if (workspaceStrategy === "checkpoint_restore" && files.kind !== "s3") {
+  const singleControlOpenSandbox = processMode === "standalone" && env.SANDBOX_PROVIDER === "opensandbox";
+  if (workspaceStrategy === "checkpoint_restore" && files.kind !== "s3" && !singleControlOpenSandbox) {
     problems.push("FILES_S3_* shared storage is required for checkpoint_restore");
   }
   let matter: NodeConfig["http"]["matter"];
@@ -204,6 +205,7 @@ export function loadNodeConfig(env: NodeEnvironment): NodeConfig {
       ownerId: env.OMA_SESSION_EXECUTION_OWNER_ID ?? `node:${process.pid}:${nanoid()}`,
       concurrency: integer("OMA_SESSION_EXECUTION_CONCURRENCY", 8, { min: 1 }),
       managementRpcWaitMs: integer("MAISHU_MANAGEMENT_RPC_WAIT_MS", 1_000, { min: 1, max: 89_999 }),
+      workFinalizationRequestTimeoutMs: integer("MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS", 30_000, { min: 1, max: 89_999 }),
       leaseTtlMs: integer("OMA_SESSION_EXECUTION_LEASE_TTL_MS", DEFAULT_SESSION_EXECUTION_LEASE_TTL_MS, { min: 3 }),
     },
     workspace: {

@@ -1,5 +1,6 @@
 // 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { describeWorkDispatchError } from "../lib/work-dispatch-error.js";
+import { NodeWorkWorkspaceCheckpoints } from "../lib/work-workspace-checkpoints.js";
 import { createNodeWorkFinalizationHost } from "../lib/work-finalization-host/index.js";
 import { createNodeWorkArtifactPublisher } from "../openai-artifact-publication.js";
 import { SessionRuntimeHistoryApplicationService } from "@open-managed-agents/managed-agents-application";
@@ -109,7 +110,16 @@ export async function createNodeRuntime(
     managedUserProfilesRoutes,
   } = managed;
 
+  // Portable Work restoration is opt-in and remains confined to this tested
+  // standalone OpenSandbox composition; other providers retain their contract.
+  const workWorkspaceCheckpoints = config.workspace.strategy === "checkpoint_restore"
+    && config.processMode === "standalone" && config.sandbox.environment.SANDBOX_PROVIDER === "opensandbox"
+    ? new NodeWorkWorkspaceCheckpoints({sql, dialect, blobs: filesBlob}) : undefined;
+  if (workWorkspaceCheckpoints) {
+    sessionSandboxes.configureWorkCheckpointRestore(physical => workWorkspaceCheckpoints.restore(physical));
+  }
   const workFinalizationHost = await createNodeWorkFinalizationHost({
+    ...(workWorkspaceCheckpoints ? {workspaceCheckpoints: workWorkspaceCheckpoints} : {}),
     sql, dialect, blobs: filesBlob, sandboxes: sessionSandboxes,
     afterExecution: createNodeWorkArtifactPublisher({
       historyForWorkspace: workspaceId => new SessionRuntimeHistoryApplicationService({ workspaceId, source: managedRuntimeReaders.history }),

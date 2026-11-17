@@ -313,6 +313,7 @@ export function createNodeEnvironmentWorkWorker(input: {
                     OPENMA_WORKSPACE_ID: scope.workspaceId, OPENMA_SANDBOX_TOKEN: token,
                     OPENMA_HARNESS_ID: harness.id, OPENMA_HARNESS_VERSION: harness.version,
                     OPENMA_ACP_HARNESSES: launchInventory,
+                    MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS: String(input.config.execution.workFinalizationRequestTimeoutMs ?? 30_000),
                     ...(authEnv?.MAISHU_AUTH_MODE ? { MAISHU_AUTH_MODE: authEnv.MAISHU_AUTH_MODE } : {}),
                     ...(authEnv?.MAISHU_CREDENTIAL_REF ? { MAISHU_CREDENTIAL_REF: authEnv.MAISHU_CREDENTIAL_REF } : {}),
                   } };

@@ -1,0 +1,42 @@
+# 执行端 /etc/maishu/opensandbox.toml，权限 0600。
+# 文本占位符必须替换；TOML 不会自动展开环境变量。
+[server]
+host = "EXECUTOR_TAIL_IP"
+port = 8818
+api_key = "REPLACE_WITH_RANDOM_EXECUTION_KEY"
+max_sandbox_timeout_seconds = 86400
+
+[proxy]
+resolve_internal = true
+
+[log]
+level = "INFO"
+
+[runtime]
+type = "docker"
+execd_image = "opensandbox/execd:v1.1.0"
+
+[storage]
+# 只允许本产品目录；账户认证默认走控制台加密注入，不开放宿主机凭证总目录。
+allowed_host_paths = ["/var/lib/maishu/runtime", "/var/lib/maishu/projects", "/var/lib/maishu/cache"]
+
+[store]
+type = "sqlite"
+path = "/var/lib/maishu/opensandbox/state.db"
+
+[docker]
+network_mode = "bridge"
+publish_host = "EXECUTOR_TAIL_IP"
+port_range_min = 48000
+port_range_max = 49999
+no_new_privileges = true
+pids_limit = 2048
+
+# 仅在已部署并验证 maishu-egress.socket 和实际上游 HTTP 代理后启用。
+# [docker.sandbox_env]
+# HTTP_PROXY = "http://172.30.0.1:17990"
+# HTTPS_PROXY = "http://172.30.0.1:17990"
+# NO_PROXY = "localhost,127.0.0.1,CONTROLLER_TAIL_IP,EXECUTOR_TAIL_IP,CONTROL_DOMAIN,172.30.0.1"
+
+[ingress]
+mode = "direct"

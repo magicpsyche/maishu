@@ -43,6 +43,11 @@ function createNodeManagedAcpSupervisorApp(options: NodeManagedAcpSupervisorAppO
 }
 import { createNodeAcpHarnessStateIo, type NodeAcpHarnessStateIo } from "../src/node";
 
+it.each(["0", "-1", "1.5", "90000", "NaN", "Infinity"])("rejects invalid trusted checkpoint wait %s before starting an ACP process", value => {
+  expect(() => createProductionApp({ environment: { MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS: value } }))
+    .toThrow(/MAISHU_WORK_FINALIZATION_REQUEST_TIMEOUT_MS/);
+});
+
 const scope = {
   workspaceId: "workspace_1",
   environmentId: "environment_1",
