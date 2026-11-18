@@ -77,30 +77,30 @@ export function Modal({
       <DialogContent
         overlayClassName={confirmation ? "bg-[var(--modal-confirmation-dim)]" : undefined}
         showCloseButton={!confirmation}
-        aria-describedby={subtitle ? undefined : undefined}
+        {...(!subtitle && { "aria-describedby": undefined })}
         className={cn(
-          "console-modal max-h-[calc(var(--modal-viewport-cap)-var(--overlay-top))] flex flex-col gap-0 p-0",
+          "console-modal max-h-[calc(var(--modal-viewport-cap)-var(--overlay-top))] flex w-[calc(100%-2rem)] flex-col gap-0 p-0 [overflow-wrap:anywhere]",
           widthClass,
           confirmation && "top-1/2 -translate-y-1/2",
         )}
       >
-        <DialogHeader className="gap-1 px-6 py-4">
-          <DialogTitle className="truncate font-display text-sm font-semibold leading-5">
+        <DialogHeader className="min-w-0 shrink-0 gap-1 py-4 pl-6 pr-12">
+          <DialogTitle title={title} className="line-clamp-2 text-sm font-semibold leading-5">
             {title}
           </DialogTitle>
           {subtitle && (
-            <DialogDescription className="text-sm text-fg-muted">
+            <DialogDescription title={subtitle} className="line-clamp-3 text-sm text-fg-muted">
               {subtitle}
             </DialogDescription>
           )}
         </DialogHeader>
 
-        <div data-console-modal-body className="flex-1 overflow-y-auto px-6 py-4">
+        <div data-console-modal-body className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-4">
           {children}
         </div>
 
         {footer && (
-          <DialogFooter className="m-0 gap-2 rounded-none bg-transparent px-6 py-4 sm:justify-end">
+          <DialogFooter className="m-0 shrink-0 flex-wrap gap-2 rounded-none bg-transparent px-6 py-4 sm:justify-end">
             {footer}
           </DialogFooter>
         )}

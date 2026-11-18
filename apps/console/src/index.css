@@ -17,7 +17,7 @@
 @theme {
   /* Fonts */
   --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
-  --font-sans: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   /* Tailwind typography utilities resolve to the console scale. Keeping

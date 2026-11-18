@@ -4,6 +4,9 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getActiveTenantId } from "../lib/api";
+import yaml from "js-yaml";
 import { TrashIcon } from "lucide-react";
 import type { BetaSkill } from "@anthropic-ai/sdk/resources/beta/skills/skills";
 import type {
@@ -76,6 +79,52 @@ function isZipFile(file: File): boolean {
   );
 }
 
+function isDescription(value: string | undefined): value is string {
+  return typeof value === "string" && value.trim() !== "" && !/^[|>][+\d-]*$/.test(value.trim());
+}
+
+function skillDescription(value: string | undefined, files: SkillFile[]): string | undefined {
+  if (isDescription(value)) return value.trim();
+  // Some uploaded versions saved the YAML block indicator instead of its text.
+  const manifest = files.find((file) => /(?:^|\/)SKILL\.md$/i.test(file.filename));
+  const frontMatter = manifest?.content.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!frontMatter) return undefined;
+  try {
+    const metadata = yaml.load(frontMatter[1], { schema: yaml.JSON_SCHEMA }) as { description?: unknown } | null;
+    return typeof metadata?.description === "string" && isDescription(metadata.description)
+      ? metadata.description.trim()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function SkillDescriptionCell({ skill }: { skill: Skill }) {
+  const managedApi = useManagedApi();
+  const version = skill.latest_version_id;
+  const fromList = isDescription(skill.description) ? skill.description.trim() : undefined;
+  const query = useQuery({
+    queryKey: ["skill-description", getActiveTenantId(), skill.id, version],
+    enabled: !fromList && Boolean(version),
+    staleTime: Infinity,
+    retry: false,
+    queryFn: async () => {
+      if (!version) return null;
+      const params = { skill_id: skill.id };
+      const detail = await managedApi.skills.versions.retrieve(version, params);
+      if (isDescription(detail.description)) return detail.description.trim();
+      const response = await managedApi.skills.versions.download(version, params);
+      return skillDescription(
+        detail.description,
+        readSkillArchivePreview(new Uint8Array(await response.arrayBuffer())),
+      ) ?? null;
+    },
+  });
+  const description = fromList ?? query.data;
+  const text = description ?? (query.isFetching ? "加载中…" : query.isError ? "描述读取失败" : "暂无描述");
+  return <span className="block truncate text-fg-muted" title={description ?? undefined}>{text}</span>;
+}
+
 /* ---------- component ---------- */
 
 export function SkillsList() {
@@ -126,6 +175,7 @@ export function SkillsList() {
   const [detailFiles, setDetailFiles] = useState<SkillFile[]>([]);
   const [detailVersions, setDetailVersions] = useState<VersionSummary[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const detailRequest = useRef(0);
 
   /* new version sub-form inside detail */
   const [showNewVersion, setShowNewVersion] = useState(false);
@@ -188,7 +238,10 @@ export function SkillsList() {
   /* ---- detail ---- */
 
   const openDetail = async (skill: Skill) => {
+    const request = ++detailRequest.current;
     setDetail(skill);
+    setDetailFiles([]);
+    setDetailVersions([]);
     setDetailLoading(true);
     setShowNewVersion(false);
     setNvError("");
@@ -207,21 +260,23 @@ export function SkillsList() {
           }))
           .catch((): Pick<VersionDetail, "files"> => ({ files: [] })),
       ]);
+      if (request !== detailRequest.current) return;
       setDetail({
         ...skill,
         name: versionDetail.name,
-        description: versionDetail.description,
+        description: skillDescription(versionDetail.description, preview.files) ?? skillDescription(skill.description, []),
       });
       setDetailFiles(preview.files || []);
       setDetailVersions(versionsRes.data || []);
     } catch {
-      setDetailFiles([]);
-      setDetailVersions([]);
+      // Keep the list metadata if version details are unavailable.
+    } finally {
+      if (request === detailRequest.current) setDetailLoading(false);
     }
-    setDetailLoading(false);
   };
 
   const closeDetail = () => {
+    detailRequest.current++;
     setDetail(null);
     setDetailFiles([]);
     setDetailVersions([]);
@@ -333,9 +388,8 @@ export function SkillsList() {
         id: "description",
         accessorKey: "description",
         header: uiText("Description"),
-        cell: ({ row }) => (
-          <span className="text-fg-muted">{row.original.description || "—"}</span>
-        ),
+        size: 320,
+        cell: ({ row }) => <SkillDescriptionCell skill={row.original} />,
       },
       {
         id: "source",
@@ -345,7 +399,7 @@ export function SkillsList() {
           const tracked = skillSources.locks.get(row.original.id);
           return row.original.source?.type === "anthropic" ? (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-subtle text-warning">
-              built-in
+              {uiText("Built-in")}
             </span>
           ) : tracked ? (
             <span
@@ -356,7 +410,7 @@ export function SkillsList() {
             </span>
           ) : (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-bg-surface text-fg-muted">
-              custom
+              {uiText("Custom")}
             </span>
           );
         },
@@ -423,7 +477,7 @@ export function SkillsList() {
   return (
     <DataTable<Skill>
       subtitle={uiText("Manage pre-built and custom skills for your agents.")}
-      createLabel={uiText("+ New skill")}
+      createLabel={uiText("New skill")}
       onCreate={() => setShowCreate(true)}
       headerActions={
         skillSources.available ? (
@@ -595,7 +649,7 @@ export function SkillsList() {
             </div>
 
             {/* Metadata */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               <div>
                 <Label className="text-xs text-fg-muted block mb-0.5">
                    {uiText("Display Title")} </Label>
@@ -610,11 +664,11 @@ export function SkillsList() {
                   {detail.name || "—"}
                 </p>
               </div>
-              <div>
+              <div className="min-w-0 sm:col-span-2">
                 <Label className="text-xs text-fg-muted block mb-0.5">
                    {uiText("Description")} </Label>
-                <p className="text-sm text-fg-muted">
-                  {detail.description || "—"}
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-muted">
+                  {detail.description || "暂无描述"}
                 </p>
               </div>
               <div>
@@ -652,7 +706,7 @@ export function SkillsList() {
             <div>
               <Label className="text-xs text-fg-muted block mb-1">
                  {uiText("Usage in Agent Config")} </Label>
-              <pre className="bg-bg-surface border border-border rounded-lg p-3 text-xs font-mono text-fg-muted">
+              <pre className="whitespace-pre-wrap bg-bg-surface border border-border rounded-lg p-3 text-xs font-mono text-fg-muted">
 {`"skills": [{ "type": "custom", "skill_id": "${detail.id}", "version": "latest" }]`}
               </pre>
             </div>

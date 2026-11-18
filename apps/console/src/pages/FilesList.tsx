@@ -62,7 +62,7 @@ export function FilesList() {
   // the id when the title is blank).
   const scopeOptions = useMemo(
     () => [
-      { value: ALL_SCOPE, label: uiText("All sessions") },
+      { value: ALL_SCOPE, label: "上传文件" },
       ...sessions.map((s) => ({
         value: s.id,
         label: s.title?.trim() ? `${s.title} (${s.id})` : s.id,
@@ -120,6 +120,10 @@ export function FilesList() {
     ? items.filter((f) => f.filename.toLowerCase().includes(search.toLowerCase()))
     : items;
 
+  const sessionTitles = useMemo(
+    () => new Map(sessions.map((session) => [session.id, session.title?.trim()])),
+    [sessions],
+  );
   const columns = useMemo<ColumnDef<FileRecord>[]>(
     () => [
       {
@@ -171,12 +175,13 @@ export function FilesList() {
             <Link
               to={`/sessions/${row.original.scope.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="text-brand hover:underline text-xs font-mono"
+              className="min-w-0 truncate text-brand hover:underline text-xs"
+              title={`${sessionTitles.get(row.original.scope.id) ?? ""} (${row.original.scope.id})`.trim()}
             >
-              {row.original.scope.id}
+              {sessionTitles.get(row.original.scope.id) || row.original.scope.id}
             </Link>
           ) : (
-            <span className="text-fg-subtle text-xs">—</span>
+            <span className="text-fg-subtle text-xs" title="上传到工作区，未指定单一所属会话">工作区文件</span>
           ),
       },
       {
@@ -190,13 +195,12 @@ export function FilesList() {
         ),
       },
     ],
-    // Column renderers only consume row data; row actions own mutations.
-    [],
+    [sessionTitles],
   );
 
   const filters = (
     <FilterChip
-      label={uiText("Scope")}
+      label={scopeId ? "会话文件" : "上传文件 · 按会话查看"}
       active={scopeId !== ALL_SCOPE}
       display={scopeDisplay}
       onClear={() => setScopeId(ALL_SCOPE)}
@@ -205,7 +209,7 @@ export function FilesList() {
         align="start"
         sideOffset={4}
         collisionPadding={8}
-        className="w-80 p-0"
+        className="w-80 max-w-[calc(100vw-16px)] p-0"
       >
         <FacetedFilter
           options={scopeOptions}
@@ -236,12 +240,12 @@ export function FilesList() {
               },
             ]
           : []),
-        {
+        ...(!file.id.startsWith("out:") ? [{
           label: uiText("Delete"),
           icon: <TrashIcon className="size-4" />,
           destructive: true,
           onSelect: () => void remove(file),
-        },
+        }] : []),
       ]}
       hasMore={hasMore && !search}
       loadingMore={isLoadingMore}

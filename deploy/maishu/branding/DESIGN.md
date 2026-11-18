@@ -64,17 +64,17 @@ typography:
     fontWeight: 600
     lineHeight: "30px"
   prose:
-    fontFamily: "\"Noto Serif SC\", \"Songti SC\", \"SimSun\", serif"
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif"
     fontSize: "18px"
     fontWeight: 400
     lineHeight: 1.8
   body:
-    fontFamily: "\"Noto Serif SC\", \"Songti SC\", \"SimSun\", serif"
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: "26px"
   label:
-    fontFamily: "\"Noto Serif SC\", \"Songti SC\", \"SimSun\", serif"
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: "24px"
@@ -158,7 +158,7 @@ components:
 **Key Characteristics:**
 
 - 深蓝导航与纸白工作面，深色模式使用真正的深色画布。
-- 统一宋体，以字号、字重与间距建立层级。
+- 主标题和品牌字标使用宋体，正文和操作界面使用系统无衬线。
 - 小圆角、细分隔线与平面容器。
 - 键盘焦点、禁用、加载和空状态具有明确反馈。
 
@@ -191,9 +191,9 @@ components:
 
 **Display Font:** Noto Serif SC，回退到 Songti SC、SimSun、serif。
 
-**Body Font:** 同一字体栈，常用字重 400–600，禁用字体合成。
+**Body Font:** 系统无衬线，中文回退包括苹方、微软雅黑和 Noto Sans SC。
 
-**Label/Mono Font:** 中文辅助说明仍用品牌字体；代码和 ID 使用 ui-monospace、SFMono-Regular、Menlo、Consolas、monospace。
+**Label/Mono Font:** 辅助说明沿用正文的无衬线字体；代码和 ID 使用 ui-monospace、SFMono-Regular、Menlo、Consolas、monospace。
 
 ### Hierarchy
 
@@ -205,7 +205,7 @@ components:
 
 本地 `fonts/noto-serif-sc.woff2` 为单一可变字体（2,501,816 字节，约 2.5 MB），覆盖 GB2312 与当前控制台 807 个汉字，已检查缺字为零。未知用户输入的罕见汉字和 emoji 可回退到系统字体，不宣称完整字库。许可证随 `fonts/OFL.txt` 提供；字库和覆盖证据见 `fonts/coverage.json`。
 
-**The One Font Source Rule.** 运行时只使用一个共享品牌 WOFF2；新增文案后复查缺字，代码与 ID 使用系统等宽，罕字和 emoji 允许系统回退。
+**The One Font Source Rule.** 品牌字标和主标题共用宋体 WOFF2。正文使用系统字体，代码与 ID 使用系统等宽。
 
 ## Layout
 
@@ -237,7 +237,7 @@ components:
 
 ### Inputs / Fields
 
-细线输入、品牌字体、辅助色占位文字，最小高度 44px；登录输入为 48px。焦点具有金色外轮廓，并保留现有边框反馈；错误使用 danger 语义，禁用状态降低透明度。长代码和 ID 使用系统等宽。
+细线输入、无衬线字体、辅助色占位文字，最小高度 44px；登录输入为 48px。焦点具有金色外轮廓，并保留现有边框反馈；错误使用 danger 语义，禁用状态降低透明度。长代码和 ID 使用系统等宽。
 
 ### Navigation
 

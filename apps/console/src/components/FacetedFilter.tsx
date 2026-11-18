@@ -62,7 +62,7 @@ export function FacetedFilter({
               >
                 <div
                   className={cn(
-                    "mr-2 flex size-4 items-center justify-center rounded-sm border",
+                    "mr-2 flex size-4 shrink-0 items-center justify-center rounded-sm border",
                     selected
                       ? "bg-brand border-brand text-bg"
                       : "border-border opacity-50 [&_svg]:invisible",
@@ -70,7 +70,7 @@ export function FacetedFilter({
                 >
                   <CheckIcon className="size-3.5" />
                 </div>
-                <span>{opt.label}</span>
+                <span className="min-w-0 truncate" title={opt.label}>{opt.label}</span>
               </CommandItem>
             );
           })}

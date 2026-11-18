@@ -669,7 +669,7 @@
       "refersTo": "button-primary",
       "description": "主要操作；取自概览中的生成 API 密钥按钮。",
       "html": "<button type=\"button\" class=\"ds-primary\">生成 API 密钥</button>",
-      "css": ".ds-primary{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;min-height:44px;padding:0 12px;border:1px solid transparent;border-radius:4px;background:var(--brand,#152b46);color:var(--brand-fg,#f3f6fb);font-weight:500;cursor:pointer;transition:background 150ms;}.ds-primary:hover{background:var(--brand-hover,#213f62)}.ds-primary:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
+      "css": ".ds-primary{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;min-height:44px;padding:0 12px;border:1px solid transparent;border-radius:4px;background:var(--brand,#152b46);color:var(--brand-fg,#f3f6fb);font-weight:500;cursor:pointer;transition:background 150ms;}.ds-primary:hover{background:var(--brand-hover,#213f62)}.ds-primary:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
     },
     {
       "name": "次操作",
@@ -677,7 +677,7 @@
       "refersTo": "button-outline",
       "description": "细线操作，如清除搜索与筛选。",
       "html": "<button type=\"button\" class=\"ds-outline\">清除搜索与筛选</button>",
-      "css": ".ds-outline{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;min-height:44px;padding:4px 10px;border:1px solid var(--border,#d7e0eb);border-radius:4px;background:var(--bg,#f8fafd);color:var(--fg,#1a2742);font-weight:500;cursor:pointer;transition:background 150ms}.ds-outline:hover{background:var(--bg-surface,#eef2f8)}.ds-outline:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}.ds-outline:active{transform:translateY(1px)}.ds-outline:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
+      "css": ".ds-outline{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;min-height:44px;padding:4px 10px;border:1px solid var(--border,#d7e0eb);border-radius:4px;background:var(--bg,#f8fafd);color:var(--fg,#1a2742);font-weight:500;cursor:pointer;transition:background 150ms}.ds-outline:hover{background:var(--bg-surface,#eef2f8)}.ds-outline:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}.ds-outline:active{transform:translateY(1px)}.ds-outline:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
     },
     {
       "name": "搜索输入",
@@ -685,7 +685,7 @@
       "refersTo": "input",
       "description": "主 UI 字号的细线输入，带明确标签和键盘焦点。",
       "html": "<label class=\"ds-input-label\">文件名称<input class=\"ds-input\" type=\"search\" placeholder=\"按名称筛选已加载文件…\" /></label>",
-      "css": ".ds-input-label{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;display:grid;gap:8px;color:var(--fg,#1a2742);max-width:360px}.ds-input{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;width:100%;min-width:0;min-height:44px;padding:4px 10px;border:1px solid var(--border,#d7e0eb);border-radius:4px;background:transparent;color:var(--fg,#1a2742);caret-color:var(--brand,#152b46);transition:border-color 150ms}.ds-input::placeholder{color:var(--fg-muted,#5b6982)}.ds-input:hover{border-color:var(--border-strong,#a8b8cd)}.ds-input:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;border-color:var(--fg-muted,#5b6982)}.ds-input:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
+      "css": ".ds-input-label{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;display:grid;gap:8px;color:var(--fg,#1a2742);max-width:360px}.ds-input{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;width:100%;min-width:0;min-height:44px;padding:4px 10px;border:1px solid var(--border,#d7e0eb);border-radius:4px;background:transparent;color:var(--fg,#1a2742);caret-color:var(--brand,#152b46);transition:border-color 150ms}.ds-input::placeholder{color:var(--fg-muted,#5b6982)}.ds-input:hover{border-color:var(--border-strong,#a8b8cd)}.ds-input:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;border-color:var(--fg-muted,#5b6982)}.ds-input:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
     },
     {
       "name": "深蓝导航",
@@ -693,7 +693,7 @@
       "refersTo": "navigation-active",
       "description": "两种主题下都保持深蓝，选中使用浅金。",
       "html": "<nav class=\"ds-nav\" aria-label=\"控制台\"><a class=\"ds-nav-link\" href=\"#overview\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>概览</a><a class=\"ds-nav-link\" href=\"#sessions\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" aria-hidden=\"true\"><path d=\"M4 4h16v12H9l-5 4z\"/></svg>会话</a></nav>",
-      "css": ".ds-nav{background:#152b46;padding:12px;width:240px;border-radius:4px}.ds-nav-link{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:4px;color:#b1c3d9;text-decoration:none;transition:background 150ms,color 150ms}.ds-nav-link svg{width:20px;height:20px;flex-shrink:0}.ds-nav-link:hover{background:#213b58;color:#f3f6fb}.ds-nav-link[aria-current=\"page\"]{background:#2d4055;color:#e5c17b;font-weight:600}.ds-nav-link:focus-visible{outline:2px solid #e5c17b;outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
+      "css": ".ds-nav{background:#152b46;padding:12px;width:240px;border-radius:4px}.ds-nav-link{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:4px;color:#b1c3d9;text-decoration:none;transition:background 150ms,color 150ms}.ds-nav-link svg{width:20px;height:20px;flex-shrink:0}.ds-nav-link:hover{background:#213b58;color:#f3f6fb}.ds-nav-link[aria-current=\"page\"]{background:#2d4055;color:#e5c17b;font-weight:600}.ds-nav-link:focus-visible{outline:2px solid #e5c17b;outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
     },
     {
       "name": "资源标签",
@@ -709,7 +709,7 @@
       "refersTo": "panel",
       "description": "平面面板，标题区与内容区以细线分隔；示例无运行数据。",
       "html": "<section class=\"ds-panel\"><header class=\"ds-panel-header\"><div><h2 class=\"ds-panel-title\">最近会话</h2><p class=\"ds-panel-description\">当前工作区的最新活动。</p></div><a class=\"ds-panel-action\" href=\"#sessions\">查看全部</a></header><div class=\"ds-panel-body\">尚无会话</div></section>",
-      "css": ".ds-panel{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;min-width:0;max-width:540px;overflow:hidden;border:1px solid var(--border,#d7e0eb);border-radius:6px;background:var(--surface-route,#f8fafd);color:var(--fg,#1a2742)}.ds-panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;min-height:80px;padding:18px 20px}.ds-panel-title{margin:0;font-size:20px;font-weight:600;line-height:30px}.ds-panel-description{margin:4px 0 0;color:var(--fg-muted,#5b6982);font-size:14px;line-height:24px}.ds-panel-action{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:4px;color:var(--fg-muted,#5b6982);font-size:16px;text-decoration:none}.ds-panel-action:hover{background:var(--bg-surface,#eef2f8);color:var(--brand,#152b46)}.ds-panel-action:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}.ds-panel-body{border-top:1px solid var(--border,#d7e0eb);padding:20px;color:var(--fg-muted,#5b6982)}"
+      "css": ".ds-panel{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;min-width:0;max-width:540px;overflow:hidden;border:1px solid var(--border,#d7e0eb);border-radius:6px;background:var(--surface-route,#f8fafd);color:var(--fg,#1a2742)}.ds-panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;min-height:80px;padding:18px 20px}.ds-panel-title{margin:0;font-size:20px;font-weight:600;line-height:30px}.ds-panel-description{margin:4px 0 0;color:var(--fg-muted,#5b6982);font-size:14px;line-height:24px}.ds-panel-action{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:4px;color:var(--fg-muted,#5b6982);font-size:16px;text-decoration:none}.ds-panel-action:hover{background:var(--bg-surface,#eef2f8);color:var(--brand,#152b46)}.ds-panel-action:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}.ds-panel-body{border-top:1px solid var(--border,#d7e0eb);padding:20px;color:var(--fg-muted,#5b6982)}"
     },
     {
       "name": "统计单元",
@@ -717,7 +717,7 @@
       "refersTo": "kpi",
       "description": "平面统计区中的可导航单元；缺失值显示短横线。",
       "html": "<button type=\"button\" class=\"ds-kpi\" aria-label=\"智能体：暂无数据\"><span class=\"ds-kpi-value\">–</span><span class=\"ds-kpi-label\">智能体</span></button>",
-      "css": ".ds-kpi{font-family:var(--font-sans,\"Noto Serif SC\",\"Songti SC\",\"SimSun\",serif);font-size:16px;line-height:26px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:10px;min-width:160px;min-height:120px;padding:20px 24px;border:0;border-top:1px solid var(--border,#d7e0eb);border-bottom:1px solid var(--border,#d7e0eb);border-radius:0;background:transparent;color:var(--fg,#1a2742);text-align:left;cursor:pointer;transition:background 150ms}.ds-kpi-value{font-size:36px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}.ds-kpi-label{font-size:14px;font-weight:400;line-height:24px;color:var(--fg-muted,#5b6982)}.ds-kpi:hover{background:var(--surface-row-hover,#edf2f8)}.ds-kpi:hover .ds-kpi-value{color:var(--brand,#152b46)}.ds-kpi:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}@media(max-width:767px){.ds-kpi{min-height:112px;padding:18px 16px}.ds-kpi-value{font-size:32px;line-height:38px}}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
+      "css": ".ds-kpi{font-family:var(--font-sans,system-ui, -apple-system, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif);font-size:16px;line-height:26px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:10px;min-width:160px;min-height:120px;padding:20px 24px;border:0;border-top:1px solid var(--border,#d7e0eb);border-bottom:1px solid var(--border,#d7e0eb);border-radius:0;background:transparent;color:var(--fg,#1a2742);text-align:left;cursor:pointer;transition:background 150ms}.ds-kpi-value{font-size:36px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}.ds-kpi-label{font-size:14px;font-weight:400;line-height:24px;color:var(--fg-muted,#5b6982)}.ds-kpi:hover{background:var(--surface-row-hover,#edf2f8)}.ds-kpi:hover .ds-kpi-value{color:var(--brand,#152b46)}.ds-kpi:focus-visible{outline:2px solid var(--maishu-gold-text,#8c681e);outline-offset:3px;}@media(max-width:767px){.ds-kpi{min-height:112px;padding:18px 16px}.ds-kpi-value{font-size:32px;line-height:38px}}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-outline,.ds-input,.ds-nav-link,.ds-resource,.ds-kpi{transition:none;}}"
     }
   ],
   "narrative": {
@@ -725,7 +725,7 @@
     "overview": "麦枢采用独立产品符号，沿用小麦知行的深蓝、麦金、纸白和 Noto Serif SC。深蓝建立导航与品牌识别，浅底承载执行配置、会话与资源信息；真实状态、操作反馈和阅读层级优先。\n\n当前默认采用六方案中的 01「枢心」：M 形结构与麦金节点。它与母品牌共享色彩和字体，不复制母品牌四麦粒标识。本文件记录已实现的控制台规范；母品牌 VI 和上游 PRODUCT.md 分别保留原有职责。",
     "keyCharacteristics": [
       "深蓝导航与纸白工作面，深色模式使用真正的深色画布。",
-      "统一宋体，以字号、字重与间距建立层级。",
+      "主标题和品牌字标使用宋体，正文和操作界面使用系统无衬线。",
       "小圆角、细分隔线与平面容器。",
       "键盘焦点、禁用、加载和空状态具有明确反馈。"
     ],
@@ -737,7 +737,7 @@
       },
       {
         "name": "One Font Source",
-        "body": "运行时只使用一个共享品牌 WOFF2；新增文案后复查缺字，代码与 ID 使用系统等宽，罕字和 emoji 允许系统回退。",
+        "body": "品牌字标和主标题共用宋体 WOFF2。正文使用系统字体，代码与 ID 使用系统等宽。",
         "section": "typography"
       },
       {

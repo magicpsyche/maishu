@@ -43,7 +43,7 @@ describe("Linear global surfaces", () => {
     expect(overlay).toHaveClass("bg-transparent");
     expect(header?.className).not.toContain("border-b");
     expect(footer?.className).not.toContain("border-t");
-    expect(header).toHaveClass("px-6", "py-4");
+    expect(header).toHaveClass("pl-6", "pr-12", "py-4");
     expect(dialog.querySelector('[data-console-modal-body]')).toHaveClass("px-6", "py-4");
     expect(footer).toHaveClass("px-6", "py-4");
   });

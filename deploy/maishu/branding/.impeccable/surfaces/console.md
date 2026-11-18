@@ -7,7 +7,7 @@
 ## Direction contract
 
 - THESIS：让用户读清真实任务和资源、找到操作入口；品牌由导航、字体和标志承载。
-- OWN-WORLD：深蓝导航、纸白工作面、克制麦金选中；Noto Serif SC 统一文字；产品 M＋金节点独立于母品牌四麦粒。
+- OWN-WORLD：深蓝导航、纸白工作面、克制麦金选中；品牌字标与主标题用 Noto Serif SC，正文与控件用系统无衬线；产品 M＋金节点独立于母品牌四麦粒。
 - STORY：进入工作概览，查看最近会话，再进入智能体、执行环境和平台设置完成操作。
 - FIRST VIEWPORT：保留左栏和顶栏；标题与说明、真实统计行、最近会话依次排列，接入说明在后。手机为抽屉导航、2×2统计和容器内横滚表格。
 - FORM：沿用既有 Operate 结构，应用用户指定 VI；seed: none (existing system)。主 UI 16px、辅助14px、说明18px，主要控件44px。

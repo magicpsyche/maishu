@@ -8,7 +8,7 @@
 }
 :root {
   --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
-  --font-sans: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --bg: #f8fafd;
   --bg-sidebar: #eef2f8;
@@ -110,6 +110,11 @@
   --info-subtle: #223b59;
 }
 body { font-family: var(--font-sans); }
+.console-shell h1, .maishu-sidebar-brand strong, [data-login-layout="centered"] header h1 {
+  font-family: var(--font-display);
+}
+.maishu-sidebar-brand { text-decoration: none; }
+.maishu-sidebar-brand:focus-visible { outline-offset: -4px; }
 button, input, textarea, select { font-family: inherit; }
 button, input, select, textarea { caret-color: var(--brand); }
 ::selection { color: var(--fg); background: color-mix(in srgb, var(--maishu-gold) 28%, var(--bg)); }

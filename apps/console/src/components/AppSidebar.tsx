@@ -3,7 +3,7 @@ import { uiText } from "../i18n/ui-text";
 import { Button } from "@/components/ui/button";
 import type { ComponentType } from "react";
 import { BookOpenIcon, CalendarClockIcon, FlaskConicalIcon as EvalRunsIcon, LibraryIcon as BenchmarkIcon, LinkIcon, RepeatIcon, SearchIcon, UsersIcon } from "lucide-react";
-import { NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 import { useScrollFade } from "@/hooks/useScrollFade";
 
 import { openCommandPalette } from "./CommandPalette";
@@ -69,6 +69,7 @@ function useNavGroups(): NavGroup[] {
       label: t.nav.infrastructure,
       items: [
         { to: "/environments", label: t.nav.environments, icon: EnvIcon },
+        { to: "/runtimes", label: t.nav.localRuntimes, icon: RuntimesIcon },
         { to: "/settings/sandbox", label: "沙箱后端", icon: RuntimesIcon },
         { to: "/settings/harness-credentials", label: "引擎凭证", icon: VaultIcon },
         { to: "/vaults", label: t.nav.credentialVaults, icon: VaultIcon },
@@ -83,7 +84,6 @@ function useNavGroups(): NavGroup[] {
         { to: "/budget", label: t.nav.budget, icon: ModelCardsIcon },
         { to: "/members", label: locale === "zh-CN" ? "成员" : uiText("Members"), icon: UsersIcon },
         { to: "/api-keys", label: t.nav.apiKeys, icon: ApiKeysIcon },
-        { to: "/runtimes", label: t.nav.localRuntimes, icon: RuntimesIcon },
         { to: "/help", label: "使用帮助", icon: BookOpenIcon },
       ],
     },
@@ -110,7 +110,10 @@ export function AppSidebar() {
 
   return (
     <aside className="console-sidebar" aria-label={uiText("Workspace navigation")} data-sidebar="sidebar">
-      <div className="maishu-sidebar-brand"><Logo size="xl" tone="current" /><div><strong>{branding.productName}</strong><span>企业智能体平台</span></div></div>
+      <Link to="/" data-sidebar-close className="maishu-sidebar-brand" aria-label={`${branding.productName} · ${t.nav.dashboard}`}>
+        <Logo size="xl" tone="current" />
+        <div><strong>{branding.productName}</strong><span>企业智能体平台</span></div>
+      </Link>
       <div className="console-sidebar-tenant">
         <TenantSwitcher />
         <Button

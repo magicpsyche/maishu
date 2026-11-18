@@ -177,6 +177,10 @@ export function ConsoleShell({
         className="console-sidebar-rail"
         data-shell-slot="sidebar"
         aria-hidden={!sidebarVisible}
+        onClick={(event) => {
+          if (!isMobile || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          if (event.target instanceof Element && event.target.closest("[data-sidebar-close]")) closeSidebar();
+        }}
         onPointerDownCapture={(event) => {
           const target = event.target;
           if (

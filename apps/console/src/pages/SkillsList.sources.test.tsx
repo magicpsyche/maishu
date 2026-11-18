@@ -1,6 +1,7 @@
 // 麦枢修改：中文品牌、控制台与执行配置扩展；保留上游兼容接口。
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -46,7 +47,7 @@ vi.mock("../lib/useApiQuery", () => ({
     error: null,
   }),
 }));
-vi.mock("../lib/useManagedApi", () => ({ useManagedApi: () => ({ skills: {} }) }));
+vi.mock("../lib/useManagedApi", () => ({ useManagedApi: () => ({ skills: { versions: { retrieve: async () => ({ description: "Skill details" }) } } }) }));
 
 const lock = {
   skill_id: "skill_review",
@@ -111,11 +112,11 @@ beforeEach(() => {
 
 function show() {
   render(
-    <MemoryRouter>
-      <I18nProvider>
-        <SkillsList />
-      </I18nProvider>
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <I18nProvider><SkillsList /></I18nProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

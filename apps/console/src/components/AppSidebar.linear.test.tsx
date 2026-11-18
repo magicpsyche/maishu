@@ -80,7 +80,7 @@ describe("AppSidebar tracks", () => {
     const sidebar = screen.getByRole("complementary", { name: "Workspace navigation" });
     const trackedRows = [
       screen.getByRole("button", { name: /Switch workspace|切换工作区/ }),
-      ...within(sidebar).getAllByRole("link"),
+      ...within(within(sidebar).getByRole("navigation")).getAllByRole("link"),
     ];
 
     for (const row of trackedRows) {
@@ -126,7 +126,7 @@ describe("AppSidebar tracks", () => {
     const sidebar = screen.getByRole("complementary", { name: "Workspace navigation" });
     const headings = containerHeadings(sidebar).map((heading) => heading.textContent);
 
-    expect(screen.getByRole("link", { name: /Dashboard|仪表盘/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^(Dashboard|仪表盘)$/ })).toBeInTheDocument();
     expect(headings).not.toContain("Overview");
     expect(headings).not.toContain("概览");
     expect(headings).toEqual(
