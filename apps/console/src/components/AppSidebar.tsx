@@ -110,7 +110,7 @@ export function AppSidebar() {
 
   return (
     <aside className="console-sidebar" aria-label={uiText("Workspace navigation")} data-sidebar="sidebar">
-      <div className="maishu-sidebar-brand"><Logo size="lg" /><div><strong>{branding.productName}</strong><span>企业智能体平台</span></div></div>
+      <div className="maishu-sidebar-brand"><Logo size="xl" tone="current" /><div><strong>{branding.productName}</strong><span>企业智能体平台</span></div></div>
       <div className="console-sidebar-tenant">
         <TenantSwitcher />
         <Button

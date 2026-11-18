@@ -16,9 +16,9 @@
 /* ---------- Tailwind theme tokens ---------- */
 @theme {
   /* Fonts */
-  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --font-sans: "Geist Variable", -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-sans: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   /* Tailwind typography utilities resolve to the console scale. Keeping
      the semantic utilities canonical means feature code cannot quietly
@@ -68,7 +68,6 @@
      (coral) so summarize work never reads as main-loop model time. */
   --color-trace-compaction: var(--trace-compaction);
 
-  --color-ring: var(--fg);
 
   --shadow-card-soft: var(--shadow-card-soft);
   --shadow-card-press: var(--shadow-card-press);
@@ -86,23 +85,7 @@
      visually consistent with the rest of the console — no second palette
      to maintain. Both themes (light + dark) get correct values automatically
      because the OMA tokens above are theme-aware. */
-  --color-background: var(--bg);
-  --color-foreground: var(--fg);
-  --color-card: var(--bg);
-  --color-card-foreground: var(--fg);
-  --color-popover: var(--bg);
-  --color-popover-foreground: var(--fg);
-  --color-primary: var(--brand);
-  --color-primary-foreground: var(--brand-fg);
-  --color-secondary: var(--bg-surface);
-  --color-secondary-foreground: var(--fg);
-  --color-muted: var(--bg-surface);
-  --color-muted-foreground: var(--fg-muted);
-  --color-accent: var(--bg-surface);
-  --color-accent-foreground: var(--fg);
-  --color-destructive: var(--danger);
   --color-destructive-foreground: #ffffff;
-  --color-input: var(--border);
 
   /* shadcn primitives derive button + input rounding from --radius
      via `rounded-[min(var(--radius-md),12px)]` and similar. OMA's
@@ -118,13 +101,34 @@
      straight through — bg-sidebar / fg / brand are all already
      theme-aware via :root / .dark. */
   --color-sidebar: var(--bg-sidebar);
-  --color-sidebar-foreground: var(--fg);
-  --color-sidebar-primary: var(--brand);
-  --color-sidebar-primary-foreground: var(--brand-fg);
   --color-sidebar-accent: var(--bg-surface);
   --color-sidebar-accent-foreground: var(--fg);
   --color-sidebar-border: var(--border);
   --color-sidebar-ring: var(--fg);
+}
+
+/* shadcn controls share the same semantic brand tokens as the console. */
+@theme inline {
+  --color-primary: var(--brand);
+  --color-primary-foreground: var(--brand-fg);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-muted: var(--bg-surface);
+  --color-muted-foreground: var(--fg-muted);
+  --color-secondary: var(--bg-surface);
+  --color-secondary-foreground: var(--fg);
+  --color-accent: var(--bg-surface);
+  --color-accent-foreground: var(--fg);
+  --color-card: var(--bg);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--bg);
+  --color-popover-foreground: var(--fg);
+  --color-destructive: var(--danger);
+  --color-input: var(--border);
+  --color-ring: var(--brand);
+  --color-sidebar-foreground: var(--fg);
+  --color-sidebar-primary: var(--brand);
+  --color-sidebar-primary-foreground: var(--brand-fg);
 }
 
 /* ---------- Base typography ---------- */

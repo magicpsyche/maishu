@@ -299,3 +299,30 @@ Moby 29.1.3 在清理自己的默认 bridge 记录时，只要显式地址池非
 随后立即检查旧 `docker0`/旧代理、旧健康及旧临时沙箱正例，再验证新平台真实任务。
 任何旧服务异常都应停止继续发布，按已记录的原桥元数据定位恢复，不能重装 Docker、
 清理全部网络或重启旧 OMA 来碰运气。
+
+### 仅升级控制台界面
+
+正在执行任务时，可让 Nginx 单独提供版本化静态控制台，API 和 Worker 继续运行。
+该方式是可选部署配置；内置 `CONSOLE_DIR` / `CONSOLE_BRANDING_DIR` 仍可用于单进程部署。
+
+先按前文构建控制台和 CLI 下载，提交源码，然后用 Node.js 24 打包：
+
+```bash
+node scripts/maishu/package-console.mjs /tmp/maishu-console-<提交号>
+tar -C /tmp/maishu-console-<提交号> -czf /tmp/maishu-console-<提交号>.tgz .
+```
+
+将发布放到 `/opt/maishu/console-releases/<提交号>`，核对 `console-release.json` 中的文件摘要。
+切换 `/opt/maishu/console-current` 前，把上一版 `assets/` 中新版本没有的哈希文件复制进来，
+让已经打开的页面仍能加载旧版延迟模块。此目录只接受静态构建文件，不放环境文件、数据库或认证文件。
+
+在麦枢私网 Nginx 的 `server` 块中引入 `nginx-console-static.conf.example` 的内容，保留既有
+`location /` 代理、TLS、私网限制、SSE 与 WebSocket 设置。先 `nginx -t`，再平滑 reload；
+无需重启 `maishu.service`。发布前后检查 API PID、API 发布链接和认证维护发布链接保持不变，
+并实际检查登录、深层路由、品牌字体、下载文件和已认证 API。首次启用时备份站点配置；回滚恢复
+站点配置和上一版静态链接后平滑 reload。后续升级 OMA 增加顶级 UI 路由时，须同步静态配置中的
+路由列表；API 与 OAuth 回调继续交给原代理。下一次完整控制端发布也应同步更新这个静态链接。
+
+麦枢 VI 与字体来源、字号、深浅色语义见 `branding/DESIGN.md`；新界面优先使用这些语义变量。
+字体由 `scripts/maishu/subset-console-font.py` 从已授权的 Noto Serif SC 原字体生成，保留 OFL；
+升级带入新文案时检查 `branding/fonts/coverage.json` 并按需重新生成。产品符号与小麦母品牌标识独立。

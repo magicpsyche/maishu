@@ -1,0 +1,14 @@
+{
+  "family": "Noto Serif SC",
+  "weights": [
+    400,
+    600
+  ],
+  "sourceSha256": "050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9",
+  "woff2Sha256": "a9e207e9ac8bda60f6c0b1bb846ed0c3e5c37824d17281a923b7920f1128e8d4",
+  "bytes": 2501816,
+  "characters": 7633,
+  "consoleHanCharacters": 807,
+  "missingConsoleHan": [],
+  "dynamicTextPolicy": "GB2312 and console copy included; rare user-supplied glyphs and emoji may use OS fallback. Code identifiers use the OS monospace stack."
+}

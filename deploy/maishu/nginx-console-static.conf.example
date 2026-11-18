@@ -1,0 +1,17 @@
+# 可选：放在麦枢私网站点的 server 内、既有 location / 代理之前。
+# root 目录只有静态构建产物；API、OAuth 回调、SSE、WebSocket 仍走原代理。
+root /opt/maishu/console-current;
+location = / { try_files /index.html =404; add_header Cache-Control "no-store"; }
+location = /index.html { try_files $uri =404; add_header Cache-Control "no-store"; }
+location ^~ /assets/ { try_files $uri =404; }
+location ^~ /branding/ { try_files $uri =404; add_header Cache-Control "no-cache"; }
+location ^~ /downloads/ { try_files $uri =404; }
+location = /logo.svg { try_files $uri =404; }
+location = /logo.png { try_files $uri =404; }
+location = /favicon.svg { try_files $uri =404; }
+# 与 apps/console/src/main.tsx 的顶级 UI 路由保持一致；新增路由须同步此列表。
+location ~ ^/(help|agents|sessions|deployments|settings|files|evals|environments|skills|vaults|memory|model-cards|budget|members|api-keys|runtimes|loops|bonds|integrations|join|login|connect-runtime)(/|$) {
+    try_files /index.html =404;
+    add_header Cache-Control "no-store";
+}
+location = /cli/login { try_files /index.html =404; add_header Cache-Control "no-store"; }

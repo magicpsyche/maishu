@@ -12,6 +12,7 @@ import {
   useFilesInfiniteApiQuery,
 } from "../lib/useApiQuery";
 import { PopoverContent } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import type { SessionRecord as Session } from "../types/session";
 import { useI18n } from "../i18n";
 import type { BetaFileMetadata as FileRecord } from "@anthropic-ai/sdk/resources/beta/files";
@@ -23,6 +24,7 @@ export function FilesList() {
   const managedApi = useManagedApi();
   const [scopeId, setScopeId] = useState<string>(ALL_SCOPE);
   const [search, setSearch] = useState("");
+  const hasConditions = Boolean(search.trim()) || scopeId !== ALL_SCOPE;
   const { t } = useI18n();
 
   // Files has its own official SDK pagination shape (`before_id` plus
@@ -244,13 +246,18 @@ export function FilesList() {
       hasMore={hasMore && !search}
       loadingMore={isLoadingMore}
       onLoadMore={loadMore}
-      emptyTitle={scopeId ? uiText("No files in this scope") : uiText("No files yet")}
+      emptyTitle={hasConditions ? "没有匹配的文件" : uiText("No files yet")}
       emptyKind="file"
       emptySubtitle={
-        scopeId
-          ? uiText("Try clearing the scope filter, or check the session id.")
+        hasConditions
+          ? "请修改搜索词或清除筛选条件后重试。"
           : <>{uiText("Upload via")} <code className="text-xs">POST /v1/files</code>  {uiText("or the AMA SDK")} <code className="text-xs">client.beta.files.create()</code>.</>
       }
+      emptyAction={hasConditions ? (
+        <Button variant="outline" onClick={() => { setSearch(""); setScopeId(ALL_SCOPE); }}>
+          清除搜索与筛选
+        </Button>
+      ) : undefined}
       columns={columns}
     />
   );

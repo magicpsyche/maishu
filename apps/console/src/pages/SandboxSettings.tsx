@@ -53,8 +53,8 @@ export function SandboxSettings() {
     } catch (e) { setMessage(e instanceof Error ? e.message : "操作失败"); }
     finally { setBusy(false); }
   };
-  return <main className="mx-auto w-full max-w-3xl space-y-7 p-6">
-    <header><p className="text-sm text-fg-muted">基础设施</p><h1 className="text-2xl font-semibold">沙箱后端</h1>
+  return <main className="maishu-settings-page mx-auto w-full max-w-3xl space-y-7 p-6">
+    <header><h1 className="text-2xl font-semibold">沙箱后端</h1>
       <p className="mt-2 text-sm text-fg-muted">连接已有的 OpenSandbox 服务。任务在执行端容器中运行，管理端负责协调和保存会话。</p></header>
     {message && <p role="status" className="rounded-lg border border-border p-4 text-sm">{message}</p>}
     {unsupported ? <section className="rounded-xl border border-border p-5"><p>当前部署不支持此设置。</p><p className="mt-2 text-sm text-fg-muted">控制台沙箱后端配置目前由麦枢 Node 服务提供；此部署的执行资源仍由原有部署配置管理。</p></section> : !settings || !view ? <Button onClick={() => void load()}>重新读取</Button> : <>

@@ -11,13 +11,7 @@ import {
   type UIMatch,
 } from "react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
-// Bundled font (woff2 shipped with the app) so Logo's `[ ]` brackets render
-// in JetBrains Mono on first paint — Google Fonts `display=swap` would
-// otherwise render the brackets in SF Mono first, then re-render in
-// JetBrains Mono when the network fetch resolves, producing a visible
-// width shift in the sidebar header.
-import "@fontsource-variable/jetbrains-mono";
-import "@fontsource-variable/geist";
+// 麦枢品牌字体由部署皮肤的单一 Noto Serif SC 字体文件提供。
 import "./index.css";
 import { AuthProvider } from "./lib/auth";
 import { I18nProvider } from "./i18n";

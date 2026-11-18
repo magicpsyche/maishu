@@ -1,4 +1,6 @@
 {
+  "Workspace overview": "工作概览",
+  "Review agents, sessions and execution resources.": "查看智能体、会话和执行资源。",
   "All time": "所有时间",
   "Today": "今天",
   "Last hour": "最近一小时",
@@ -75,6 +77,8 @@
   "No priced spend yet.": "暂无已定价的花费。",
   "Load more": "加载更多",
   "Welcome back": "欢迎回来",
+  "Log in with email": "邮箱登录",
+  "Use your email and password": "使用邮箱和密码登录",
   "Create your account": "创建你的账户",
   "Sign in with email code": "使用邮箱验证码登录",
   "Verify your email": "验证你的邮箱",

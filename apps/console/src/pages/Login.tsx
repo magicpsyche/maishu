@@ -381,13 +381,13 @@ export function Login() {
     <ModernLoginShell>
       <div className="flex flex-col gap-8">
         <header className="flex flex-col items-center text-center">
-          <Logo size="lg" />
+          <Logo size="xl" />
           <div className="mt-5 space-y-1.5">
             <h1 className="text-lg font-medium tracking-[-0.015em] text-fg">
-              {titles[mode]}
+              {uiText(titles[mode])}
             </h1>
             {subtitles[mode] && (
-              <p className="text-sm text-fg-muted">{subtitles[mode]}</p>
+              <p className="text-sm text-fg-muted">{uiText(subtitles[mode])}</p>
             )}
           </div>
         </header>

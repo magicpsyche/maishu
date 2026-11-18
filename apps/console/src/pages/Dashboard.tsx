@@ -16,7 +16,6 @@ import {
 import { EmptyState } from "../components/EmptyState";
 import { Skeleton } from "../components/Skeleton";
 import { useI18n } from "../i18n";
-import { useBranding } from "../lib/branding";
 import { useApiQuery } from "../lib/useApiQuery";
 import type { BetaManagedAgentsSession } from "@anthropic-ai/sdk/resources/beta/sessions/sessions";
 
@@ -52,7 +51,6 @@ function QuickstartStep({
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const branding = useBranding();
   const [copied, setCopied] = useState<string | null>(null);
   const { t } = useI18n();
   const statsQuery = useApiQuery<Stats>("/v1/maishu/stats");
@@ -97,8 +95,8 @@ export function Dashboard() {
     <DashboardLayout
       intro={
         <header>
-          <h1>{uiText("Get started with")} {branding.productName}</h1>
-          <p>{t.dashboard.handPlatformToAgent}</p>
+          <h1>{uiText("Workspace overview")}</h1>
+          <p>{uiText("Review agents, sessions and execution resources.")}</p>
         </header>
       }
       kpis={primaryKpis.map((kpi) => (
@@ -126,59 +124,6 @@ export function Dashboard() {
         </div>
       }
     >
-      <ConsolePanel
-        title={uiText("Launch an agent")}
-        description={uiText("A short path from an empty workspace to a managed run.")}
-      >
-        <QuickstartStep number="01" title={t.dashboard.installCli}>
-          <p>{t.dashboard.installCliDesc}</p>
-          <Button
-            variant="ghost"
-            type="button"
-            className="console-copy-control"
-            onClick={() => void copy(command, "command")}
-          >
-            <span>{command}</span>
-            {copyIcon("command")}
-          </Button>
-          <p className="mt-1.5 text-xs text-fg-subtle">
-             安装后登录：{" "}
-            <Button
-              variant="ghost"
-              type="button"
-              className="font-mono text-fg-muted hover:text-brand"
-              onClick={() => void copy(globalCommand, "global-command")}
-            >
-              {globalCommand}
-            </Button>
-          </p>
-        </QuickstartStep>
-
-        <QuickstartStep number="02" title={t.dashboard.mintApiKey}>
-          <p>{t.dashboard.mintApiKeyDesc}</p>
-          <Button variant="ghost"
-            type="button"
-            className="mt-2 inline-flex h-[var(--control-h)] items-center gap-1.5 rounded-md bg-brand px-3 text-sm font-medium text-brand-fg hover:bg-brand-hover"
-            onClick={() => navigate("/api-keys")}
-          >
-            {t.dashboard.generateApiKey}
-            <ArrowRightIcon className="size-3.5" />
-          </Button>
-        </QuickstartStep>
-
-        <QuickstartStep number="03" title={t.dashboard.handItReins}>
-          <p>{t.dashboard.handItReinsDesc}</p>
-          <Button variant="ghost"
-            type="button"
-            className="console-copy-control"
-            onClick={() => void copy(examplePrompt, "prompt")}
-          >
-            <span>{examplePrompt}</span>
-            {copyIcon("prompt")}
-          </Button>
-        </QuickstartStep>
-      </ConsolePanel>
-
       <ConsolePanel
         title={t.dashboard.recentSessions}
         description={uiText("Latest activity across the current workspace.")}
@@ -244,6 +189,62 @@ export function Dashboard() {
           </div>
         )}
       </ConsolePanel>
+
+      <ConsolePanel
+        className="maishu-quickstart-panel"
+        title={uiText("Launch an agent")}
+        description={uiText("A short path from an empty workspace to a managed run.")}
+      >
+        <QuickstartStep number="01" title={t.dashboard.installCli}>
+          <p>{t.dashboard.installCliDesc}</p>
+          <Button
+            variant="ghost"
+            type="button"
+            className="console-copy-control"
+            onClick={() => void copy(command, "command")}
+          >
+            <span>{command}</span>
+            {copyIcon("command")}
+          </Button>
+          <p className="mt-1.5 text-xs text-fg-subtle">
+             安装后登录：{" "}
+            <Button
+              variant="ghost"
+              type="button"
+              className="font-mono text-fg-muted hover:text-brand"
+              onClick={() => void copy(globalCommand, "global-command")}
+            >
+              {globalCommand}
+            </Button>
+          </p>
+        </QuickstartStep>
+
+        <QuickstartStep number="02" title={t.dashboard.mintApiKey}>
+          <p>{t.dashboard.mintApiKeyDesc}</p>
+          <Button variant="ghost"
+            type="button"
+            className="mt-2 inline-flex h-[var(--control-h)] items-center gap-1.5 rounded-md bg-brand px-3 text-sm font-medium text-brand-fg hover:bg-brand-hover"
+            onClick={() => navigate("/api-keys")}
+          >
+            {t.dashboard.generateApiKey}
+            <ArrowRightIcon className="size-3.5" />
+          </Button>
+        </QuickstartStep>
+
+        <QuickstartStep number="03" title={t.dashboard.handItReins}>
+          <p>{t.dashboard.handItReinsDesc}</p>
+          <Button variant="ghost"
+            type="button"
+            className="console-copy-control"
+            onClick={() => void copy(examplePrompt, "prompt")}
+          >
+            <span>{examplePrompt}</span>
+            {copyIcon("prompt")}
+          </Button>
+        </QuickstartStep>
+      </ConsolePanel>
+
+
     </DashboardLayout>
   );
 }

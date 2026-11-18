@@ -50,7 +50,7 @@ export function Help() {
   };
   return <div className="mx-auto w-full max-w-5xl space-y-9 p-5 md:p-9 pb-16">
     <header className="space-y-3 border-b border-border pb-7">
-      <p className="text-xs font-medium tracking-wide text-brand">麦枢 / 使用帮助</p>
+
       <h1 className="text-3xl font-semibold tracking-tight">从配置到第一次任务</h1>
       <p className="max-w-3xl text-sm leading-7 text-fg-muted">麦枢是企业智能体执行与管理平台。你可以在控制台或通过 CLI、API 发起任务，由远程沙箱中的原生智能体执行，并集中查看会话、文件和记忆。</p>
       <p className="text-sm text-fg-muted">私网部署请先连接组织的 Tailscale 网络。沙箱服务和账户凭证设置需要实例管理员权限。</p>

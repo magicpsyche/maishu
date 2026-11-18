@@ -40,7 +40,11 @@ export function ConsoleShell({
     () => typeof window === "undefined" || window.innerWidth >= 768,
   );
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_SIDEBAR_WIDTH;
+    const configured = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--shell-sidebar-w"));
+    return Number.isFinite(configured) ? Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, configured)) : DEFAULT_SIDEBAR_WIDTH;
+  });
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const sidebarOverlayOpeningRef = useRef(false);
   const sidebarRailRef = useRef<HTMLDivElement>(null);
